@@ -9,13 +9,31 @@ if (!isset($_SESSION['IdUtente'])) {
 }
 
 $id = $_SESSION['IdUtente'];
+$tipo = $_SESSION['tipoUtente'];
 
-// Selezioniamo tutti i campi utili dal nuovo schema
-$sql = "SELECT username, email, nome, cognome, data_nascita, num_telefono, partita_iva, nome_negozio, tipo_utente 
-        FROM UTENTE WHERE username = ?";
-$stmt = $conn->prepare($sql);
+// Dati base utente
+$stmt = $conn->prepare("SELECT username, email, nome, cognome FROM UTENTE WHERE username = ?");
 $stmt->bind_param("s", $id);
 $stmt->execute();
-$user = $stmt->get_result()->fetch_assoc();
+$utente = $stmt->get_result()->fetch_assoc();
 
-echo json_encode(['status' => 'ok', 'user' => $user]);
+// Dati specifici per ruolo
+$dettagli = [];
+if ($tipo === 'venditore') {
+    $stmt2 = $conn->prepare("SELECT partita_iva, ragione_sociale FROM VENDITORE WHERE username = ?");
+    $stmt2->bind_param("s", $id);
+    $stmt2->execute();
+    $dettagli = $stmt2->get_result()->fetch_assoc();
+} else {
+    $stmt2 = $conn->prepare("SELECT telefono, indirizzo_predefinito FROM CLIENTE WHERE username = ?");
+    $stmt2->bind_param("s", $id);
+    $stmt2->execute();
+    $dettagli = $stmt2->get_result()->fetch_assoc();
+}
+
+echo json_encode([
+    'status' => 'ok',
+    'tipo' => $tipo,
+    'anagrafica' => $utente,
+    'dettagli' => $dettagli ?? []
+]);

@@ -1,3 +1,88 @@
+:root {
+    --primary-green: #27ae60;
+    --dark-green: #1e8449;
+    --light-green: #eafaf1;
+    --border-color: #ddd;
+    --text-dark: #2c3e50;
+    --text-sec: #7f8c8d;
+    --white: #ffffff;
+}
+
+/* --- BASE --- */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    color: var(--text-dark);
+    background: #f8f9fa;
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    color: var(--primary-green);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--dark-green);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* --- BOTTONI --- */
+.btn-primary {
+    background: var(--primary-green);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-family: inherit;
+    font-size: 0.95em;
+    transition: background 0.2s;
+}
+
+.btn-primary:hover { background: var(--dark-green); }
+
+.btn-recensisci {
+    background: var(--primary-green);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-family: inherit;
+    font-size: 0.95em;
+    transition: background 0.2s;
+}
+
+.btn-recensisci:hover { background: var(--dark-green); }
+
+.btn-dashboard {
+    display: inline-block;
+    padding: 12px 24px;
+    background: white;
+    color: var(--dark-green);
+    border: 2px solid var(--primary-green);
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95em;
+    transition: background 0.2s;
+}
+
+.btn-dashboard:hover {
+    background: var(--light-green);
+    color: var(--dark-green);
+}
+
 /* --- 8. DASHBOARD VENDITORE --- */
 .dash-grid { 
     display: grid; 

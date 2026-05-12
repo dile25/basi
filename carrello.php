@@ -131,87 +131,68 @@ if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
 
     // Funzione principale per caricare i dati dal database
     function caricaCarrello() {
-        $.get('api/ba_carrello.php', { action: 'list' }, function(resp) {
-            if(resp.status === 'ok') {
-                if(resp.prodotti.length === 0) {
-                    $("#cart-wrapper").html(`
-                        <div style='text-align:center; padding: 80px; width: 100%; grid-column: 1/-1;'>
-                            <img src="img/empty-cart.svg" style="width:150px; opacity:0.5; margin-bottom:20px;">
-                            <h3>Il tuo carrello è deserto.</h3>
-                            <p>Non hai ancora aggiunto libri al tuo carrello.</p><br>
-                            <a href="index.php" class="btn-primary" style="padding: 12px 25px; text-decoration:none; border-radius:8px;">Esplora i Libri</a>
-                        </div>
-                    `);
-                    return;
-                }
-
-                let html = "";
-                resp.prodotti.forEach(p => {
-                    // Prezzo scontato calcolato dall'API
-                    html += `
-                    <div class="cart-item">
-                        <img src="${p.URLfoto}" style="width:80px; height:110px; object-fit:cover; border-radius:6px; margin-right:20px; border: 1px solid #eee;">
-                        <div style="flex-grow:1;">
-                            <h4 style="margin:0; font-size:1.2em;">${p.nome}</h4>
-                            <div style="margin-top:5px;">
-                                <span style="font-weight:bold; color:var(--accent);">€${parseFloat(p.prezzoScontato).toFixed(2)}</span>
-                                ${p.prezzoOriginale > p.prezzoScontato ? `<small style="text-decoration:line-through; color:#999; margin-left:8px;">€${parseFloat(p.prezzoOriginale).toFixed(2)}</small>` : ''}
-                            </div>
-                            <button class="btn-remove" onclick="rimuoviDalCarrello(${p.IdProdotto})">Elimina</button>
-                        </div>
-                        <div style="text-align:right;">
-                            <label style="font-size:0.8em; color:#666; display:block; margin-bottom:5px;">Quantità</label>
-                            <input type="number" class="qty-input" value="${p.quantita}" min="1" 
-                                   onchange="aggiornaQuantita(${p.IdProdotto}, this.value)">
-                            <div style="font-weight:800; margin-top:10px; font-size:1.1em;">€${parseFloat(p.subtotale).toFixed(2)}</div>
-                        </div>
-                    </div>`;
-                });
-
-                $("#cart-items-list").html(html);
-                $("#cart-total-label").text("€" + parseFloat(resp.totaleCart).toFixed(2));
-                $("#cart-count-label").text(resp.prodotti.length);
-            } else {
-                alert(resp.msg);
+    $.get('api/ba_carrello.php', { action: 'list' }, function(resp) {
+        if(resp.status === 'ok') {
+            if(resp.prodotti.length === 0) {
+                $("#cart-wrapper").html(`
+                    <div style='text-align:center; padding:80px; width:100%; grid-column:1/-1;'>
+                        <h3>Il tuo carrello è vuoto.</h3>
+                        <p>Non hai ancora aggiunto libri.</p><br>
+                        <a href="index.php" class="btn-primary" style="padding:12px 25px; text-decoration:none; border-radius:8px;">Esplora i Libri</a>
+                    </div>
+                `);
+                return;
             }
-        }, "json");
-    }
+
+            let html = "";
+            resp.prodotti.forEach(p => {
+                html += `
+                <div class="cart-item">
+                    <img src="${p.URLfoto}" style="width:80px; height:110px; object-fit:cover; border-radius:6px; margin-right:20px; border:1px solid #eee;">
+                    <div style="flex-grow:1;">
+                        <h4 style="margin:0; font-size:1.2em;">${p.nome}</h4>
+                        <div style="margin-top:5px;">
+                            <span style="font-weight:bold; color:var(--primary-green);">€${parseFloat(p.prezzoScontato).toFixed(2)}</span>
+                            ${p.prezzoOriginale > p.prezzoScontato ? `<small style="text-decoration:line-through; color:#999; margin-left:8px;">€${parseFloat(p.prezzoOriginale).toFixed(2)}</small>` : ''}
+                        </div>
+                        <button class="btn-remove" onclick="rimuoviDalCarrello(${p.IdProdotto})">Elimina</button>
+                    </div>
+                    <div style="text-align:right;">
+                        <label style="font-size:0.8em; color:#666; display:block; margin-bottom:5px;">Quantità</label>
+                        <input type="number" class="qty-input" value="${p.quantita}" min="1"
+                               onchange="aggiornaQuantita(${p.IdProdotto}, this.value)">
+                        <div style="font-weight:800; margin-top:10px; font-size:1.1em;">€${parseFloat(p.subtotale).toFixed(2)}</div>
+                    </div>
+                </div>`;
+            });
+
+            $("#cart-items-list").html(html);
+            $("#cart-total-label").text("€" + parseFloat(resp.totaleCart).toFixed(2));
+            $("#cart-count-label").text(resp.prodotti.length);
+        } else {
+            alert(resp.msg);
+        }
+    }, "json");
+}
 
     function aggiornaQuantita(id, qta) {
-        if(qta < 1) return;
-        $.post('api/ba_carrello.php', { action: 'update', idProdotto: id, qty: qta }, function(resp) {
-            if(resp.status === 'ok') {
-                caricaCarrello();
-            } else {
-                alert(resp.msg);
-                caricaCarrello(); // Ricarica per resettare l'input alla quantità precedente
-            }
+    if(qta < 1) return;
+    $.post('api/ba_carrello.php', { action: 'update', idProdotto: id, qty: qta }, function(resp) {
+        caricaCarrello();
+    }, "json");
+}
+
+function rimuoviDalCarrello(id) {
+    if(confirm("Vuoi davvero rimuovere questo libro?")) {
+        $.post('api/ba_carrello.php', { action: 'remove', idProdotto: id }, function(resp) {
+            if(resp.status === 'ok') caricaCarrello();
         }, "json");
     }
-
-    function rimuoviDalCarrello(id) {
-        if(confirm("Vuoi davvero rimuovere questo libro?")) {
-            $.post('api/ba_carrello.php', { action: 'remove', idProdotto: id }, function(resp) {
-                if(resp.status === 'ok') {
-                    caricaCarrello();
-                }
-            }, "json");
-        }
-    }
+}
 
     function procediAlCheckout() {
-        if(confirm("Confermi l'ordine? Questa azione è definitiva.")) {
-            // Qui richiamiamo l'API per registrare l'ordine e scalare il magazzino
-            $.post('api/ba_conferma_ordine.php', function(resp) {
-                if(resp.status === 'ok') {
-                    alert("Ordine completato! Troverai i dettagli nella sezione Miei Ordini.");
-                    window.location.href = "miei_ordini.php";
-                } else {
-                    alert("Ops! Qualcosa è andato storto: " + resp.msg);
-                }
-            }, "json");
-        }
-    }
+    window.location.href = 'checkout.php';
+}
     </script>
 
 </body>

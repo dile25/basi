@@ -63,9 +63,9 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
 <div class="header-container">
     <a href="index.php" class="logo" style="text-decoration:none; font-weight:800; font-size:1.4em; color:var(--dark-green); display:flex; align-items:center; gap:8px;">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="width:28px; fill:currentColor;">
-            <path d="M416 196.2c-13.8-30.8-49-92.2-100-92.2H196c-51 0-84.8 59.4-100 92.2-24 23-48 45.7-48 84.8v76c0 3.7 2.6 7 6.2 7.8C69.1 368.2 116.4 375 256 375s186.9-6.8 201.8-10.2c3.6-.8 6.2-4.1 6.2-7.8v-76c0-39-22.3-63.1-48-84.8zM190 128h132c40.5 0 62 60 62 70H128c0-10 27-70 62-70zm-78 203.7c-17.7 0-32-14.3-32-32s14.3-32 32-32 32 14.3 32 32c0 17.6-14.3 32-32 32zM328 300c0 8.8-7.2 16-16 16H200c-8.8 0-16-7.2-16-16s7.2-16 16-16h112c8.8 0 16 7.2 16 16zm72 32c-17.7 0-32-14.3-32-32s14.3-32 32-32 32 14.3 32 32-14.3 32-32 32zM160 384c-47.9 0-96-5-96-5 0 17-.3 29 6 29h85c6.3 0 5-13.2 5-24zM352 384c48 0 96-5 96-5 0 16 2 29-5 29h-86c-6.7 0-5-13.5-5-24z" />
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:28px; fill:currentColor;">
+    <path d="M21 4H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1zm-1 15H7a1 1 0 0 1 0-2h13v1a1 1 0 0 1-1 1zm0-4H7V6h13v9zM3 6a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h1V6H3z"/>
+</svg>
         Book<span style="color:var(--primary-green)">Archive</span>
     </a>
 
@@ -80,37 +80,39 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
     </div>
 
     <div class="user-nav">
-        <?php if (isset($_SESSION['IdUtente'])): ?>
-            <a href="<?php echo ($_SESSION['tipoUtente'] === 'venditore') ? 'dashboard_venditore.php' : 'dashboard_cliente.php'; ?>" class="user-btn">
-                👤 <?php echo htmlspecialchars($_SESSION['IdUtente']); ?>
+    <?php if (isset($_SESSION['IdUtente'])): ?>
+        <a href="profilo.php" class="user-btn" title="<?php echo htmlspecialchars($_SESSION['IdUtente']); ?>" style="display:flex; align-items:center; gap:6px;">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:22px; height:22px; fill:currentColor;">
+        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+    </svg>
+    <?php echo htmlspecialchars($_SESSION['IdUtente']); ?>
+</a>
+
+        <?php if ($_SESSION['tipoUtente'] === 'cliente'): ?>
+            <a href="miei_ordini.php" class="user-btn">I miei ordini</a>
+            <a href="carrello.php" class="user-btn cart-link">
+                🛒 <span class="cart-badge" id="cartCount">0</span>
             </a>
-
-            <?php if ($_SESSION['tipoUtente'] === 'cliente'): ?>
-                <a href="miei_ordini.php" class="user-btn">📦 Ordini</a>
-                <a href="carrello.php" class="user-btn cart-link">
-                    🛒 <span class="cart-badge" id="cartCount">0</span>
-                </a>
-            <?php endif; ?>
-
-            <a href="logout.php" class="user-btn" style="color:#e74c3c;">❌ Esci</a>
-
-        <?php else: ?>
-            <a href="login.php" class="user-btn">Accedi</a>
-            <a href="registrazione.php" class="user-btn btn-reg-header">Registrati</a>
         <?php endif; ?>
-    </div>
+
+        <a href="logout.php" class="user-btn" style="color:#e74c3c;">Esci</a>
+
+    <?php else: ?>
+        <a href="login.php" class="user-btn">Accedi</a>
+        <a href="registrazione.php" class="user-btn btn-reg-header">Registrati</a>
+    <?php endif; ?>
+</div>
 </div>
 
 <script>
 $(document).ready(function() {
     // 1. Carica Categorie nell'header
     $.get("api/ba_categorie.php", function(resp) {
-        // Supponendo che l'API restituisca {status: 'ok', categorie: [...]}
-        const cats = resp.categorie || resp;
-        cats.forEach(cat => {
-            $("#headerCatSelect").append(`<option value="${cat.IdCategoria}">${cat.NomeCategoria}</option>`);
-        });
+    const cats = resp.categorie || [];
+    cats.forEach(cat => {
+        $("#headerCatSelect").append(`<option value="${cat.nome_categoria}">${cat.nome_categoria}</option>`);
     });
+});
 
     // 2. Aggiorna badge carrello solo se è un cliente loggato
     <?php if(isset($_SESSION['tipoUtente']) && $_SESSION['tipoUtente'] === 'cliente'): ?>

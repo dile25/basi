@@ -20,6 +20,9 @@
         </form>
 
         <p style="text-align:center; margin-top:20px; font-size:0.9em;">Nuovo su BookArchive? <a href="registrazione.php">Registrati</a></p>
+        <p style="text-align:center; margin-top:10px; font-size:0.9em;">
+    <a href="index.php" style="color: var(--text-sec);">Torna alla home</a>
+</p>
     </div>
 
     <script>
@@ -27,7 +30,7 @@
         e.preventDefault();
         $.post('api/ba_auth_login.php', $(this).serialize(), function(resp) {
             if(resp.status === 'ok') {
-                window.location.href = (resp.tipo === 'venditore') ? "dashboard_venditore.php" : "index.php";
+                window.location.href = "index.php";
             } else { alert("Dati non corretti!"); }
         });
     });

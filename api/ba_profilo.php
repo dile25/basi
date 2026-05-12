@@ -54,3 +54,4 @@ if ($action === 'get') {
         echo json_encode(['status' => 'error', 'msg' => 'Errore nell\'aggiornamento dei dati']);
     }
 }
+

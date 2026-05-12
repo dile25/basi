@@ -108,55 +108,51 @@ session_start();
 
     <script>
     $(document).ready(function() {
-        // Carica i libri all'avvio
-        caricaLibri();
-
-        // Se ci sono parametri di ricerca nell'URL (q o cat), usali
-        const urlParams = new URLSearchParams(window.location.search);
-        if(urlParams.has('q') || urlParams.has('cat')) {
-            eseguiRicercaFiltrata(urlParams.get('q'), urlParams.get('cat'));
-        }
-    });
+    caricaLibri();
+});
 
     function caricaLibri() {
-        $.get('api/ba_ricerca.php', function(resp) {
-            renderizzaLibri(resp);
-        });
+    const urlParams = new URLSearchParams(window.location.search);
+    const q = urlParams.get('q') || '';
+    const cat = urlParams.get('cat') || '';
+    $.get('api/ba_ricerca.php', { q: q, cat: cat }, function(resp) {
+        renderizzaLibri(resp);
+    });
+}
+
+    function renderizzaLibri(resp) {
+    if (!resp.prodotti || resp.prodotti.length === 0) {
+        $("#lista-libri").html("<p style='grid-column: 1/-1; text-align:center;'>Nessun libro trovato.</p>");
+        return;
     }
+    let html = "";
+    resp.prodotti.forEach(lib => {
+        const voto = Math.round(lib.MediaVoto || 0);
+        const stelle = "★".repeat(voto) + "☆".repeat(5 - voto);
+        const foto = lib.URLfoto ? lib.URLfoto : 'img/default.jpg';
 
-    function renderizzaLibri(libri) {
-        let html = "";
-        if(libri.length === 0) {
-            $("#lista-libri").html("<p style='grid-column: 1/-1; text-align:center;'>Nessun libro trovato.</p>");
-            return;
-        }
-
-        libri.forEach(lib => {
-            const stelle = "★".repeat(Math.round(lib.MediaVoto || 0)) + "☆".repeat(5 - Math.round(lib.MediaVoto || 0));
-
-            html += `
-            <div class="book-card">
-                <img src="${lib.URLfoto}" alt="${lib.Titolo}">
-                <div class="book-info">
-                    <h3 style="margin:0; font-size: 1.1em;">${lib.Titolo}</h3>
-                    <small style="color: #666;">di ${lib.Autore}</small>
-                    <div class="star-small">${stelle} <span style="color:#999">(${lib.NumRecensioni || 0})</span></div>
-                    <div class="book-price">€${parseFloat(lib.Prezzo).toFixed(2)}</div>
-
-                    <?php if(isset($_SESSION['tipoUtente']) && $_SESSION['tipoUtente'] === 'cliente'): ?>
-                        <button class="btn-add-cart" onclick="aggiungiAlCarrello(${lib.IdProdotto})">
-                            🛒 Aggiungi al carrello
-                        </button>
-                    <?php else: ?>
-                        <button class="btn-add-cart" style="background: #ccc; cursor:not-allowed;">
-                            Solo per clienti
-                        </button>
-                    <?php endif; ?>
-                </div>
-            </div>`;
-        });
-        $("#lista-libri").html(html);
-    }
+        html += `
+        <div class="book-card" onclick="location.href='dettaglio_prodotto.php?id=${lib.id_prodotto}'" style="cursor:pointer;">
+            <img src="${foto}" alt="${lib.nome}">
+            <div class="book-info">
+                <h3 style="margin:0; font-size:1.1em;">${lib.nome}</h3>
+                <small style="color:#666;">${lib.descrizione ? lib.descrizione.substring(0,60)+'...' : ''}</small>
+                <div class="star-small">${stelle} <span style="color:#999">(${lib.NumRecensioni || 0})</span></div>
+                <div class="book-price">€${parseFloat(lib.PrezzoScontato).toFixed(2)}</div>
+                <?php if(isset($_SESSION['tipoUtente']) && $_SESSION['tipoUtente'] === 'cliente'): ?>
+                    <button class="btn-add-cart" onclick="aggiungiAlCarrello(${lib.id_prodotto})">
+                        🛒 Aggiungi al carrello
+                    </button>
+                <?php else: ?>
+                    <button class="btn-add-cart" style="background:#ccc; cursor:not-allowed;">
+                        Solo per clienti
+                    </button>
+                <?php endif; ?>
+            </div>
+        </div>`;
+    });
+    $("#lista-libri").html(html);
+}
 
     function aggiungiAlCarrello(id) {
         $.post('api/ba_aggiungi_carrello.php', { idProdotto: id }, function(resp) {

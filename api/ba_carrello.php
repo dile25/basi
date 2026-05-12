@@ -14,10 +14,9 @@ $action = $_REQUEST['action'] ?? '';
 switch ($action) {
 
     case 'add':
-        $idProd = $_POST['idProdotto'] ?? 0;
+        $idProd = intval($_POST['idProdotto'] ?? 0);
         $qty = 1;
 
-        // Controllo esistenza e disponibilità nel DB
         $checkStock = $conn->prepare("SELECT quantita_disponibile FROM PRODOTTO WHERE id_prodotto = ?");
         $checkStock->bind_param("i", $idProd);
         $checkStock->execute();
@@ -28,17 +27,17 @@ switch ($action) {
             exit;
         }
 
-        // Upsert (Aggiorna o Inserisce) nel carrello del database
-        $check = $conn->prepare("SELECT quantita FROM CARRELLO WHERE username = ? AND id_prodotto = ?");
+        $check = $conn->prepare("SELECT id_carrello, quantita_prodotto FROM CARRELLO WHERE username = ? AND id_prodotto = ?");
         $check->bind_param("si", $idUtente, $idProd);
         $check->execute();
         $res = $check->get_result();
 
-        if ($res->num_rows > 0) {
-            $stmt = $conn->prepare("UPDATE CARRELLO SET quantita = quantita + ? WHERE username = ? AND id_prodotto = ?");
-            $stmt->bind_param("isi", $qty, $idUtente, $idProd);
+        if ($row = $res->fetch_assoc()) {
+            $nuovaQta = $row['quantita_prodotto'] + $qty;
+            $stmt = $conn->prepare("UPDATE CARRELLO SET quantita_prodotto = ? WHERE username = ? AND id_prodotto = ?");
+            $stmt->bind_param("isi", $nuovaQta, $idUtente, $idProd);
         } else {
-            $stmt = $conn->prepare("INSERT INTO CARRELLO (username, id_prodotto, quantita) VALUES (?, ?, ?)");
+            $stmt = $conn->prepare("INSERT INTO CARRELLO (username, id_prodotto, quantita_prodotto, prezzo_totale, data_creazione) VALUES (?, ?, ?, 0, CURRENT_DATE)");
             $stmt->bind_param("sii", $idUtente, $idProd, $qty);
         }
 
@@ -50,8 +49,7 @@ switch ($action) {
         break;
 
     case 'list':
-        // Query che calcola lo sconto dinamico direttamente nel carrello
-        $sql = "SELECT c.id_prodotto, c.quantita, p.nome, p.prezzo, p.quantita_disponibile, 
+        $sql = "SELECT c.id_prodotto, c.quantita_prodotto, p.nome, p.prezzo,
                        pk.sconto as ScontoPacchetto,
                        (SELECT url FROM IMMAGINE_PRODOTTO WHERE id_prodotto = p.id_prodotto LIMIT 1) as Foto
                 FROM CARRELLO c
@@ -68,37 +66,49 @@ switch ($action) {
         $totaleCart = 0;
 
         while ($row = $result->fetch_assoc()) {
-            // Calcolo prezzo scontato se applicabile
             $prezzoUnitario = (float)$row['prezzo'];
-            if ($row['ScontoPacchetto'] > 0) {
-                $prezzoUnitario = $prezzoUnitario - ($prezzoUnitario * ($row['ScontoPacchetto'] / 100));
+            $sconto = (float)($row['ScontoPacchetto'] ?? 0);
+            if ($sconto > 0) {
+                $prezzoUnitario = $prezzoUnitario - ($prezzoUnitario * ($sconto / 100));
             }
-            
-            $subtotale = $prezzoUnitario * $row['quantita'];
+            $subtotale = $prezzoUnitario * $row['quantita_prodotto'];
             $totaleCart += $subtotale;
 
             $prodotti[] = [
-                'IdProdotto' => $row['id_prodotto'],
-                'nome' => $row['nome'],
-                'prezzoOriginale' => $row['prezzo'],
-                'prezzoScontato' => round($prezzoUnitario, 2),
-                'quantita' => $row['quantita'],
-                'URLfoto' => $row['Foto'] ?? 'img/default.jpg',
-                'subtotale' => round($subtotale, 2)
+                'IdProdotto'      => $row['id_prodotto'],
+                'nome'            => $row['nome'],
+                'prezzoOriginale' => (float)$row['prezzo'],
+                'prezzoScontato'  => round($prezzoUnitario, 2),
+                'quantita'        => $row['quantita_prodotto'],
+                'URLfoto'         => $row['Foto'] ?? 'img/default.jpg',
+                'subtotale'       => round($subtotale, 2)
             ];
         }
 
         echo json_encode([
-            'status' => 'ok',
-            'prodotti' => $prodotti,
+            'status'     => 'ok',
+            'prodotti'   => $prodotti,
             'totaleCart' => round($totaleCart, 2)
         ]);
         break;
 
+    case 'update':
+        $idProd = intval($_POST['idProdotto'] ?? 0);
+        $qty = intval($_POST['qty'] ?? 1);
+        if ($qty < 1) $qty = 1;
+        $stmt = $conn->prepare("UPDATE CARRELLO SET quantita_prodotto = ? WHERE username = ? AND id_prodotto = ?");
+        $stmt->bind_param("isi", $qty, $idUtente, $idProd);
+        echo json_encode(['status' => ($stmt->execute() ? 'ok' : 'error')]);
+        break;
+
     case 'remove':
-        $idProd = $_POST['idProdotto'] ?? 0;
+        $idProd = intval($_POST['idProdotto'] ?? 0);
         $stmt = $conn->prepare("DELETE FROM CARRELLO WHERE username = ? AND id_prodotto = ?");
         $stmt->bind_param("si", $idUtente, $idProd);
         echo json_encode(['status' => ($stmt->execute() ? 'ok' : 'error')]);
+        break;
+
+    default:
+        echo json_encode(['status' => 'error', 'msg' => 'Azione non valida']);
         break;
 }
