@@ -197,4 +197,3 @@ function rimuoviDalCarrello(id) {
 
 </body>
 </html>
-// ALLORA 
