@@ -12,7 +12,8 @@ $idUtente = $_SESSION['IdUtente'];
 $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 
 if ($action === 'list') {
-    $stmt = $conn->prepare("SELECT id_pagamento, metodo, stato as dati FROM PAGAMENTO WHERE username = ? AND stato != 'Completato' ORDER BY id_pagamento DESC");
+    // I metodi salvati hanno stato che inizia con 'salvato:'
+    $stmt = $conn->prepare("SELECT id_pagamento, metodo, SUBSTRING(stato, 9) as dati FROM PAGAMENTO WHERE username = ? AND stato LIKE 'salvato:%' ORDER BY id_pagamento DESC");
     $stmt->bind_param("s", $idUtente);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -22,14 +23,14 @@ if ($action === 'list') {
 
 } elseif ($action === 'add') {
     $metodo = $_POST['metodo'] ?? '';
-    $dati   = $_POST['dati'] ?? '';
+    $dati   = 'salvato:' . ($_POST['dati'] ?? '');
     $stmt = $conn->prepare("INSERT INTO PAGAMENTO (username, metodo, stato) VALUES (?, ?, ?)");
     $stmt->bind_param("sss", $idUtente, $metodo, $dati);
     echo json_encode(['status' => $stmt->execute() ? 'ok' : 'error']);
 
 } elseif ($action === 'delete') {
     $id = intval($_POST['id'] ?? 0);
-    $stmt = $conn->prepare("DELETE FROM PAGAMENTO WHERE id_pagamento = ? AND username = ?");
+    $stmt = $conn->prepare("DELETE FROM PAGAMENTO WHERE id_pagamento = ? AND username = ? AND stato LIKE 'salvato:%'");
     $stmt->bind_param("is", $id, $idUtente);
     echo json_encode(['status' => $stmt->execute() ? 'ok' : 'error']);
 }

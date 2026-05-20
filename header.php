@@ -81,17 +81,15 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
     <div class="user-nav">
     <?php if (isset($_SESSION['IdUtente'])): ?>
-        <a href="profilo.php" class="user-btn" title="<?php echo htmlspecialchars($_SESSION['IdUtente']); ?>" style="display:flex; align-items:center; gap:6px;">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:22px; height:22px; fill:currentColor;">
-        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
-    </svg>
-    <?php echo htmlspecialchars($_SESSION['IdUtente']); ?>
-</a>
+        <a href="profilo.php" class="user-btn" title="Vai alla pagina personale" style="display:flex;align-items:center;gap:6px;">👤 
+            <?php echo htmlspecialchars($_SESSION['IdUtente']); ?>
+        </a>
 
         <?php if ($_SESSION['tipoUtente'] === 'cliente'): ?>
             <a href="miei_ordini.php" class="user-btn">I miei ordini</a>
+        <a href="preferiti.php" class="user-btn">❤️ Preferiti</a>
             <a href="carrello.php" class="user-btn cart-link">
-                🛒 <span class="cart-badge" id="cartCount">0</span>
+                🛒 Carrello <span class="cart-badge" id="cartCount">0</span>
             </a>
         <?php endif; ?>
 

@@ -9,7 +9,7 @@ if ($id <= 0) {
     exit;
 }
 
-$sql = "SELECT username, valutazione, testo, data 
+$sql = "SELECT id_recensione, username, valutazione, testo, data 
         FROM RECENSIONE 
         WHERE id_prodotto = ? 
         ORDER BY data DESC";

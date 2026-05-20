@@ -12,7 +12,7 @@ $id = $_SESSION['IdUtente'];
 $tipo = $_SESSION['tipoUtente'];
 
 // Dati base utente
-$stmt = $conn->prepare("SELECT username, email, nome, cognome FROM UTENTE WHERE username = ?");
+$stmt = $conn->prepare("SELECT username, email, nome, cognome, data_registrazione FROM UTENTE WHERE username = ?");
 $stmt->bind_param("s", $id);
 $stmt->execute();
 $utente = $stmt->get_result()->fetch_assoc();
