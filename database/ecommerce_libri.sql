@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Creato il: Mag 25, 2026 alle 19:58
+-- Creato il: Mag 26, 2026 alle 19:37
 -- Versione del server: 10.4.28-MariaDB
 -- Versione PHP: 8.2.4
 
@@ -125,8 +125,33 @@ CREATE TABLE `DESCRIVE` (
 --
 
 INSERT INTO `DESCRIVE` (`id_prodotto`, `nome_categoria`) VALUES
-(17, 'Narrativa'),
-(18, 'Narrativa');
+(1, 'Fantasy'),
+(2, 'Fantasy'),
+(3, 'Fantasy'),
+(4, 'Fantasy'),
+(5, 'Fantasy'),
+(6, 'Fantasy'),
+(7, 'Romanzi'),
+(8, 'Romanzi'),
+(9, 'Racconti'),
+(10, 'Romanzi'),
+(11, 'Fantascienza'),
+(12, 'Fantascienza'),
+(13, 'Fantascienza'),
+(14, 'Thriller psicologico'),
+(15, 'Crime'),
+(16, 'Thriller psicologico'),
+(17, 'Crime'),
+(18, 'Storia'),
+(19, 'Scienze'),
+(20, 'Scienze'),
+(21, 'Filosofia'),
+(22, 'Cucina'),
+(23, 'Viaggi'),
+(24, 'Young Adult'),
+(25, 'Young Adult'),
+(26, 'Narrativa'),
+(27, 'Architettura');
 
 -- --------------------------------------------------------
 
@@ -146,13 +171,11 @@ CREATE TABLE `IMMAGINE_PRODOTTO` (
 --
 
 INSERT INTO `IMMAGINE_PRODOTTO` (`id_immagine_prodotto`, `id_prodotto`, `url`, `alt_text`) VALUES
-(2, NULL, 'img/1777461434_69f1e8bad6d61.png', 'Copertina gsg'),
-(3, NULL, 'img/1777459810_69f1e26282985.psd', 'Copertina gsg'),
-(4, NULL, 'img/1777460054_69f1e356eeb3b.psd', 'Copertina gsg'),
-(5, NULL, 'img/1777460466_69f1e4f261568.psd', 'Copertina cjoaoih'),
-(6, NULL, 'img/1777460729_69f1e5f93fae4.jpg', 'Copertina cjoaoih'),
-(7, 17, 'img/1779269931_6a0d812b8f1b5.jpg', 'Copertina normal people'),
-(8, 18, 'img/1779270220_6a0d824cc538c.jpeg', 'Copertina Harry Potter');
+(19, 1, 'img/harry_potter_1.jpg', 'Copertina Harry Potter 1'),
+(20, 2, 'img/harry_potter_2.jpg', 'Copertina Harry Potter 2'),
+(21, 5, 'img/trono_di_spade_1.jpg', 'Copertina Il Trono di Spade'),
+(22, 7, 'img/senilita.jpg', 'Copertina Senilita'),
+(23, 8, 'img/coscienza_zeno.jpg', 'Copertina La coscienza di Zeno');
 
 -- --------------------------------------------------------
 
@@ -217,6 +240,14 @@ CREATE TABLE `PACCHETTO` (
   `attivo` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dump dei dati per la tabella `PACCHETTO`
+--
+
+INSERT INTO `PACCHETTO` (`id_pacchetto`, `descrizione`, `sconto`, `attivo`) VALUES
+(1, 'Saga Completa / Promo Autore', 15.00, 1),
+(2, 'Promo Speciale', 20.00, 1);
+
 -- --------------------------------------------------------
 
 --
@@ -277,8 +308,33 @@ CREATE TABLE `PRODOTTO` (
 --
 
 INSERT INTO `PRODOTTO` (`id_prodotto`, `username`, `id_pacchetto`, `nome`, `autore`, `descrizione`, `prezzo`, `quantita_disponibile`) VALUES
-(17, 'bella', NULL, 'normal people', NULL, 'Connell e Marianne sono due adolescenti irlandesi.', 15.00, 0),
-(18, 'bella', NULL, 'Harry Potter', NULL, 'Harry scopre di essere un mago', 20.00, 10);
+(1, 'bella', 1, 'Harry Potter e la pietra filosofale', 'J.K. Rowling', 'Il primo capitolo della saga del mago piu famoso del mondo.', 12.00, 20),
+(2, 'bella', 1, 'Harry Potter e la camera dei segreti', 'J.K. Rowling', 'Il secondo anno di Harry a Hogwarts tra misteri e creature oscure.', 12.50, 15),
+(3, 'bella', 1, 'Harry Potter e il prigioniero di Azkaban', 'J.K. Rowling', 'Il terzo anno vede la fuga del pericoloso Sirius Black.', 13.00, 18),
+(4, 'bella', 1, 'Harry Potter e il calice di fuoco', 'J.K. Rowling', 'Il Torneo Tremaghi mette a dura prova la vita di Harry.', 15.00, 12),
+(5, 'bella', 1, 'Il Trono di Spade', 'George R.R. Martin', 'L inizio dell epica saga fantasy tra intrighi e potere nei Sette Regni.', 19.00, 10),
+(6, 'bella', 1, 'Il Grande Inverno', 'George R.R. Martin', 'La stirpe degli Stark si frammenta mentre l inverno sta arrivando.', 19.00, 10),
+(7, 'bella', NULL, 'Senilita', 'Italo Svevo', 'Il capolavoro modernista che esplora l inettitudine e le illusioni di Emilio Brentani.', 10.00, 25),
+(8, 'bella', NULL, 'La coscienza di Zeno', 'Italo Svevo', 'Le confessioni psicoanalitiche di Zeno Cosini tra fumo e nevrosi.', 11.00, 30),
+(9, 'bella', NULL, 'Il gioco segreto', 'Elsa Morante', 'Una raccolta di racconti intensi e sognanti della celebre autrice.', 9.50, 14),
+(10, 'bella', NULL, 'Fosca', 'Igino Ugo Tarchetti', 'Il romanzo simbolo della Scapigliatura.', 8.50, 15),
+(11, 'bella', NULL, 'Dune', 'Frank Herbert', 'Il monumentale romanzo di fantascienza ambientato su Arrakis.', 16.50, 22),
+(12, 'bella', NULL, 'Neuromante', 'William Gibson', 'Il manifesto del cyberpunk.', 13.00, 8),
+(13, 'bella', NULL, 'Guida galattica per gli autostoppisti', 'Douglas Adams', 'Un avventura spaziale esilarante.', 12.00, 19),
+(14, 'bella', NULL, 'Il silenzio degli innocenti', 'Thomas Harris', 'Thriller psicologico con Hannibal Lecter.', 14.00, 11),
+(15, 'bella', NULL, 'L alienista', 'Caleb Carr', 'Thriller storico ambientato nella New York ottocentesca.', 15.00, 7),
+(16, 'bella', NULL, 'La ragazza del treno', 'Paula Hawkins', 'Thriller psicologico basato su ricordi distorti.', 13.50, 20),
+(17, 'bella', NULL, 'Dieci piccoli indiani', 'Agatha Christie', 'Uno dei gialli piu celebri di sempre.', 10.50, 35),
+(18, 'bella', NULL, 'Sapiens. Da animali a dei', 'Yuval Noah Harari', 'Breve storia dell umanita.', 18.00, 15),
+(19, 'bella', NULL, 'Cosmo', 'Carl Sagan', 'Viaggio attraverso spazio e scienza.', 17.00, 9),
+(20, 'bella', NULL, 'L ordine del tempo', 'Carlo Rovelli', 'Saggio sul tempo.', 12.00, 25),
+(21, 'bella', NULL, 'Cosi parlo Zarathustra', 'Friedrich Nietzsche', 'Opera filosofica sull oltreuomo.', 9.00, 14),
+(22, 'bella', NULL, 'Il cucchiaio d argento', 'AA.VV.', 'Grande classico della cucina italiana.', 45.00, 5),
+(23, 'bella', NULL, 'In Patagonia', 'Bruce Chatwin', 'Celebre libro di viaggio.', 11.50, 12),
+(24, 'bella', NULL, 'Percy Jackson e gli dei dell Olimpo: Il ladro di fulmini', 'Rick Riordan', 'Mitologia greca e avventure moderne.', 12.00, 17),
+(25, 'bella', NULL, 'Hunger Games', 'Suzanne Collins', 'Romanzo distopico young adult.', 14.50, 21),
+(26, 'bella', NULL, 'L altalena', 'Carlo Dossi', 'Opera della Scapigliatura milanese.', 11.80, 0),
+(27, 'bella', NULL, 'ciao', 'ciaociao', 'hqghfpiwqpfipwhf', 21.00, 0);
 
 -- --------------------------------------------------------
 
@@ -464,7 +520,7 @@ ALTER TABLE `CARRELLO`
 -- AUTO_INCREMENT per la tabella `IMMAGINE_PRODOTTO`
 --
 ALTER TABLE `IMMAGINE_PRODOTTO`
-  MODIFY `id_immagine_prodotto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id_immagine_prodotto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT per la tabella `IMMAGINE_RECENSIONE`
@@ -482,7 +538,7 @@ ALTER TABLE `ORDINE`
 -- AUTO_INCREMENT per la tabella `PACCHETTO`
 --
 ALTER TABLE `PACCHETTO`
-  MODIFY `id_pacchetto` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_pacchetto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT per la tabella `PAGAMENTO`
@@ -500,7 +556,7 @@ ALTER TABLE `PREFERITI`
 -- AUTO_INCREMENT per la tabella `PRODOTTO`
 --
 ALTER TABLE `PRODOTTO`
-  MODIFY `id_prodotto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id_prodotto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT per la tabella `RECENSIONE`
