@@ -28,7 +28,6 @@ session_start();
 <body>
 <?php include("header.php"); ?>
 
-<!-- MODAL RECENSIONE -->
 <div id="modalRecensione" class="modal-overlay">
     <div class="modal-box">
         <span onclick="$('#modalRecensione').fadeOut()" style="float:right; cursor:pointer; font-size:1.5em;">&times;</span>
@@ -60,15 +59,15 @@ session_start();
     <div id="contentWrapper" style="display:none;">
         <div style="display:grid; grid-template-columns:300px 1fr; gap:40px; align-items:start;">
 
-            <!-- COLONNA IMMAGINE -->
             <div>
                 <img src="" id="mainImage" style="width:100%; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.1);" alt="Copertina">
                 <div id="thumbsContainer" style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;"></div>
             </div>
 
-            <!-- COLONNA INFO -->
             <div>
-                <h1 id="pTitle" style="margin:0 0 8px; color:var(--dark-green);"></h1>
+                <h1 id="pTitle" style="margin:0 0 4px; color:var(--dark-green);"></h1>
+                <p style="font-size: 1.2em; color: var(--text-dark); margin: 0 0 15px 0;">di <strong id="pAuthor"></strong></p>
+                
                 <p style="color:var(--text-sec); margin-bottom:15px;">
                     Venduto da: <a href="#" id="pVendorLink" style="font-weight:bold; color:var(--primary-green);"></a>
                     &nbsp;|&nbsp; Genere: <strong id="pCat"></strong>
@@ -97,7 +96,6 @@ session_start();
             </div>
         </div>
 
-        <!-- SEZIONE RECENSIONI -->
         <div style="margin-top:50px; background:white; border-radius:15px; padding:30px; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
             <h3 style="color:var(--dark-green); margin-bottom:20px;">Opinioni della Community</h3>
             <div id="reviewsList"></div>
@@ -124,6 +122,10 @@ $(document).ready(function() {
 
         let badge = p.ScontoPacchetto > 0 ? `<span style="background:#e74c3c;color:white;padding:3px 10px;border-radius:20px;font-size:0.8em;font-weight:bold;margin-right:8px;">-${p.ScontoPacchetto}%</span>` : '';
         $("#pTitle").html(badge + p.NomeProdotto);
+        
+        // POPOLA L'AUTORE ESTRATTO DAL DATABASE
+        $("#pAuthor").text(p.autore || 'Autore non specificato');
+        
         $("#pDesc").text(p.descrizione);
         $("#pCat").text(p.NomeCategoria || 'Generale');
         $("#pVendorLink").text(p.NomeVenditore).attr("href", "profilo_venditore.php?u=" + p.IdVenditore);
@@ -275,17 +277,6 @@ function togglePreferito() {
             alert(resp.msg || 'Accedi per usare i preferiti.');
         }
     }, 'json');
-}
-
-function apriModalRecensione() {
-    <?php if(!isset($_SESSION['IdUtente'])): ?>
-        window.location.href = 'login.php'; return;
-    <?php endif; ?>
-    aggiornaStelle(5);
-    $("#rev-voto-val").val(5);
-    $("#rev-commento").val('');
-    $("#modal-rec-titolo").text("La tua opinione");
-    $("#modalRecensione").css("display","flex").hide().fadeIn();
 }
 
 function aggiornaStelle(v) {

@@ -24,7 +24,59 @@ if(!isset($_SESSION['IdUtente'])) {
         .status-lavorazione { background: #fff3cd; color: #856404; }
         .status-spedito { background: #d4edda; color: #155724; }
         
-        /* Modal recensioni */
+        /* MODIFICA: CSS per la barra grafica del Tracker Spedizione */
+        .tracker-container {
+            padding: 15px 20px;
+            background: #fafafa;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+        }
+        .tracker-line {
+            position: absolute;
+            top: 24px;
+            left: 10%;
+            right: 10%;
+            height: 4px;
+            background: #ddd;
+            z-index: 1;
+        }
+        .tracker-line-fill {
+            position: absolute;
+            top: 24px;
+            left: 10%;
+            height: 4px;
+            background: var(--primary-green);
+            z-index: 2;
+            transition: width 0.5s ease;
+        }
+        .tracker-step {
+            text-align: center;
+            z-index: 3;
+            flex: 1;
+            font-size: 0.75em;
+            color: #999;
+            font-weight: bold;
+        }
+        .tracker-circle {
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 3px solid #ddd;
+            border-radius: 50%;
+            margin: 0 auto 5px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tracker-step.active .tracker-circle {
+            border-color: var(--primary-green);
+            background: var(--primary-green);
+            color: white;
+        }
+        .tracker-step.active { color: var(--text-dark); }
+
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
         .modal-content { background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 450px; position: relative; }
         .star-rating { font-size: 30px; cursor: pointer; color: #ddd; margin: 15px 0; }
@@ -73,21 +125,19 @@ if(!isset($_SESSION['IdUtente'])) {
     $(document).ready(function() {
         caricaMieiOrdini();
 
-        // Gestione click stelle
         $(document).on("click", ".star", function() {
             let v = $(this).data("v");
             $("#rev-voto-val").val(v);
             aggiornaStelle(v);
         });
 
-        // Invio recensione
         $("#formRecensione").on("submit", function(e) {
             e.preventDefault();
             $.post('api/ba_scrivi_recensione.php', $(this).serialize(), function(resp) {
                 if(resp.status === 'ok') {
                     alert("Recensione inviata con successo!");
                     $("#modalRecensione").fadeOut();
-                    caricaMieiOrdini(); // Ricarica per nascondere il tasto recensisci
+                    caricaMieiOrdini();
                 } else {
                     alert(resp.msg);
                 }
@@ -105,7 +155,20 @@ if(!isset($_SESSION['IdUtente'])) {
                 
                 let h = "";
                 resp.ordini.forEach(ord => {
-                    let bCls = (ord.stato === 'Spedito') ? 'status-spedito' : 'status-lavorazione';
+                    let bCls = (ord.stato === 'Spedito' || ord.stato === 'Consegnato') ? 'status-spedito' : 'status-lavorazione';
+                    
+                    // MODIFICA: Calcolo dinamico degli step e del riempimento del tracker
+                    let step1 = "active", step2 = "", step3 = "", step4 = "";
+                    let fillWidth = "0%";
+                    
+                    if(ord.stato === 'Pagato' || ord.stato === 'In lavorazione') {
+                        step1 = "active"; step2 = "active"; fillWidth = "33%";
+                    } else if(ord.stato === 'Spedito' || ord.stato === 'In arrivo') {
+                        step1 = "active"; step2 = "active"; step3 = "active"; fillWidth = "66%";
+                    } else if(ord.stato === 'Consegnato') {
+                        step1 = "active"; step2 = "active"; step3 = "active"; step4 = "active"; fillWidth = "80%";
+                    }
+
                     h += `
                     <div class="order-card">
                         <div class="order-header">
@@ -118,6 +181,17 @@ if(!isset($_SESSION['IdUtente'])) {
                                 <strong style="margin-left:10px; color:var(--accent);">€${parseFloat(ord.totale).toFixed(2)}</strong>
                             </div>
                         </div>
+                        
+                        <div class="tracker-container">
+                            <div class="tracker-line"></div>
+                            <div class="tracker-line-fill" style="width: ${fillWidth};"></div>
+                            
+                            <div class="tracker-step ${step1}"><div class="tracker-circle">✓</div>Ricevuto</div>
+                            <div class="tracker-step ${step2}"><div class="tracker-circle">📦</div>In Preparazione</div>
+                            <div class="tracker-step ${step3}"><div class="tracker-circle">🚚</div>In Spedizione</div>
+                            <div class="tracker-step ${step4}"><div class="tracker-circle">🏠</div>Consegnato</div>
+                        </div>
+
                         <div class="order-body">`;
                     
                     ord.libri.forEach(lib => {

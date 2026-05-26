@@ -9,8 +9,8 @@ if (!$id) {
     exit;
 }
 
-// Dati prodotto con categoria, venditore, sconto pacchetto
-$sql = "SELECT p.id_prodotto, p.nome, p.descrizione, p.prezzo, p.quantita_disponibile, p.username as IdVenditore,
+// Query MODIFICATA: aggiunto p.autore per estrarre l'autore del libro
+$sql = "SELECT p.id_prodotto, p.nome, p.autore, p.descrizione, p.prezzo, p.quantita_disponibile, p.username as IdVenditore,
                (SELECT nome_categoria FROM DESCRIVE WHERE id_prodotto = p.id_prodotto LIMIT 1) as NomeCategoria,
                pk.sconto as ScontoPacchetto,
                ROUND(p.prezzo - (p.prezzo * COALESCE(pk.sconto,0) / 100), 2) as PrezzoScontato
@@ -48,6 +48,8 @@ echo json_encode([
     'dettagli' => [
         'IdProdotto'     => $prodotto['id_prodotto'],
         'NomeProdotto'   => $prodotto['nome'],
+        // RIGA AGGIUNTA: Passa l'autore al frontend JavaScript
+        'autore'         => $prodotto['autore'], 
         'descrizione'    => $prodotto['descrizione'],
         'prezzo'         => $prodotto['prezzo'],
         'PrezzoScontato' => $prodotto['PrezzoScontato'],

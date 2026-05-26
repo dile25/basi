@@ -12,6 +12,7 @@ if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
 
 $user = $_SESSION['IdUtente'];
 $nome = $_POST['nome'] ?? '';
+$autore = $_POST['autore'] ?? ''; // MODIFICA: Recupero del campo autore
 $desc = $_POST['descrizione'] ?? '';
 $prezzo = floatval($_POST['prezzo'] ?? 0);
 $qta = intval($_POST['quantita'] ?? 0);
@@ -20,9 +21,10 @@ $cat = $_POST['categoria'] ?? '';
 $conn->begin_transaction();
 
 try {
-    $sqlP = "INSERT INTO PRODOTTO (username, nome, descrizione, prezzo, quantita_disponibile) VALUES (?, ?, ?, ?, ?)";
+    // MODIFICA: Inclusione della colonna e del relativo parametro 'autore' nella query di INSERT
+    $sqlP = "INSERT INTO PRODOTTO (username, nome, autore, descrizione, prezzo, quantita_disponibile) VALUES (?, ?, ?, ?, ?, ?)";
     $stmtP = $conn->prepare($sqlP);
-    $stmtP->bind_param("sssdi", $user, $nome, $desc, $prezzo, $qta);
+    $stmtP->bind_param("ssssdi", $user, $nome, $autore, $desc, $prezzo, $qta);
     if (!$stmtP->execute()) throw new Exception("Errore inserimento prodotto");
     
     $idProdotto = $conn->insert_id;
@@ -64,3 +66,4 @@ try {
     ob_clean();
     echo json_encode(['status' => 'error', 'msg' => $e->getMessage()]);
 }
+?>

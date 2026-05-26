@@ -49,7 +49,8 @@ switch ($action) {
         break;
 
     case 'list':
-        $sql = "SELECT c.id_prodotto, c.quantita_prodotto, p.nome, p.prezzo,
+        // MODIFICA: Selezioniamo anche p.autore dalla tabella PRODOTTO
+        $sql = "SELECT c.id_prodotto, c.quantita_prodotto, p.nome, p.autore, p.prezzo,
                        pk.sconto as ScontoPacchetto,
                        (SELECT url FROM IMMAGINE_PRODOTTO WHERE id_prodotto = p.id_prodotto LIMIT 1) as Foto
                 FROM CARRELLO c
@@ -62,26 +63,62 @@ switch ($action) {
         $stmt->execute();
         $result = $stmt->get_result();
 
+        $righeCarrello = [];
+        $conteggioAutori = [];
+
+        // Primo passaggio: estraiamo i dati e calcoliamo quante copie ci sono per ogni autore
+        while ($row = $result->fetch_assoc()) {
+            $righeCarrello[] = $row;
+            
+            $autore = trim($row['autore'] ?? '');
+            if (!empty($autore)) {
+                if (!isset($conteggioAutori[$autore])) {
+                    $conteggioAutori[$autore] = 0;
+                }
+                // Sommiamo la quantità di copie di questo libro nel carrello
+                $conteggioAutori[$autore] += intval($row['quantita_prodotto']);
+            }
+        }
+
         $prodotti = [];
         $totaleCart = 0;
 
-        while ($row = $result->fetch_assoc()) {
+        // Secondo passaggio: calcoliamo i singoli subtotali applicando le regole di sconto
+        foreach ($righeCarrello as $row) {
             $prezzoUnitario = (float)$row['prezzo'];
-            $sconto = (float)($row['ScontoPacchetto'] ?? 0);
-            if ($sconto > 0) {
-                $prezzoUnitario = $prezzoUnitario - ($prezzoUnitario * ($sconto / 100));
+            $autore = trim($row['autore'] ?? '');
+            $haScontoAutore = false;
+            $percentualeScontoApplicata = 0;
+
+            // 1. Controllo Sconto Autore: se ci sono almeno 2 libri dello stesso autore nel carrello
+            if (!empty($autore) && isset($conteggioAutori[$autore]) && $conteggioAutori[$autore] >= 2) {
+                $percentualeScontoApplicata = 20; // Sconto del 20% (puoi personalizzare questo valore)
+                $haScontoAutore = true;
+            } 
+            // 2. Altrimenti, se non c'è lo sconto autore, controlliamo lo sconto del pacchetto standard
+            else {
+                $percentualeScontoApplicata = (float)($row['ScontoPacchetto'] ?? 0);
             }
+
+            // Applichiamo la percentuale di sconto trovata
+            if ($percentualeScontoApplicata > 0) {
+                $prezzoUnitario = $prezzoUnitario - ($prezzoUnitario * ($percentualeScontoApplicata / 100));
+            }
+
             $subtotale = $prezzoUnitario * $row['quantita_prodotto'];
             $totaleCart += $subtotale;
 
             $prodotti[] = [
                 'IdProdotto'      => $row['id_prodotto'],
                 'nome'            => $row['nome'],
+                'autore'          => $autore,
                 'prezzoOriginale' => (float)$row['prezzo'],
                 'prezzoScontato'  => round($prezzoUnitario, 2),
                 'quantita'        => $row['quantita_prodotto'],
                 'URLfoto'         => $row['Foto'] ?? 'img/default.jpg',
-                'subtotale'       => round($subtotale, 2)
+                'subtotale'       => round($subtotale, 2),
+                'scontoAutore'    => $haScontoAutore, // Indica al frontend se è attiva la promo autore
+                'percentualeSconto' => $percentualeScontoApplicata
             ];
         }
 
@@ -112,3 +149,4 @@ switch ($action) {
         echo json_encode(['status' => 'error', 'msg' => 'Azione non valida']);
         break;
 }
+?>

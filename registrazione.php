@@ -67,21 +67,27 @@
         }
     }
 
-    $("#formRegistrazione").on("submit", function(e) {
-        e.preventDefault();
-        $.post('api/ba_registrazione.php', $(this).serialize())
-            .done(function(resp) {
-                if (resp.status === 'ok') {
-                    alert("Registrazione completata! Ora puoi accedere.");
-                    window.location.href = "login.php";
-                } else {
-                    alert("Errore: " + resp.msg);
-                }
-            })
-            .fail(function(xhr) {
-                alert("Errore di rete (" + xhr.status + "): controlla che il file PHP esista.");
-            });
-    });
+$("#formRegistrazione").on("submit", function(e) {
+    e.preventDefault();
+    $.post('api/ba_registrazione.php', $(this).serialize())
+        .done(function(resp) {
+            if (resp.status === 'ok') {
+                // MODIFICA: Niente più reindirizzamento al login. Andiamo direttamente alla home!
+                // Se preferisci che il venditore vada direttamente alla sua dashboard, puoi decommentare le righe sotto:
+                // if ($('#tipoUtente').val() === 'venditore') {
+                //     window.location.href = "dashboard_venditore.php";
+                // } else {
+                //     window.location.href = "index.php";
+                // }
+                window.location.href = "index.php";
+            } else {
+                alert("Errore: " + resp.msg);
+            }
+        })
+        .fail(function(xhr) {
+            alert("Errore di rete (" + xhr.status + "): controlla che il file PHP esista.");
+        });
+});
     </script>
 </body>
 </html>

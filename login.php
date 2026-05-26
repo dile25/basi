@@ -12,7 +12,10 @@
     <div style="width: 100%; max-width: 350px; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
         <h2 style="color: var(--dark-green); text-align: center; margin-bottom: 30px;">Bentornato!</h2>
 
-        <form id="formLogin">
+        <form id="formLogin" autocomplete="off">
+            <!-- Campi trappola per bloccare autofill Chrome -->
+            <input type="text" style="display:none;" name="fake_username">
+            <input type="password" style="display:none;" name="fake_password">
             <input type="text" name="username" placeholder="Username" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid var(--border-color);" required>
             <input type="password" name="password" placeholder="Password" style="width:100%; padding:12px; margin-bottom:20px; border-radius:8px; border:1px solid var(--border-color);" required>
 

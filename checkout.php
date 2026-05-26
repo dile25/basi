@@ -71,13 +71,13 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
                 <input type="radio" name="metodo" value="Carta"> 💳 Carta di Credito / Debito
             </div>
             <div class="metodo-card" onclick="selezionaMetodo('PayPal', this)">
-                <input type="radio" name="metodo" value="PayPal"> 🅿️ PayPal (simulato)
+                <input type="radio" name="metodo" value="PayPal"> 🅿️ PayPal 
             </div>
             <div class="metodo-card" onclick="selezionaMetodo('ApplePay', this)">
-                <input type="radio" name="metodo" value="ApplePay">  Apple Pay (simulato)
+                <input type="radio" name="metodo" value="ApplePay">  Apple Pay 
             </div>
             <div class="metodo-card" onclick="selezionaMetodo('Rate', this)">
-                <input type="radio" name="metodo" value="Rate"> 📅 Paga in 3 rate (simulato)
+                <input type="radio" name="metodo" value="Rate"> 📅 Paga in 3 rate 
             </div>
             <div class="metodo-card" onclick="selezionaMetodo('Contrassegno', this)">
                 <input type="radio" name="metodo" value="Contrassegno"> 🚚 Pagamento alla consegna
