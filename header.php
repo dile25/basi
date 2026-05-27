@@ -4,13 +4,12 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <style>
-    /* Badge del carrello migliorato e coordinato */
     .cart-link { position: relative; display: inline-block; }
     .cart-badge {
         position: absolute;
         top: -8px;
         right: -8px;
-        background: #e74c3c; /* Rosso per attirare l'attenzione */
+        background: #e74c3c;
         color: white;
         font-size: 0.7em;
         padding: 2px 6px;
@@ -38,7 +37,6 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
         box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
 
-    /* MODIFICA: Stili per il posizionamento dei suggerimenti di ricerca live */
     .search-wrapper { position: relative; }
     .search-suggestions {
         position: absolute;
@@ -83,8 +81,39 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
         padding: 8px 18px !important;
         border-radius: 6px !important;
     }
-    .btn-reg-header:hover {
-        background: var(--dark-green) !important;
+    .btn-reg-header:hover { background: var(--dark-green) !important; }
+
+    /* ============================================================
+       BOTTONE DASHBOARD VENDITORE
+    ============================================================ */
+    .btn-dashboard-venditore {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: linear-gradient(135deg, var(--dark-green, #1a6b3c), var(--primary-green, #27ae60));
+        color: white !important;
+        padding: 8px 16px !important;
+        border-radius: 8px !important;
+        font-weight: 700 !important;
+        font-size: 0.9em !important;
+        text-decoration: none !important;
+        box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+        transition: all 0.2s ease !important;
+        border: none;
+    }
+
+    .btn-dashboard-venditore:hover {
+        background: linear-gradient(135deg, #145a32, #1e8449) !important;
+        box-shadow: 0 4px 14px rgba(39, 174, 96, 0.45);
+        transform: translateY(-1px);
+        color: white !important;
+    }
+
+    .btn-dashboard-venditore svg {
+        width: 16px;
+        height: 16px;
+        fill: white;
+        flex-shrink: 0;
     }
 </style>
 
@@ -97,45 +126,63 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
     </a>
 
     <form role="search" autocomplete="off" onsubmit="return false;">
-    <div class="search-wrapper">
-    <div class="search-bar" style="display:flex; border:1px solid var(--border-color); border-radius:50px; overflow:hidden; background:#f9f9f9;">
-        <select id="headerCatSelect" class="search-select" style="border:none; background:none; padding:8px 15px; cursor:pointer; font-family:inherit; outline:none; border-right:1px solid #ddd;">
-            <option value="">Tutte le categorie</option>
-        </select>
-        
-        <input type="search" id="headerSearchInput" autocomplete="off" placeholder="Cerca libri, autori..." onkeypress="handleSearchKeyPress(event)" style="border:none; background:none; padding:8px 15px; width:250px; outline:none;">
-        
-        <button class="search-btn" onclick="eseguiRicerca()" style="border:none; background:var(--primary-green); color:white; padding:8px 15px; cursor:pointer;">🔍</button>
-    </div>
-    <div id="live-suggestions" class="search-suggestions"></div>
-</div>
-</form>
+        <div class="search-wrapper">
+            <div class="search-bar" style="display:flex; border:1px solid var(--border-color); border-radius:50px; overflow:hidden; background:#f9f9f9;">
+                <select id="headerCatSelect" class="search-select" style="border:none; background:none; padding:8px 15px; cursor:pointer; font-family:inherit; outline:none; border-right:1px solid #ddd;">
+                    <option value="">Tutte le categorie</option>
+                </select>
+
+                <input type="search" id="headerSearchInput" autocomplete="off" placeholder="Cerca libri, autori..."
+                       onkeypress="handleSearchKeyPress(event)"
+                       style="border:none; background:none; padding:8px 15px; width:250px; outline:none;">
+
+                <button class="search-btn" onclick="eseguiRicerca()" style="border:none; background:var(--primary-green); color:white; padding:8px 15px; cursor:pointer;">🔍</button>
+            </div>
+            <div id="live-suggestions" class="search-suggestions"></div>
+        </div>
+    </form>
+
     <div class="user-nav">
-    <?php if (isset($_SESSION['IdUtente'])): ?>
-        <a href="profilo.php" class="user-btn" title="Vai alla pagina personale" style="display:flex;align-items:center;gap:6px;">👤 
-            <?php echo htmlspecialchars($_SESSION['IdUtente']); ?>
-        </a>
+        <?php if (isset($_SESSION['IdUtente'])): ?>
 
-        <?php if ($_SESSION['tipoUtente'] === 'cliente'): ?>
-            <a href="miei_ordini.php" class="user-btn">I miei ordini</a>
-            <a href="preferiti.php" class="user-btn">❤️ Preferiti</a>
-            <a href="carrello.php" class="user-btn cart-link">
-                🛒 Carrello <span class="cart-badge" id="cartCount">0</span>
+            <a href="profilo.php" class="user-btn" title="Vai alla pagina personale" style="display:flex; align-items:center; gap:6px;">
+                👤 <?php echo htmlspecialchars($_SESSION['IdUtente']); ?>
             </a>
+
+            <?php if ($_SESSION['tipoUtente'] === 'cliente'): ?>
+                <a href="miei_ordini.php" class="user-btn">I miei ordini</a>
+                <a href="preferiti.php" class="user-btn">❤️ Preferiti</a>
+                <a href="carrello.php" class="user-btn cart-link">
+                    🛒 Carrello <span class="cart-badge" id="cartCount">0</span>
+                </a>
+            <?php endif; ?>
+
+            <?php if ($_SESSION['tipoUtente'] === 'venditore'): ?>
+                <!-- ============================
+                     DASHBOARD VENDITORE
+                ============================ -->
+                <a href="dashboard_venditore.php" class="btn-dashboard-venditore">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="gestione_prodotti.php" class="user-btn" title="Gestisci il tuo catalogo">📦 Prodotti</a>
+                <a href="gestione_ordini.php" class="user-btn" title="Vedi gli ordini ricevuti">📋 Ordini</a>
+            <?php endif; ?>
+
+            <a href="logout.php" class="user-btn" style="color:#e74c3c;">Esci</a>
+
+        <?php else: ?>
+            <a href="login.php" class="user-btn">Accedi</a>
+            <a href="registrazione.php" class="user-btn btn-reg-header">Registrati</a>
         <?php endif; ?>
-
-        <a href="logout.php" class="user-btn" style="color:#e74c3c;">Esci</a>
-
-    <?php else: ?>
-        <a href="login.php" class="user-btn">Accedi</a>
-        <a href="registrazione.php" class="user-btn btn-reg-header">Registrati</a>
-    <?php endif; ?>
-</div>
+    </div>
 </div>
 
 <script>
 $(document).ready(function() {
-    // 1. Carica Categorie nell'header
+    // Carica categorie nel select
     $.get("api/ba_categorie.php", function(resp) {
         const cats = resp.categorie || [];
         cats.forEach(cat => {
@@ -143,27 +190,26 @@ $(document).ready(function() {
         });
     });
 
-    // 2. Aggiorna badge carrello solo se è un cliente loggato
+    // Badge carrello (solo clienti loggati)
     <?php if(isset($_SESSION['tipoUtente']) && $_SESSION['tipoUtente'] === 'cliente'): ?>
         updateCartBadge();
     <?php endif; ?>
 
-    // MODIFICA: Gestore eventi per la digitazione nella barra di ricerca (Suggerimenti Live)
+    // Suggerimenti live
     $("#headerSearchInput").on("input", function() {
         const query = $(this).val().trim();
-        if(query.length < 2) {
+        if (query.length < 2) {
             $("#live-suggestions").hide().empty();
             return;
         }
-
         $.get("api/ba_suggerimenti.php", { q: query }, function(resp) {
-            if(resp.prodotti && resp.prodotti.length > 0) {
+            if (resp.prodotti && resp.prodotti.length > 0) {
                 let htmlSuggestions = "";
                 resp.prodotti.forEach(p => {
                     htmlSuggestions += `
                     <div class="suggestion-item" onclick="location.href='dettaglio_prodotto.php?id=${p.id_prodotto}'">
                         <strong>${p.nome}</strong>
-                        <small>✍ Autore: ${p.autore ? p.autore : 'Non specificato'}</small>
+                        <small>✍ Autore: ${p.autore || 'Non specificato'}</small>
                     </div>`;
                 });
                 $("#live-suggestions").html(htmlSuggestions).show();
@@ -173,7 +219,6 @@ $(document).ready(function() {
         }, "json");
     });
 
-    // Nascondi la tendina se si clicca all'esterno della barra di ricerca
     $(document).click(function(e) {
         if (!$(e.target).closest('.search-wrapper').length) {
             $("#live-suggestions").hide();
@@ -184,7 +229,7 @@ $(document).ready(function() {
 function updateCartBadge() {
     $.get("api/ba_get_carrello.php", function(resp) {
         const badge = $("#cartCount");
-        if(resp.status === "ok" && resp.prodotti && resp.prodotti.length > 0) {
+        if (resp.status === "ok" && resp.prodotti && resp.prodotti.length > 0) {
             let qtaTotale = 0;
             resp.prodotti.forEach(p => qtaTotale += parseInt(p.QuantitaNelCarrello));
             badge.text(qtaTotale).fadeIn();
