@@ -8,7 +8,8 @@ if (!isset($_SESSION['IdUtente'])) {
     exit;
 }
 
-$idUtente = $_SESSION['IdUtente'];
+$idUtente    = $_SESSION['IdUtente'];
+$filtroStato = $_GET['stato'] ?? '';
 
 $sql = "SELECT o.id_ordine, o.data, o.totale, o.stato,
                p.id_prodotto, p.nome, ii.quantita_prodotto as quantita,
@@ -18,11 +19,21 @@ $sql = "SELECT o.id_ordine, o.data, o.totale, o.stato,
         JOIN INCLUSO_IN ii ON o.id_ordine = ii.id_ordine
         JOIN PRODOTTO p ON ii.id_prodotto = p.id_prodotto
         LEFT JOIN RECENSIONE r ON r.id_prodotto = p.id_prodotto AND r.username = o.username
-        WHERE o.username = ?
-        ORDER BY o.data DESC";
+        WHERE o.username = ?";
+
+$params = [$idUtente];
+$types  = "s";
+
+if (!empty($filtroStato)) {
+    $sql .= " AND o.stato = ?";
+    $params[] = $filtroStato;
+    $types .= "s";
+}
+
+$sql .= " ORDER BY o.data DESC, o.id_ordine DESC";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $idUtente);
+$stmt->bind_param($types, ...$params);
 $stmt->execute();
 $res = $stmt->get_result();
 
