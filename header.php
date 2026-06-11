@@ -83,9 +83,6 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
     }
     .btn-reg-header:hover { background: var(--dark-green) !important; }
 
-    /* ============================================================
-       BOTTONE DASHBOARD VENDITORE
-    ============================================================ */
     .btn-dashboard-venditore {
         display: inline-flex;
         align-items: center;
@@ -101,19 +98,91 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
         transition: all 0.2s ease !important;
         border: none;
     }
-
     .btn-dashboard-venditore:hover {
         background: linear-gradient(135deg, #145a32, #1e8449) !important;
         box-shadow: 0 4px 14px rgba(39, 174, 96, 0.45);
         transform: translateY(-1px);
         color: white !important;
     }
-
     .btn-dashboard-venditore svg {
         width: 16px;
         height: 16px;
         fill: white;
         flex-shrink: 0;
+    }
+
+    /* DROPDOWN CATEGORIE */
+    .nav-categorie {
+        position: relative;
+        display: inline-block;
+    }
+    .btn-categorie {
+        background: none;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-family: inherit;
+        font-size: 0.95em;
+        font-weight: 600;
+        color: var(--text-dark);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: 0.2s;
+    }
+    .btn-categorie:hover {
+        border-color: var(--primary-green);
+        color: var(--primary-green);
+    }
+    .btn-categorie svg {
+        width: 14px;
+        height: 14px;
+        transition: transform 0.2s;
+    }
+    .btn-categorie.open svg {
+        transform: rotate(180deg);
+    }
+    .dropdown-categorie {
+        display: none;
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        z-index: 99999;
+        min-width: 260px;
+        padding: 8px 0;
+        max-height: 480px;
+        overflow-y: auto;
+    }
+    .dropdown-categorie.open { display: block; }
+    .dropdown-padre {
+        padding: 10px 18px 6px;
+        font-size: 0.75em;
+        font-weight: 800;
+        color: var(--primary-green);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        border-top: 1px solid #f0f0f0;
+        margin-top: 4px;
+    }
+    .dropdown-padre:first-child { border-top: none; margin-top: 0; }
+    .dropdown-figlio {
+        display: block;
+        padding: 7px 18px 7px 28px;
+        font-size: 0.88em;
+        color: var(--text-dark);
+        text-decoration: none;
+        transition: background 0.15s;
+        cursor: pointer;
+    }
+    .dropdown-figlio:hover {
+        background: var(--light-green);
+        color: var(--dark-green);
+        font-weight: 600;
     }
 </style>
 
@@ -125,54 +194,55 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
         Book<span style="color:var(--primary-green)">Archive</span>
     </a>
 
-    <form role="search" autocomplete="off" onsubmit="return false;">
+    <div style="display:flex; align-items:center; gap:12px;">
+        <div class="nav-categorie">
+            <button class="btn-categorie" id="btnCategorie" onclick="toggleDropdown()">
+                Categorie
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7 10l5 5 5-5z"/>
+                </svg>
+            </button>
+            <div class="dropdown-categorie" id="dropdownCategorie"></div>
+        </div>
+
         <div class="search-wrapper">
             <div class="search-bar" style="display:flex; border:1px solid var(--border-color); border-radius:50px; overflow:hidden; background:#f9f9f9;">
-                <select id="headerCatSelect" class="search-select" style="border:none; background:none; padding:8px 15px; cursor:pointer; font-family:inherit; outline:none; border-right:1px solid #ddd;">
-                    <option value="">Tutte le categorie</option>
-                </select>
-
                 <input type="search" id="headerSearchInput" autocomplete="off" placeholder="Cerca libri, autori..."
                        onkeypress="handleSearchKeyPress(event)"
                        style="border:none; background:none; padding:8px 15px; width:250px; outline:none;">
-
-                <button class="search-btn" onclick="eseguiRicerca()" style="border:none; background:var(--primary-green); color:white; padding:8px 15px; cursor:pointer;">🔍</button>
+                <button class="search-btn" onclick="eseguiRicerca()" style="border:none; background:var(--primary-green); color:white; padding:8px 15px; cursor:pointer;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width:16px; height:16px; display:block;">
+                        <path d="M21 19.9l-4.69-4.69A7.5 7.5 0 1 0 4.5 15a7.5 7.5 0 0 0 4.81-1.75L14 17.94 19.9 21 21 19.9zM4.5 15a5.5 5.5 0 1 1 5.5 5.5A5.51 5.51 0 0 1 4.5 15z"/>
+                    </svg>
+                </button>
             </div>
             <div id="live-suggestions" class="search-suggestions"></div>
         </div>
-    </form>
+    </div>
 
     <div class="user-nav">
         <?php if (isset($_SESSION['IdUtente'])): ?>
-
-            <a href="profilo.php" class="user-btn" title="Vai alla pagina personale" style="display:flex; align-items:center; gap:6px;">
+            <a href="profilo.php" class="user-btn" style="display:flex; align-items:center; gap:6px;">
                 👤 <?php echo htmlspecialchars($_SESSION['IdUtente']); ?>
             </a>
-
             <?php if ($_SESSION['tipoUtente'] === 'cliente'): ?>
                 <a href="miei_ordini.php" class="user-btn">I miei ordini</a>
-                <a href="preferiti.php" class="user-btn">❤️ Preferiti</a>
+                <a href="preferiti.php" class="user-btn">Preferiti</a>
                 <a href="carrello.php" class="user-btn cart-link">
-                    🛒 Carrello <span class="cart-badge" id="cartCount">0</span>
+                    Carrello <span class="cart-badge" id="cartCount">0</span>
                 </a>
             <?php endif; ?>
-
             <?php if ($_SESSION['tipoUtente'] === 'venditore'): ?>
-                <!-- ============================
-                     DASHBOARD VENDITORE
-                ============================ -->
                 <a href="dashboard_venditore.php" class="btn-dashboard-venditore">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                         <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
                     </svg>
                     Dashboard
                 </a>
-                <a href="gestione_prodotti.php" class="user-btn" title="Gestisci il tuo catalogo">📦 Prodotti</a>
-                <a href="gestione_ordini.php" class="user-btn" title="Vedi gli ordini ricevuti">📋 Ordini</a>
+                <a href="gestione_prodotti.php" class="user-btn">Prodotti</a>
+                <a href="gestione_ordini.php" class="user-btn">Ordini</a>
             <?php endif; ?>
-
             <a href="logout.php" class="user-btn" style="color:#e74c3c;">Esci</a>
-
         <?php else: ?>
             <a href="login.php" class="user-btn">Accedi</a>
             <a href="registrazione.php" class="user-btn btn-reg-header">Registrati</a>
@@ -181,21 +251,38 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 </div>
 
 <script>
-$(document).ready(function() {
-    // Carica categorie nel select
-    $.get("api/ba_categorie.php", function(resp) {
-        const cats = resp.categorie || [];
-        cats.forEach(cat => {
-            $("#headerCatSelect").append(`<option value="${cat.nome_categoria}">${cat.nome_categoria}</option>`);
-        });
-    });
+let categoriaSelezionata = '';
 
-    // Badge carrello (solo clienti loggati)
+$(document).ready(function() {
+
+    $.get("api/ba_lista_categorie.php", function(resp) {
+        const cats = resp.categorie || [];
+        const padri = cats.filter(c => !c.nome_categoria_padre);
+        const figlie = cats.filter(c => c.nome_categoria_padre);
+
+        $("#dropdownCategorie").append(`
+            <div class="dropdown-figlio" onclick="selezionaCategoria('')">Tutte le categorie</div>
+        `);
+
+        padri.forEach(padre => {
+            $("#dropdownCategorie").append(`
+                <div class="dropdown-padre">${padre.nome_categoria}</div>
+            `);
+            const sotto = figlie.filter(f => f.nome_categoria_padre === padre.nome_categoria);
+            sotto.forEach(figlia => {
+                $("#dropdownCategorie").append(`
+                    <div class="dropdown-figlio" onclick="selezionaCategoria('${figlia.nome_categoria}')">
+                        ${figlia.nome_categoria}
+                    </div>
+                `);
+            });
+        });
+    }, "json");
+
     <?php if(isset($_SESSION['tipoUtente']) && $_SESSION['tipoUtente'] === 'cliente'): ?>
         updateCartBadge();
     <?php endif; ?>
 
-    // Suggerimenti live
     $("#headerSearchInput").on("input", function() {
         const query = $(this).val().trim();
         if (query.length < 2) {
@@ -209,7 +296,7 @@ $(document).ready(function() {
                     htmlSuggestions += `
                     <div class="suggestion-item" onclick="location.href='dettaglio_prodotto.php?id=${p.id_prodotto}'">
                         <strong>${p.nome}</strong>
-                        <small>✍ Autore: ${p.autore || 'Non specificato'}</small>
+                        <small>Autore: ${p.autore || 'Non specificato'}</small>
                     </div>`;
                 });
                 $("#live-suggestions").html(htmlSuggestions).show();
@@ -223,8 +310,24 @@ $(document).ready(function() {
         if (!$(e.target).closest('.search-wrapper').length) {
             $("#live-suggestions").hide();
         }
+        if (!$(e.target).closest('.nav-categorie').length) {
+            $('#btnCategorie').removeClass('open');
+            $('#dropdownCategorie').removeClass('open');
+        }
     });
 });
+
+function toggleDropdown() {
+    $('#btnCategorie').toggleClass('open');
+    $('#dropdownCategorie').toggleClass('open');
+}
+
+function selezionaCategoria(cat) {
+    categoriaSelezionata = cat;
+    const btn = document.getElementById('btnCategorie');
+    btn.firstChild.textContent = cat ? cat + ' ' : 'Categorie ';
+    toggleDropdown();
+}
 
 function updateCartBadge() {
     $.get("api/ba_get_carrello.php", function(resp) {
@@ -241,11 +344,11 @@ function updateCartBadge() {
 
 function eseguiRicerca() {
     const q = $("#headerSearchInput").val().trim();
-    const cat = $("#headerCatSelect").val();
-    window.location.href = `index.php?q=${encodeURIComponent(q)}&cat=${cat}`;
+    window.location.href = `index.php?q=${encodeURIComponent(q)}&cat=${encodeURIComponent(categoriaSelezionata)}`;
 }
 
 function handleSearchKeyPress(e) {
     if (e.key === 'Enter') eseguiRicerca();
 }
+
 </script>
