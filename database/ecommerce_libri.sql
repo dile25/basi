@@ -1242,7 +1242,752 @@ ALTER TABLE `ORDINE`
   MODIFY `id_ordine` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
--- AUTO_INCREMENT per la tabella `PACCHETTO`
+-- AUTO_INCREMENT per la tabella `PACCHETTO`-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Host: 127.0.0.1
+-- Creato il: Giu 12, 2026 alle 19:35
+-- Versione del server: 10.4.32-MariaDB
+-- Versione PHP: 8.2.12
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Database: `ecommerce_libri`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `carrello`
+--
+
+CREATE TABLE `carrello` (
+  `id_carrello` int(11) NOT NULL,
+  `username` varchar(30) NOT NULL,
+  `id_prodotto` int(11) NOT NULL,
+  `data_creazione` date DEFAULT curdate(),
+  `quantita_prodotto` int(11) DEFAULT 1,
+  `prezzo_totale` decimal(10,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `carrello`
+--
+
+INSERT INTO `carrello` (`id_carrello`, `username`, `id_prodotto`, `data_creazione`, `quantita_prodotto`, `prezzo_totale`) VALUES
+(15, 'profilocliente', 25, '2026-05-27', 1, 60.00),
+(16, 'profilocliente', 36, '2026-05-27', 8, 234.00),
+(18, 'profilocliente', 42, '2026-05-27', 1, 0.00),
+(19, 'profilocliente', 33, '2026-05-27', 1, 0.00),
+(20, 'profilocliente', 33, '2026-05-27', 1, 0.00),
+(21, 'profilocliente', 43, '2026-05-27', 1, 0.00),
+(22, 'ciao', 46, '2026-06-12', 2, 12.75),
+(23, 'ciao', 21, '2026-06-12', 2, 11.05);
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `categoria`
+--
+
+CREATE TABLE `categoria` (
+  `nome_categoria` varchar(100) NOT NULL,
+  `nome_categoria_padre` varchar(100) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `categoria`
+--
+
+INSERT INTO `categoria` (`nome_categoria`, `nome_categoria_padre`) VALUES
+('Arte & Cultura', NULL),
+('Gialli & Thriller', NULL),
+('Hobby', NULL),
+('Narrativa', NULL),
+('Periodici & Stampa', NULL),
+('Ragazzi', NULL),
+('Saggistica', NULL),
+('Architettura', 'Arte & Cultura'),
+('Arte', 'Arte & Cultura'),
+('Cinema', 'Arte & Cultura'),
+('Fotografia', 'Arte & Cultura'),
+('Musica', 'Arte & Cultura'),
+('Crime', 'Gialli & Thriller'),
+('Noir', 'Gialli & Thriller'),
+('Spy story', 'Gialli & Thriller'),
+('Thriller psicologico', 'Gialli & Thriller'),
+('Cucina', 'Hobby'),
+('Salute', 'Hobby'),
+('Sport', 'Hobby'),
+('Tecnologia', 'Hobby'),
+('Viaggi', 'Hobby'),
+('Fantascienza', 'Narrativa'),
+('Fantasy', 'Narrativa'),
+('Horror', 'Narrativa'),
+('Racconti', 'Narrativa'),
+('Romance', 'Narrativa'),
+('Romanzi', 'Narrativa'),
+('Storica', 'Narrativa'),
+('Fumetti', 'Periodici & Stampa'),
+('Giornali', 'Periodici & Stampa'),
+('Periodici Scientifici', 'Periodici & Stampa'),
+('Riviste', 'Periodici & Stampa'),
+('0-6 anni', 'Ragazzi'),
+('7-12 anni', 'Ragazzi'),
+('Middle Grade', 'Ragazzi'),
+('Young Adult', 'Ragazzi'),
+('Economia', 'Saggistica'),
+('Filosofia', 'Saggistica'),
+('Politica', 'Saggistica'),
+('Psicologia', 'Saggistica'),
+('Scienze', 'Saggistica'),
+('Storia', 'Saggistica');
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `cliente`
+--
+
+CREATE TABLE `cliente` (
+  `username` varchar(30) NOT NULL,
+  `telefono` varchar(20) DEFAULT NULL,
+  `indirizzo_predefinito` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `cliente`
+--
+
+INSERT INTO `cliente` (`username`, `telefono`, `indirizzo_predefinito`) VALUES
+('ciao', '3333333333', 'via ciao, ciao, 11111, ci'),
+('profilocliente', '', 'via grande 1, città, 50111, provincia');
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `descrive`
+--
+
+CREATE TABLE `descrive` (
+  `id_prodotto` int(11) NOT NULL,
+  `nome_categoria` varchar(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `descrive`
+--
+
+INSERT INTO `descrive` (`id_prodotto`, `nome_categoria`) VALUES
+(17, 'Narrativa'),
+(19, 'Fantasy'),
+(19, 'Young Adult'),
+(20, 'Fantasy'),
+(20, 'Young Adult'),
+(21, 'Fantasy'),
+(21, 'Young Adult'),
+(22, 'Fantasy'),
+(22, 'Young Adult'),
+(23, 'Fantasy'),
+(23, 'Romanzi'),
+(24, 'Fantasy'),
+(24, 'Romanzi'),
+(25, 'Narrativa'),
+(25, 'Romanzi'),
+(26, 'Narrativa'),
+(26, 'Romanzi'),
+(27, 'Narrativa'),
+(27, 'Racconti'),
+(28, 'Narrativa'),
+(28, 'Romanzi'),
+(29, 'Fantascienza'),
+(30, 'Fantascienza'),
+(31, 'Fantascienza'),
+(32, 'Thriller psicologico'),
+(33, 'Crime'),
+(34, 'Thriller psicologico'),
+(35, 'Crime'),
+(36, 'Storia'),
+(37, 'Scienze'),
+(38, 'Scienze'),
+(39, 'Filosofia'),
+(40, 'Cucina'),
+(41, 'Viaggi'),
+(42, '7-12 anni'),
+(43, 'Young Adult'),
+(46, 'Fantascienza'),
+(47, 'Fantascienza'),
+(48, 'Fantasy'),
+(48, 'Romanzi'),
+(49, 'Fantasy'),
+(49, 'Romanzi'),
+(50, 'Riviste'),
+(50, 'Scienze'),
+(51, 'Riviste'),
+(51, 'Viaggi'),
+(52, 'Periodici Scientifici'),
+(53, 'Giornali'),
+(54, 'Fumetti'),
+(54, 'Horror');
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `immagine_prodotto`
+--
+
+CREATE TABLE `immagine_prodotto` (
+  `id_immagine_prodotto` int(11) NOT NULL,
+  `id_prodotto` int(11) DEFAULT NULL,
+  `url` varchar(255) NOT NULL,
+  `alt_text` varchar(150) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `immagine_prodotto`
+--
+
+INSERT INTO `immagine_prodotto` (`id_immagine_prodotto`, `id_prodotto`, `url`, `alt_text`) VALUES
+(2, NULL, 'img/1777461434_69f1e8bad6d61.png', 'Copertina gsg'),
+(3, NULL, 'img/1777459810_69f1e26282985.psd', 'Copertina gsg'),
+(4, NULL, 'img/1777460054_69f1e356eeb3b.psd', 'Copertina gsg'),
+(5, NULL, 'img/1777460466_69f1e4f261568.psd', 'Copertina cjoaoih'),
+(6, NULL, 'img/1777460729_69f1e5f93fae4.jpg', 'Copertina cjoaoih'),
+(7, 17, 'img/1779269931_6a0d812b8f1b5.jpg', 'Copertina normal people'),
+(8, NULL, 'img/1779270220_6a0d824cc538c.jpeg', 'Copertina Harry Potter');
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `immagine_recensione`
+--
+
+CREATE TABLE `immagine_recensione` (
+  `id_immagine_recensione` int(11) NOT NULL,
+  `id_recensione` int(11) NOT NULL,
+  `url` varchar(255) NOT NULL,
+  `alt_text` varchar(150) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `incluso_in`
+--
+
+CREATE TABLE `incluso_in` (
+  `id_prodotto` int(11) NOT NULL,
+  `id_ordine` int(11) NOT NULL,
+  `quantita_prodotto` int(11) NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `incluso_in`
+--
+
+INSERT INTO `incluso_in` (`id_prodotto`, `id_ordine`, `quantita_prodotto`) VALUES
+(25, 7, 1),
+(26, 7, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `ordine`
+--
+
+CREATE TABLE `ordine` (
+  `id_ordine` int(11) NOT NULL,
+  `username` varchar(30) NOT NULL,
+  `id_pagamento` int(11) DEFAULT NULL,
+  `data` date NOT NULL,
+  `stato` varchar(50) DEFAULT 'In elaborazione',
+  `totale` decimal(10,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `ordine`
+--
+
+INSERT INTO `ordine` (`id_ordine`, `username`, `id_pagamento`, `data`, `stato`, `totale`) VALUES
+(3, 'ciao', NULL, '2026-05-12', 'In elaborazione', 114.00),
+(4, 'ciao', 1, '2026-05-12', 'Spedito', 114.00),
+(5, 'ciao', 3, '2026-05-12', 'Pagato', 12.00),
+(6, 'ciao', 5, '2026-05-20', 'Pagato', 114.00),
+(7, 'profilocliente', 8, '2026-05-26', 'Pagato', 21.00);
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `pacchetto`
+--
+
+CREATE TABLE `pacchetto` (
+  `id_pacchetto` int(11) NOT NULL,
+  `nome` varchar(150) DEFAULT NULL,
+  `descrizione` text DEFAULT NULL,
+  `sconto` decimal(5,2) DEFAULT NULL,
+  `attivo` tinyint(1) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `pacchetto`
+--
+
+INSERT INTO `pacchetto` (`id_pacchetto`, `nome`, `descrizione`, `sconto`, `attivo`) VALUES
+(1, 'Saga Harry Potter', 'Saga Completa / Promo Autore', 15.00, 1),
+(2, 'Saga Il Trono di Spade', NULL, 20.00, 1),
+(3, 'Dune — Saga completa', 'I primi tre volumi della saga di Frank Herbert.', 15.00, 1),
+(4, 'Italo Svevo — Due capolavori', 'Senilità e La coscienza di Zeno insieme.', 10.00, 1),
+(5, 'Fantascienza essenziale', 'Dune, Neuromante e Guida galattica in un unico pacchetto.', 20.00, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `pagamento`
+--
+
+CREATE TABLE `pagamento` (
+  `id_pagamento` int(11) NOT NULL,
+  `username` varchar(30) NOT NULL,
+  `metodo` varchar(50) DEFAULT NULL,
+  `stato` varchar(50) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `pagamento`
+--
+
+INSERT INTO `pagamento` (`id_pagamento`, `username`, `metodo`, `stato`) VALUES
+(1, 'ciao', 'Carta', 'Completato'),
+(2, 'ciao', 'Carta', 'Carta che termina con 7590'),
+(3, 'ciao', 'Carta', 'Completato'),
+(4, 'ciao', 'Carta', 'salvato:Carta che termina con 1460'),
+(5, 'ciao', 'Carta', 'Completato'),
+(6, 'ciao', 'PayPal', 'salvato:ciao@gmail.com'),
+(7, 'profilocliente', 'PayPal', 'salvato:email@paypal.com'),
+(8, 'profilocliente', 'PayPal', 'Completato');
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `preferiti`
+--
+
+CREATE TABLE `preferiti` (
+  `id_preferiti` int(11) NOT NULL,
+  `username` varchar(30) NOT NULL,
+  `id_prodotto` int(11) NOT NULL,
+  `data_aggiunta` date DEFAULT curdate()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `preferiti`
+--
+
+INSERT INTO `preferiti` (`id_preferiti`, `username`, `id_prodotto`, `data_aggiunta`) VALUES
+(8, 'profilocliente', 43, '2026-05-26'),
+(9, 'profilocliente', 25, '2026-05-27');
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `prodotto`
+--
+
+CREATE TABLE `prodotto` (
+  `id_prodotto` int(11) NOT NULL,
+  `username` varchar(30) NOT NULL,
+  `id_pacchetto` int(11) DEFAULT NULL,
+  `nome` varchar(200) NOT NULL,
+  `autore` varchar(150) DEFAULT NULL,
+  `descrizione` text DEFAULT NULL,
+  `prezzo` decimal(10,2) NOT NULL,
+  `quantita_disponibile` int(11) NOT NULL,
+  `data_inserimento` timestamp NOT NULL DEFAULT current_timestamp(),
+  `tipo_prodotto` varchar(50) DEFAULT 'libro'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `prodotto`
+--
+
+INSERT INTO `prodotto` (`id_prodotto`, `username`, `id_pacchetto`, `nome`, `autore`, `descrizione`, `prezzo`, `quantita_disponibile`, `data_inserimento`, `tipo_prodotto`) VALUES
+(17, 'utentevenditore', NULL, 'normal people', 'Sally Rooney', 'Connell e Marianne sono due adolescenti irlandesi.', 15.00, 0, '2026-06-11 21:18:52', 'libro'),
+(19, 'utentevenditore', 1, 'Harry Potter e la pietra filosofale', 'J.K. Rowling', 'Il primo capitolo della saga del mago più famoso del mondo.', 12.00, 20, '2026-06-11 21:18:52', 'libro'),
+(20, 'utentevenditore', 1, 'Harry Potter e la camera dei segreti', 'J.K. Rowling', 'Il secondo anno di Harry a Hogwarts tra misteri e creature oscure.', 12.50, 15, '2026-06-11 21:18:52', 'libro'),
+(21, 'utentevenditore', 1, 'Harry Potter e il prigioniero di Azkaban', 'J.K. Rowling', 'Il terzo anno vede la fuga del pericoloso Sirius Black.', 13.00, 18, '2026-06-11 21:18:52', 'libro'),
+(22, 'utentevenditore', 1, 'Harry Potter e il calice di fuoco', 'J.K. Rowling', 'Il Torneo Tremaghi mette a dura prova la vita di Harry.', 15.00, 12, '2026-06-11 21:18:52', 'libro'),
+(23, 'utentevenditore', 2, 'Il Trono di Spade', 'George R.R. Martin', 'L inizio dell epica saga fantasy tra intrighi e potere nei Sette Regni.', 19.00, 10, '2026-06-11 21:18:52', 'libro'),
+(24, 'utentevenditore', 2, 'Il Grande Inverno', 'George R.R. Martin', 'La stirpe degli Stark si frammenta mentre l inverno sta arrivando.', 19.00, 10, '2026-06-11 21:18:52', 'libro'),
+(25, 'utentevenditore', NULL, 'Senilità', 'Italo Svevo', 'Il capolavoro modernista che esplora l inettitudine e le illusioni di Emilio Brentani.', 10.00, 24, '2026-06-11 21:18:52', 'libro'),
+(26, 'utentevenditore', NULL, 'La coscienza di Zeno', 'Italo Svevo', 'Le confessioni psicoanalitiche di Zeno Cosini tra fumo e nevrosi.', 11.00, 29, '2026-06-11 21:18:52', 'libro'),
+(27, 'utentevenditore', NULL, 'Il gioco segreto', 'Elsa Morante', 'Una raccolta di racconti intensi e sognanti della celebre autrice.', 9.50, 14, '2026-06-11 21:18:52', 'libro'),
+(28, 'utentevenditore', NULL, 'Fosca', 'Igino Ugo Tarchetti', 'Il romanzo simbolo della Scapigliatura, un viaggio tra amore ossessivo e malattia.', 8.50, 15, '2026-06-11 21:18:52', 'libro'),
+(29, 'utentevenditore', 3, 'Dune', 'Frank Herbert', 'Il monumentale romanzo di fantascienza ambientato sul pianeta desertico Arrakis.', 16.50, 22, '2026-06-11 21:18:52', 'libro'),
+(30, 'utentevenditore', NULL, 'Neuromante', 'William Gibson', 'Il manifesto del genere cyberpunk tra hacker, matrice e intelligenze artificiali.', 13.00, 8, '2026-06-11 21:18:52', 'libro'),
+(31, 'utentevenditore', NULL, 'Guida galattica per gli autostoppisti', 'Douglas Adams', 'Un avventura spaziale esilarante e filosofica sul senso della vita.', 12.00, 19, '2026-06-11 21:18:52', 'libro'),
+(32, 'utentevenditore', NULL, 'Il silenzio degli innocenti', 'Thomas Harris', 'Il famigerato thriller psicologico con Clarice Starling e Hannibal Lecter.', 14.00, 11, '2026-06-11 21:18:52', 'libro'),
+(33, 'utentevenditore', NULL, 'L\'alienista', 'Caleb Carr', 'Un thriller storico e psicologico nella New York di fine Ottocento.', 15.00, 7, '2026-06-11 21:18:52', 'libro'),
+(34, 'utentevenditore', NULL, 'La ragazza del treno', 'Paula Hawkins', 'Un intreccio psicologico mozzafiato basato su ricordi distorti e verità nascoste.', 13.50, 20, '2026-06-11 21:18:52', 'libro'),
+(35, 'utentevenditore', NULL, 'Dieci piccoli indiani', 'Agatha Christie', 'Il giallo per eccellenza: dieci persone bloccate su un isola segnata da una filastrocca.', 10.50, 35, '2026-06-11 21:18:52', 'libro'),
+(36, 'utentevenditore', NULL, 'Sapiens. Da animali a dei', 'Yuval Noah Harari', 'Una breve storia dell umanità, dalle scimmie fino all era tecnologica.', 18.00, 15, '2026-06-11 21:18:52', 'libro'),
+(37, 'utentevenditore', NULL, 'Cosmo', 'Carl Sagan', 'Un viaggio magnifico attraverso lo spazio, il tempo e la conoscenza scientifica.', 17.00, 9, '2026-06-11 21:18:52', 'libro'),
+(38, 'utentevenditore', NULL, 'L\'ordine del tempo', 'Carlo Rovelli', 'Un saggio fisico e filosofico sulla natura profonda e misteriosa del tempo.', 12.00, 25, '2026-06-11 21:18:52', 'libro'),
+(39, 'utentevenditore', NULL, 'Così parlò Zarathustra', 'Friedrich Nietzsche', 'L opera filosofica fondamentale sul concetto di oltreuomo.', 9.00, 14, '2026-06-11 21:18:52', 'libro'),
+(40, 'utentevenditore', NULL, 'Il cucchiaio d argento', 'AA.VV.', 'La bibbia della cucina italiana con migliaia di ricette della tradizione.', 45.00, 5, '2026-06-11 21:18:52', 'libro'),
+(41, 'utentevenditore', NULL, 'In Patagonia', 'Bruce Chatwin', 'Il capolavoro della letteratura di viaggio che ha ridefinito il genere.', 11.50, 12, '2026-06-11 21:18:52', 'libro'),
+(42, 'utentevenditore', NULL, 'Percy Jackson e gli dei dell Olimpo: Il ladro di fulmini', 'Rick Riordan', 'Mitologia greca e avventure moderne per ragazzi.', 12.00, 17, '2026-06-11 21:18:52', 'libro'),
+(43, 'utentevenditore', NULL, 'Hunger Games', 'Suzanne Collins', 'Il celebre romanzo distopico young adult sulla sopravvivenza e la ribellione.', 14.50, 21, '2026-06-11 21:18:52', 'libro'),
+(45, 'utentevenditore', NULL, 'L\'altalena', 'Carlo Dossi', 'In quest\'opera l\'autore esprime l\'essenza della Scapigliatura milanese attraverso una prosa arguta, frammentaria ed espressionista, muovendosi costantemente tra satira sociale e introspezione lirica.', 11.80, 0, '2026-06-11 21:18:52', 'libro'),
+(46, 'utentevenditore', 3, 'Dune Messiah', 'Frank Herbert', 'Il secondo capitolo della saga: Paul Atreides affronta le conseguenze della sua ascesa.', 15.00, 14, '2026-06-11 21:20:32', 'libro'),
+(47, 'utentevenditore', 3, 'Figli di Dune', 'Frank Herbert', 'Il terzo romanzo: i gemelli di Paul ereditano un destino ancora più grande.', 15.00, 10, '2026-06-11 21:20:32', 'libro'),
+(48, 'utentevenditore', 2, 'Tempesta di spade', 'George R.R. Martin', 'Il terzo volume: battaglie devastanti e tradimenti che cambiano tutto.', 20.00, 8, '2026-06-11 21:20:32', 'libro'),
+(49, 'utentevenditore', 2, 'Il banchetto dei corvi', 'George R.R. Martin', 'Westeros si frammenta mentre i vincitori raccolgono i cocci.', 20.00, 7, '2026-06-11 21:20:32', 'libro'),
+(50, 'utentevenditore', NULL, 'Le Scienze — Numero speciale Intelligenza Artificiale', 'AA.VV.', 'Il numero speciale della storica rivista scientifica italiana dedicato all\'IA e al futuro della ricerca.', 6.90, 30, '2026-06-11 21:20:32', 'rivista'),
+(51, 'utentevenditore', NULL, 'National Geographic Italia — Luglio 2026', 'AA.VV.', 'Reportage fotografici e articoli sulle meraviglie naturali del pianeta.', 5.90, 25, '2026-06-11 21:20:32', 'rivista'),
+(52, 'utentevenditore', NULL, 'Internazionale — Numero 1674', 'AA.VV.', 'La rassegna settimanale della stampa estera più letta in Italia.', 4.50, 40, '2026-06-11 21:20:32', 'periodico'),
+(53, 'utentevenditore', NULL, 'Il Sole 24 Ore — Edizione weekend', 'AA.VV.', 'L\'edizione del weekend del principale quotidiano economico italiano.', 3.50, 50, '2026-06-11 21:20:32', 'giornale'),
+(54, 'utentevenditore', NULL, 'Dylan Dog — N. 450', 'Tiziano Sclavi', 'Il celebre fumetto horror italiano: una nuova indagine per l\'indagatore dell\'incubo.', 4.90, 20, '2026-06-11 21:20:32', 'periodico');
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `recensione`
+--
+
+CREATE TABLE `recensione` (
+  `id_recensione` int(11) NOT NULL,
+  `username` varchar(30) NOT NULL,
+  `id_prodotto` int(11) NOT NULL,
+  `testo` text DEFAULT NULL,
+  `valutazione` tinyint(4) DEFAULT NULL CHECK (`valutazione` between 1 and 5),
+  `data` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `recensione`
+--
+
+INSERT INTO `recensione` (`id_recensione`, `username`, `id_prodotto`, `testo`, `valutazione`, `data`) VALUES
+(12, 'profilocliente', 25, 'bellissimo!!', 5, '2026-05-26'),
+(13, 'profilocliente', 26, 'bellissimo!!', 5, '2026-05-26');
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `utente`
+--
+
+CREATE TABLE `utente` (
+  `username` varchar(30) NOT NULL,
+  `nome` varchar(100) NOT NULL,
+  `cognome` varchar(100) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `data_registrazione` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `utente`
+--
+
+INSERT INTO `utente` (`username`, `nome`, `cognome`, `email`, `password_hash`, `data_registrazione`) VALUES
+('ciao', 'ciao', 'ciao', 'ciao@gmail.com', '$2y$10$aJe2CLwBFK6uBFq4eP.K7OlZDWtYXbz/IztD/zJfBvehpc/EmIYvq', '2026-04-29'),
+('profilocliente', 'cliente', 'profilo', 'cliente@profilo.com', '$2y$10$9gJ9cGFprHdCz2nRZjc7qeKXSJUc68rmFqDM4FouKOtFNmuTMzpvi', '2026-05-26'),
+('utentevenditore', 'venditore', 'utente', 'venditore@utente.com', '$2y$10$JBzerbT7UAi2fCeDvjfNkOwMZXMspLajvjzc4jIty4baraenGqM8a', '2026-04-29');
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `venditore`
+--
+
+CREATE TABLE `venditore` (
+  `username` varchar(30) NOT NULL,
+  `partita_iva` varchar(20) NOT NULL,
+  `ragione_sociale` varchar(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `venditore`
+--
+
+INSERT INTO `venditore` (`username`, `partita_iva`, `ragione_sociale`) VALUES
+('utentevenditore', 'bella', 'bella');
+
+--
+-- Indici per le tabelle scaricate
+--
+
+--
+-- Indici per le tabelle `carrello`
+--
+ALTER TABLE `carrello`
+  ADD PRIMARY KEY (`id_carrello`),
+  ADD KEY `username` (`username`),
+  ADD KEY `id_prodotto` (`id_prodotto`);
+
+--
+-- Indici per le tabelle `categoria`
+--
+ALTER TABLE `categoria`
+  ADD PRIMARY KEY (`nome_categoria`),
+  ADD KEY `nome_categoria_padre` (`nome_categoria_padre`);
+
+--
+-- Indici per le tabelle `cliente`
+--
+ALTER TABLE `cliente`
+  ADD PRIMARY KEY (`username`);
+
+--
+-- Indici per le tabelle `descrive`
+--
+ALTER TABLE `descrive`
+  ADD PRIMARY KEY (`id_prodotto`,`nome_categoria`),
+  ADD KEY `nome_categoria` (`nome_categoria`);
+
+--
+-- Indici per le tabelle `immagine_prodotto`
+--
+ALTER TABLE `immagine_prodotto`
+  ADD PRIMARY KEY (`id_immagine_prodotto`),
+  ADD KEY `id_prodotto` (`id_prodotto`);
+
+--
+-- Indici per le tabelle `immagine_recensione`
+--
+ALTER TABLE `immagine_recensione`
+  ADD PRIMARY KEY (`id_immagine_recensione`),
+  ADD KEY `id_recensione` (`id_recensione`);
+
+--
+-- Indici per le tabelle `incluso_in`
+--
+ALTER TABLE `incluso_in`
+  ADD PRIMARY KEY (`id_prodotto`,`id_ordine`),
+  ADD KEY `id_ordine` (`id_ordine`);
+
+--
+-- Indici per le tabelle `ordine`
+--
+ALTER TABLE `ordine`
+  ADD PRIMARY KEY (`id_ordine`),
+  ADD KEY `username` (`username`),
+  ADD KEY `id_pagamento` (`id_pagamento`);
+
+--
+-- Indici per le tabelle `pacchetto`
+--
+ALTER TABLE `pacchetto`
+  ADD PRIMARY KEY (`id_pacchetto`);
+
+--
+-- Indici per le tabelle `pagamento`
+--
+ALTER TABLE `pagamento`
+  ADD PRIMARY KEY (`id_pagamento`),
+  ADD KEY `username` (`username`);
+
+--
+-- Indici per le tabelle `preferiti`
+--
+ALTER TABLE `preferiti`
+  ADD PRIMARY KEY (`id_preferiti`),
+  ADD KEY `username` (`username`),
+  ADD KEY `id_prodotto` (`id_prodotto`);
+
+--
+-- Indici per le tabelle `prodotto`
+--
+ALTER TABLE `prodotto`
+  ADD PRIMARY KEY (`id_prodotto`),
+  ADD KEY `username` (`username`),
+  ADD KEY `id_pacchetto` (`id_pacchetto`);
+
+--
+-- Indici per le tabelle `recensione`
+--
+ALTER TABLE `recensione`
+  ADD PRIMARY KEY (`id_recensione`),
+  ADD KEY `username` (`username`),
+  ADD KEY `id_prodotto` (`id_prodotto`);
+
+--
+-- Indici per le tabelle `utente`
+--
+ALTER TABLE `utente`
+  ADD PRIMARY KEY (`username`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
+-- Indici per le tabelle `venditore`
+--
+ALTER TABLE `venditore`
+  ADD PRIMARY KEY (`username`);
+
+--
+-- AUTO_INCREMENT per le tabelle scaricate
+--
+
+--
+-- AUTO_INCREMENT per la tabella `carrello`
+--
+ALTER TABLE `carrello`
+  MODIFY `id_carrello` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+
+--
+-- AUTO_INCREMENT per la tabella `immagine_prodotto`
+--
+ALTER TABLE `immagine_prodotto`
+  MODIFY `id_immagine_prodotto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
+-- AUTO_INCREMENT per la tabella `immagine_recensione`
+--
+ALTER TABLE `immagine_recensione`
+  MODIFY `id_immagine_recensione` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT per la tabella `ordine`
+--
+ALTER TABLE `ordine`
+  MODIFY `id_ordine` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT per la tabella `pacchetto`
+--
+ALTER TABLE `pacchetto`
+  MODIFY `id_pacchetto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT per la tabella `pagamento`
+--
+ALTER TABLE `pagamento`
+  MODIFY `id_pagamento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
+-- AUTO_INCREMENT per la tabella `preferiti`
+--
+ALTER TABLE `preferiti`
+  MODIFY `id_preferiti` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- AUTO_INCREMENT per la tabella `prodotto`
+--
+ALTER TABLE `prodotto`
+  MODIFY `id_prodotto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
+
+--
+-- AUTO_INCREMENT per la tabella `recensione`
+--
+ALTER TABLE `recensione`
+  MODIFY `id_recensione` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+
+--
+-- Limiti per le tabelle scaricate
+--
+
+--
+-- Limiti per la tabella `carrello`
+--
+ALTER TABLE `carrello`
+  ADD CONSTRAINT `carrello_ibfk_1` FOREIGN KEY (`username`) REFERENCES `cliente` (`username`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `carrello_ibfk_2` FOREIGN KEY (`id_prodotto`) REFERENCES `prodotto` (`id_prodotto`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Limiti per la tabella `categoria`
+--
+ALTER TABLE `categoria`
+  ADD CONSTRAINT `categoria_ibfk_1` FOREIGN KEY (`nome_categoria_padre`) REFERENCES `categoria` (`nome_categoria`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Limiti per la tabella `cliente`
+--
+ALTER TABLE `cliente`
+  ADD CONSTRAINT `cliente_ibfk_1` FOREIGN KEY (`username`) REFERENCES `utente` (`username`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Limiti per la tabella `descrive`
+--
+ALTER TABLE `descrive`
+  ADD CONSTRAINT `descrive_ibfk_1` FOREIGN KEY (`id_prodotto`) REFERENCES `prodotto` (`id_prodotto`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `descrive_ibfk_2` FOREIGN KEY (`nome_categoria`) REFERENCES `categoria` (`nome_categoria`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Limiti per la tabella `immagine_prodotto`
+--
+ALTER TABLE `immagine_prodotto`
+  ADD CONSTRAINT `immagine_prodotto_ibfk_1` FOREIGN KEY (`id_prodotto`) REFERENCES `prodotto` (`id_prodotto`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Limiti per la tabella `immagine_recensione`
+--
+ALTER TABLE `immagine_recensione`
+  ADD CONSTRAINT `immagine_recensione_ibfk_1` FOREIGN KEY (`id_recensione`) REFERENCES `recensione` (`id_recensione`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Limiti per la tabella `incluso_in`
+--
+ALTER TABLE `incluso_in`
+  ADD CONSTRAINT `incluso_in_ibfk_1` FOREIGN KEY (`id_prodotto`) REFERENCES `prodotto` (`id_prodotto`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `incluso_in_ibfk_2` FOREIGN KEY (`id_ordine`) REFERENCES `ordine` (`id_ordine`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Limiti per la tabella `ordine`
+--
+ALTER TABLE `ordine`
+  ADD CONSTRAINT `ordine_ibfk_1` FOREIGN KEY (`username`) REFERENCES `cliente` (`username`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `ordine_ibfk_2` FOREIGN KEY (`id_pagamento`) REFERENCES `pagamento` (`id_pagamento`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Limiti per la tabella `pagamento`
+--
+ALTER TABLE `pagamento`
+  ADD CONSTRAINT `pagamento_ibfk_1` FOREIGN KEY (`username`) REFERENCES `cliente` (`username`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Limiti per la tabella `preferiti`
+--
+ALTER TABLE `preferiti`
+  ADD CONSTRAINT `preferiti_ibfk_1` FOREIGN KEY (`username`) REFERENCES `cliente` (`username`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `preferiti_ibfk_2` FOREIGN KEY (`id_prodotto`) REFERENCES `prodotto` (`id_prodotto`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Limiti per la tabella `prodotto`
+--
+ALTER TABLE `prodotto`
+  ADD CONSTRAINT `prodotto_ibfk_1` FOREIGN KEY (`username`) REFERENCES `venditore` (`username`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `prodotto_ibfk_2` FOREIGN KEY (`id_pacchetto`) REFERENCES `pacchetto` (`id_pacchetto`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Limiti per la tabella `recensione`
+--
+ALTER TABLE `recensione`
+  ADD CONSTRAINT `recensione_ibfk_1` FOREIGN KEY (`username`) REFERENCES `cliente` (`username`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `recensione_ibfk_2` FOREIGN KEY (`id_prodotto`) REFERENCES `prodotto` (`id_prodotto`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Limiti per la tabella `venditore`
+--
+ALTER TABLE `venditore`
+  ADD CONSTRAINT `venditore_ibfk_1` FOREIGN KEY (`username`) REFERENCES `utente` (`username`) ON DELETE CASCADE ON UPDATE CASCADE;
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
 --
 ALTER TABLE `PACCHETTO`
   MODIFY `id_pacchetto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
