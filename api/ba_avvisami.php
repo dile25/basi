@@ -12,7 +12,7 @@ if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
     exit;
 }
 
-$nomeProdotto = htmlspecialchars(trim($_POST['nomeProdotto'] ?? 'questo libro'));
+$nomeProdotto = trim($_POST['nomeProdotto'] ?? 'questo libro');
 
 echo json_encode([
     'status' => 'ok',

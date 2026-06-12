@@ -115,13 +115,13 @@ if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
 
             let html = "";
             let scontiHtml = "";
-            let totale = parseFloat(resp.totaleGenerale || 0);
+            let totale = parseFloat(resp.totale || resp.totaleGenerale || 0);
 
             resp.prodotti.forEach(p => {
                 const maxQta   = parseInt(p.QuantitaDisp) || 99;
                 const qtaAtt   = parseInt(p.QuantitaNelCarrello) || 1;
-                const prezzo   = parseFloat(p.prezzo || p.Prezzo || 0);
-                const prezzoSc = parseFloat(p.prezzoScontato || p.PrezzoScontato || prezzo);
+                const prezzo   = parseFloat(p.PrezzoBase || p.prezzo || 0);
+                const prezzoSc = parseFloat(p.PrezzoEffettivo || p.prezzoScontato || prezzo);
                 const foto     = p.URLfoto || p.Foto || 'img/default.jpg';
                 const titolo   = p.Titolo || p.nome || '';
                 const autore   = p.autore || p.Autore || '';

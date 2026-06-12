@@ -1,5 +1,7 @@
 <?php session_start(); 
-if(!isset($_SESSION['IdUtente'])) { header("Location: login.php"); exit; }
+$utentePublico = $_GET['u'] ?? null;
+$modalitaPubblica = $utentePublico && (!isset($_SESSION['IdUtente']) || $_SESSION['IdUtente'] !== $utentePublico);
+if (!$utentePublico && !isset($_SESSION['IdUtente'])) { header("Location: login.php"); exit; }
 ?>
 <!DOCTYPE html>
 <html lang="it">
@@ -145,7 +147,9 @@ if(!isset($_SESSION['IdUtente'])) { header("Location: login.php"); exit; }
     let datiProfilo = {};
 
     document.addEventListener('DOMContentLoaded', function() {
-        fetch('api/ba_get_profilo.php')
+        const urlP = new URLSearchParams(window.location.search);
+const uParam = urlP.get('u') ? '?u=' + encodeURIComponent(urlP.get('u')) : '';
+fetch('api/ba_get_profilo.php' + uParam)
             .then(res => res.json())
             .then(data => {
                 if (data.status === 'ok') {
@@ -196,6 +200,32 @@ if(!isset($_SESSION['IdUtente'])) { header("Location: login.php"); exit; }
     `;
 }
 document.getElementById('content-extra').innerHTML = extraHtml;
+// Mostra libri se profilo pubblico venditore
+if (data.prodotti && data.prodotti.length > 0) {
+    let libriHtml = `
+        <div style="margin-top:30px;">
+            <h3 style="color:var(--dark-green); border-left:4px solid var(--primary-green); padding-left:10px;">
+                Libri in vendita
+            </h3>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:16px; margin-top:16px;">
+    `;
+    data.prodotti.forEach(p => {
+        libriHtml += `
+            <a href="dettaglio_prodotto.php?id=${p.id_prodotto}" style="text-decoration:none; color:inherit;">
+                <div style="border:1px solid #eee; border-radius:10px; overflow:hidden; transition:0.2s;" onmouseover="this.style.boxShadow='0 4px 12px rgba(39,174,96,0.15)'" onmouseout="this.style.boxShadow=''">
+                    <img src="${p.foto || 'img/default.jpg'}" style="width:100%; height:180px; object-fit:cover;">
+                    <div style="padding:10px;">
+                        <div style="font-weight:700; font-size:0.9em; margin-bottom:4px;">${p.nome}</div>
+                        <div style="font-size:0.8em; color:#888;">${p.autore || ''}</div>
+                        <div style="color:var(--primary-green); font-weight:800; margin-top:6px;">€${parseFloat(p.prezzo).toFixed(2)}</div>
+                    </div>
+                </div>
+            </a>
+        `;
+    });
+    libriHtml += `</div></div>`;
+    document.querySelector('main.container').insertAdjacentHTML('beforeend', libriHtml);
+}
                 }
             });
 

@@ -128,7 +128,7 @@ $(document).ready(function() {
         
         $("#pDesc").text(p.descrizione);
         $("#pCat").text(p.NomeCategoria || 'Generale');
-        $("#pVendorLink").text(p.NomeVenditore).attr("href", "profilo_venditore.php?u=" + p.IdVenditore);
+        $("#pVendorLink").text(p.NomeVenditore).attr("href", "profilo.php?u=" + encodeURIComponent(p.IdVenditore));
         $("#rev-idProdotto").val(p.IdProdotto);
 
         // Immagini

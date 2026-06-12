@@ -102,5 +102,11 @@ switch ($action) {
         // ... (resto invariato)
         break;
 
-    // ... (restanti casi update e remove sono corretti)
+case 'remove':
+    $idProd = intval($_POST['idProdotto'] ?? 0);
+    $stmt = $conn->prepare("DELETE FROM CARRELLO WHERE username = ? AND id_prodotto = ?");
+    $stmt->bind_param("si", $idUtente, $idProd);
+    $success = $stmt->execute();
+    echo json_encode(['status' => $success ? 'ok' : 'error']);
+    break;
 }

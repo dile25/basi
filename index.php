@@ -9,6 +9,9 @@ session_start();
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
+        #grid-filtro:empty, #grid-filtro > div {
+    grid-column: 1 / -1;
+}
         .hero {
             background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
             color: white;
@@ -337,7 +340,18 @@ session_start();
                     <h2 class="section-title" style="margin-top:20px;">${titolo}</h2>
                     <div id="grid-filtro" class="books-grid"></div>
                 `);
-                renderizza(libri, '#grid-filtro');
+                if (libri.length === 0) {
+    $('#grid-filtro').html(`
+        <div style="padding: 60px 20px; text-align: center; color: var(--text-sec); width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div style="font-size: 3em; margin-bottom: 16px;">📚</div>
+            <h3 style="color: var(--dark-green); margin-bottom: 8px;">Nessun titolo disponibile al momento</h3>
+            <p style="max-width: 400px; margin: 0 auto 20px;">Stiamo lavorando per aggiungere nuovi titoli in questa categoria. Torna presto!</p>
+            <a href="index.php" style="color: var(--primary-green); font-weight: 600; text-decoration: none;">← Torna alla home</a>
+        </div>
+    `);
+} else {
+    renderizza(libri, '#grid-filtro');
+}
 
             } else {
                 // Modalità home normale

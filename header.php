@@ -264,19 +264,21 @@ $(document).ready(function() {
             <div class="dropdown-figlio" onclick="selezionaCategoria('')">Tutte le categorie</div>
         `);
 
-        padri.forEach(padre => {
-            $("#dropdownCategorie").append(`
-                <div class="dropdown-padre">${padre.nome_categoria}</div>
-            `);
-            const sotto = figlie.filter(f => f.nome_categoria_padre === padre.nome_categoria);
-            sotto.forEach(figlia => {
-                $("#dropdownCategorie").append(`
-                    <div class="dropdown-figlio" onclick="selezionaCategoria('${figlia.nome_categoria}')">
-                        ${figlia.nome_categoria}
-                    </div>
-                `);
-            });
-        });
+padri.forEach(padre => {
+    const sotto = figlie.filter(f => f.nome_categoria_padre === padre.nome_categoria);
+    if (sotto.length === 0) return;
+
+    $("#dropdownCategorie").append(`
+        <div class="dropdown-padre">${padre.nome_categoria}</div>
+    `);
+    sotto.forEach(figlia => {
+        $("#dropdownCategorie").append(`
+            <div class="dropdown-figlio" onclick="selezionaCategoria('${figlia.nome_categoria}')">
+                ${figlia.nome_categoria}
+            </div>
+        `);
+    });
+});
     }, "json");
 
     <?php if(isset($_SESSION['tipoUtente']) && $_SESSION['tipoUtente'] === 'cliente'): ?>
@@ -323,10 +325,11 @@ function toggleDropdown() {
 }
 
 function selezionaCategoria(cat) {
-    categoriaSelezionata = cat;
-    const btn = document.getElementById('btnCategorie');
-    btn.firstChild.textContent = cat ? cat + ' ' : 'Categorie ';
-    toggleDropdown();
+    if (cat === '') {
+        window.location.href = 'index.php';
+    } else {
+        window.location.href = `index.php?cat=${encodeURIComponent(cat)}`;
+    }
 }
 
 function updateCartBadge() {

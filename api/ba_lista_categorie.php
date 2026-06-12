@@ -2,7 +2,8 @@
 include '../db_connect.php';
 header('Content-Type: application/json');
 
-$sql = "SELECT nome_categoria, nome_categoria_padre FROM CATEGORIA";
+$sql = "SELECT nome_categoria, nome_categoria_padre FROM categoria";
+
 $result = $conn->query($sql);
 
 $categorie = [];
