@@ -33,9 +33,16 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
         .stato-consegnato { background:#d1ecf1; color:#0c5460; }
         .filtro-btn { padding:7px 16px; border-radius:20px; border:1px solid var(--border-color); background:white; cursor:pointer; font-size:0.85em; transition:0.2s; }
         .filtro-btn.active { background:var(--primary-green); color:white; border-color:var(--primary-green); }
-        .stat-box-click { cursor:pointer; }
-        .stat-box-click:hover { transform:translateY(-5px); box-shadow:0 6px 15px rgba(0,0,0,0.1); }
         .form-control { margin-bottom:12px; width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); font-family:inherit; background:#fff; box-sizing:border-box; }
+        .stat-box-guadagno { cursor:pointer; transition:0.2s; }
+        .stat-box-guadagno:hover { transform:translateY(-3px); box-shadow:0 6px 15px rgba(0,0,0,0.1); }
+        .btn-trasferisci { background:var(--primary-green); color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.9em; margin-top:8px; width:100%; transition:0.2s; }
+        .btn-trasferisci:hover { background:var(--dark-green); }
+        .badge-tipo { display:inline-block; padding:2px 8px; border-radius:10px; font-size:0.72em; font-weight:700; }
+        .tipo-libro { background:#e3f2fd; color:#1565c0; }
+        .tipo-rivista { background:#fce4ec; color:#c62828; }
+        .tipo-periodico { background:#f3e5f5; color:#6a1b9a; }
+        .tipo-magazine { background:#fff3e0; color:#e65100; }
     </style>
 </head>
 <body>
@@ -43,39 +50,50 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
 
 <div class="container" style="max-width:1200px; margin:0 auto; padding:20px;">
     <header style="display:flex; justify-content:space-between; align-items:center; margin:20px 0 30px;">
-        <h2 style="color:var(--dark-green); margin:0;">👨‍💼 Pannello Venditore</h2>
-        <button class="btn-primary" onclick="apriModalNuovoLibro()">+ Aggiungi Libro</button>
+        <h2 style="color:var(--dark-green); margin:0;">Pannello Venditore</h2>
+        <button class="btn-primary" onclick="apriModalNuovoLibro()">+ Aggiungi Prodotto</button>
     </header>
 
     <!-- STATISTICHE -->
     <div class="dash-grid" style="margin-bottom:30px;">
         <div class="stat-box">
-            <h3>Libri Online</h3>
+            <h3>Prodotti Online</h3>
             <div class="stat-number" id="count-libri">0</div>
         </div>
-        <div class="stat-box stat-box-click" onclick="scrollToOrdini()">
+        <div class="stat-box" style="cursor:pointer;" onclick="scrollToOrdini()">
             <h3>Ordini Ricevuti</h3>
             <div class="stat-number" id="count-ordini">0</div>
             <small style="color:var(--text-sec);">Clicca per vedere lo storico</small>
         </div>
-        <div class="stat-box">
-            <h3>Guadagno Totale</h3>
+        <div class="stat-box stat-box-guadagno" id="box-guadagno">
+            <h3>Guadagno Disponibile</h3>
             <div class="stat-number" id="total-guadagno">€ 0.00</div>
-            <small style="color:var(--text-sec);">Da ordini spediti/consegnati</small>
+            <small style="color:var(--text-sec);" id="ultimo-trasf"></small>
+            <button class="btn-trasferisci" id="btn-trasferisci" onclick="trasferisciGuadagno()" style="display:none;">
+                Trasferisci sul conto
+            </button>
         </div>
     </div>
 
-    <!-- GRIGLIA LIBRI + ORDINI -->
+    <!-- MODAL TRASFERIMENTO -->
+    <div id="modalTrasferimento" class="modal-overlay">
+        <div class="modal-box" style="max-width:420px; text-align:center;">
+            <div style="font-size:3em; margin-bottom:10px; color:var(--primary-green);">&#10003;</div>
+            <h3 style="color:var(--dark-green);">Trasferimento completato</h3>
+            <p id="msg-trasferimento" style="color:#555; font-size:1.05em; margin:15px 0 25px;"></p>
+            <button class="btn-primary" onclick="$('#modalTrasferimento').fadeOut()">Chiudi</button>
+        </div>
+    </div>
+
+    <!-- GRIGLIA PRODOTTI + ORDINI -->
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:30px;">
         <section>
-            <h3 style="color:var(--dark-green); margin-bottom:15px;">📚 I tuoi Libri</h3>
+            <h3 style="color:var(--dark-green); margin-bottom:15px;">I tuoi Prodotti</h3>
             <div id="lista-libri-venditore"><p style="color:var(--text-sec);">Caricamento...</p></div>
         </section>
 
         <section id="sezione-ordini">
-            <h3 style="color:var(--dark-green); margin-bottom:15px;">📦 Ordini Ricevuti</h3>
-
-            <!-- Filtri stato -->
+            <h3 style="color:var(--dark-green); margin-bottom:15px;">Ordini Ricevuti</h3>
             <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:15px;">
                 <button class="filtro-btn active" onclick="filtraOrdini('', this)">Tutti</button>
                 <button class="filtro-btn" onclick="filtraOrdini('Pagato', this)">Pagati</button>
@@ -83,23 +101,43 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
                 <button class="filtro-btn" onclick="filtraOrdini('Spedito', this)">Spediti</button>
                 <button class="filtro-btn" onclick="filtraOrdini('Consegnato', this)">Consegnati</button>
             </div>
-
             <div id="lista-ordini-venditore"><p style="color:var(--text-sec);">Caricamento...</p></div>
         </section>
     </div>
 </div>
 
-<!-- MODAL AGGIUNGI LIBRO -->
+<!-- MODAL AGGIUNGI PRODOTTO -->
 <div id="modalLibro" class="modal-overlay">
-    <div class="modal-box" style="max-width:520px;">
+    <div class="modal-box" style="max-width:540px;">
         <span onclick="$('#modalLibro').fadeOut()" style="float:right; cursor:pointer; font-size:1.5em;">&times;</span>
-        <h3 style="color:var(--dark-green); margin-bottom:20px;">📖 Nuovo Annuncio</h3>
+        <h3 style="color:var(--dark-green); margin-bottom:20px;">Nuovo Annuncio</h3>
         <form id="formNuovoLibro" enctype="multipart/form-data">
-            <label style="font-weight:600;">Titolo *</label>
-            <input type="text" name="nome" placeholder="Titolo del libro" class="form-control" required>
 
-            <label style="font-weight:600;">Autore *</label>
-            <input type="text" name="autore" placeholder="Nome Cognome autore" class="form-control" required>
+            <label style="font-weight:600;">Tipo di prodotto *</label>
+            <select name="tipo_prodotto" class="form-control" required onchange="aggiornaCampiTipo(this.value)">
+                <option value="libro">Libro</option>
+                <option value="rivista">Rivista</option>
+                <option value="periodico">Periodico</option>
+                <option value="magazine">Magazine</option>
+                <option value="fumetto">Fumetto</option>
+            </select>
+
+            <label style="font-weight:600;">Titolo *</label>
+            <input type="text" name="nome" placeholder="Titolo" class="form-control" required>
+
+            <label style="font-weight:600;" id="label-autore">Autore *</label>
+            <input type="text" name="autore" id="campo-autore" placeholder="Es. Elena Ferrante" class="form-control">
+
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1;">
+                    <label style="font-weight:600;">Prezzo (€) *</label>
+                    <input type="number" name="prezzo" step="0.01" min="0.01" placeholder="0.00" class="form-control" required>
+                </div>
+                <div style="flex:1;">
+                    <label style="font-weight:600;">Quantità *</label>
+                    <input type="number" name="quantita" placeholder="0 = non disponibile" class="form-control" min="0" required>
+                </div>
+            </div>
 
             <label style="font-weight:600;">Categoria *</label>
             <select name="categoria" id="modal-categoria" class="form-control" required onchange="caricaSottocategorie(this.value)">
@@ -108,32 +146,58 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
 
             <label style="font-weight:600;">Sottocategoria</label>
             <select name="sottocategoria" id="modal-sottocategoria" class="form-control">
-                <option value="">Seleziona sottocategoria...</option>
+                <option value="">Nessuna</option>
             </select>
 
-            <label style="font-weight:600; font-size:0.85em; color:var(--text-sec);">
-                Non trovi la categoria? <a href="#" onclick="toggleNuovaCat()" style="color:var(--primary-green);">Aggiungi nuova</a>
-            </label>
-            <div id="nuova-cat-box" style="display:none; margin-bottom:12px;">
-                <input type="text" name="nuova_categoria" id="campo-nuova-cat" placeholder="Nome nuova categoria/sottocategoria" class="form-control" style="margin-bottom:0;">
+            <div style="margin-bottom:12px;">
+                <a href="#" onclick="toggleNuovaCat(); return false;" style="font-size:0.85em; color:var(--primary-green);">
+                    + Aggiungi nuova categoria
+                </a>
+                <div id="nuova-cat-box" style="display:none; margin-top:8px;">
+                    <input type="text" name="nuova_categoria" id="campo-nuova-cat" placeholder="Nome nuova categoria" class="form-control" style="margin-bottom:0;">
+                </div>
             </div>
 
             <label style="font-weight:600;">Descrizione</label>
-            <textarea name="descrizione" placeholder="Trama o descrizione del libro" class="form-control" rows="3"></textarea>
+            <textarea name="descrizione" placeholder="Descrizione o trama..." class="form-control" rows="3"></textarea>
 
-            <div style="display:flex; gap:10px;">
-                <div style="flex:1;">
-                    <label style="font-weight:600;">Prezzo (€) *</label>
-                    <input type="number" name="prezzo" step="0.01" placeholder="12.50" class="form-control" required>
-                </div>
-                <div style="flex:1;">
-                    <label style="font-weight:600;">Quantità disponibile *</label>
-                    <input type="number" name="quantita" placeholder="0 = non disponibile" class="form-control" min="0" required>
+            <label style="font-weight:600;">Immagine copertina</label>
+            <input type="file" name="fotoLibro" accept="image/*" class="form-control">
+
+            <!-- SEZIONE PACCHETTO SCONTO -->
+            <div style="border:1px solid var(--border-color); border-radius:10px; padding:15px; margin-bottom:12px; background:#f9fbf9;">
+                <label style="font-weight:600; display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:0;">
+                    <input type="checkbox" name="abilita_sconto" id="abilita-sconto" onchange="toggleScontoBox()">
+                    Aggiungi promozione o pacchetto sconto
+                </label>
+                <div id="sconto-box" style="display:none; margin-top:12px;">
+                    <label style="font-size:0.9em; font-weight:600;">Tipo promozione</label>
+                    <select name="tipo_sconto" id="tipo-sconto" class="form-control" onchange="aggiornaTipoSconto()">
+                        <option value="sconto_semplice">Sconto percentuale diretto</option>
+                        <option value="pacchetto_autore">Pacchetto stesso autore (da 2 libri)</option>
+                        <option value="pacchetto_saga">Pacchetto saga completa</option>
+                        <option value="pacchetto_custom">Pacchetto personalizzato</option>
+                    </select>
+
+                    <div id="box-sconto-semplice">
+                        <label style="font-size:0.9em; font-weight:600;">Sconto (%)</label>
+                        <input type="number" name="percentuale_sconto" min="1" max="90" placeholder="Es. 20" class="form-control">
+                        <small style="color:var(--text-sec); font-size:0.82em;">Il prezzo mostrato verrà ridotto di questa percentuale.</small>
+                    </div>
+
+                    <div id="box-pacchetto" style="display:none;">
+                        <label style="font-size:0.9em; font-weight:600;">Seleziona prodotti nel pacchetto</label>
+                        <div id="lista-libri-pacchetto" style="max-height:150px; overflow-y:auto; border:1px solid #ddd; border-radius:8px; padding:10px; margin-bottom:10px; font-size:0.88em;">
+                            <p style="color:var(--text-sec);">Caricamento tuoi prodotti...</p>
+                        </div>
+                        <label style="font-size:0.9em; font-weight:600;">Nome del pacchetto</label>
+                        <input type="text" name="nome_pacchetto" placeholder="Es. Trilogia dell'Amica Geniale" class="form-control">
+                        <label style="font-size:0.9em; font-weight:600;">Sconto pacchetto (%)</label>
+                        <input type="number" name="sconto_pacchetto" min="1" max="90" placeholder="Es. 30" class="form-control">
+                        <small style="color:var(--text-sec); font-size:0.82em;">Lo sconto si applica quando il cliente acquista tutti i prodotti del pacchetto.</small>
+                    </div>
                 </div>
             </div>
-
-            <label style="font-weight:600;">Copertina</label>
-            <input type="file" name="fotoLibro" accept="image/*" class="form-control">
 
             <button type="submit" class="btn-primary" style="width:100%; padding:14px; margin-top:5px;">PUBBLICA ANNUNCIO</button>
             <p id="msg-nuovo-libro" style="display:none; text-align:center; font-weight:600; margin-top:10px;"></p>
@@ -141,15 +205,15 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
     </div>
 </div>
 
-<!-- MODAL MODIFICA LIBRO -->
+<!-- MODAL MODIFICA -->
 <div id="modalModifica" class="modal-overlay">
     <div class="modal-box" style="max-width:500px;">
         <span onclick="$('#modalModifica').fadeOut()" style="float:right; cursor:pointer; font-size:1.5em;">&times;</span>
-        <h3 style="color:var(--dark-green); margin-bottom:20px;">✏️ Modifica Libro</h3>
+        <h3 style="color:var(--dark-green); margin-bottom:20px;">Modifica Prodotto</h3>
         <input type="hidden" id="modifica-id">
         <label style="font-weight:600;">Titolo</label>
         <input type="text" id="modifica-nome" class="form-control">
-        <label style="font-weight:600;">Autore</label>
+        <label style="font-weight:600;">Autore / Editore</label>
         <input type="text" id="modifica-autore" class="form-control">
         <label style="font-weight:600;">Descrizione</label>
         <textarea id="modifica-descrizione" class="form-control" rows="3"></textarea>
@@ -163,10 +227,10 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
                 <input type="number" id="modifica-quantita" min="0" class="form-control">
             </div>
         </div>
-        <label style="font-weight:600;">Nuova Copertina (opzionale)</label>
+        <label style="font-weight:600;">Nuova immagine (opzionale)</label>
         <img id="modifica-preview" src="" style="width:55px;height:75px;object-fit:cover;border-radius:6px;margin-bottom:8px;display:none;">
         <input type="file" id="modifica-foto" accept="image/*" class="form-control">
-        <button class="btn-primary" style="width:100%; padding:12px;" onclick="salvaModifica()">💾 Salva Modifiche</button>
+        <button class="btn-primary" style="width:100%; padding:12px;" onclick="salvaModifica()">Salva Modifiche</button>
         <p id="msg-modifica" style="display:none; font-weight:600; margin-top:8px; text-align:center;"></p>
     </div>
 </div>
@@ -189,12 +253,13 @@ $(document).ready(function() {
             success: function(resp) {
                 const msg = $('#msg-nuovo-libro');
                 if(resp.status === 'ok') {
-                    msg.text('✅ Libro pubblicato!').css('color','green').show();
+                    msg.text('Prodotto pubblicato con successo!').css('color','green').show();
                     $('#formNuovoLibro')[0].reset();
-                    $('#modal-sottocategoria').html('<option value="">Seleziona sottocategoria...</option>');
+                    $('#modal-sottocategoria').html('<option value="">Nessuna</option>');
+                    $('#sconto-box').hide();
                     setTimeout(() => { msg.hide(); $('#modalLibro').fadeOut(); caricaLibri(); }, 2000);
                 } else {
-                    msg.text('❌ ' + resp.msg).css('color','red').show();
+                    msg.text('Errore: ' + resp.msg).css('color','red').show();
                 }
             }
         });
@@ -205,18 +270,16 @@ function caricaCategorieModal() {
     $.get('api/ba_categorie.php', function(resp) {
         if(!resp.categorie) return;
         categorieDB = resp.categorie;
-        // Solo categorie principali (senza padre)
-        resp.categorie.forEach(c => {
-            if (!c.nome_categoria_padre) {
-                $('#modal-categoria').append(`<option value="${c.nome_categoria}">${c.nome_categoria}</option>`);
-            }
+        const padri = resp.categorie.filter(c => !c.nome_categoria_padre);
+        padri.forEach(c => {
+            $('#modal-categoria').append(`<option value="${c.nome_categoria}">${c.nome_categoria}</option>`);
         });
     });
 }
 
 function caricaSottocategorie(catPadre) {
     const select = $('#modal-sottocategoria');
-    select.html('<option value="">Nessuna sottocategoria</option>');
+    select.html('<option value="">Nessuna</option>');
     if (!catPadre) return;
     categorieDB.forEach(c => {
         if (c.nome_categoria_padre === catPadre) {
@@ -225,9 +288,64 @@ function caricaSottocategorie(catPadre) {
     });
 }
 
+function aggiornaCampiTipo(tipo) {
+    const labelAutore = $('#label-autore');
+    const campoAutore = $('#campo-autore');
+    if (tipo === 'rivista' || tipo === 'magazine' || tipo === 'periodico') {
+        labelAutore.text('Editore');
+        campoAutore.attr('placeholder', 'Es. Condé Nast, RCS Media');
+    } else if (tipo === 'fumetto') {
+        labelAutore.text('Autore / Casa editrice');
+        campoAutore.attr('placeholder', 'Es. Walt Disney, Marvel');
+    } else {
+        labelAutore.text('Autore *');
+        campoAutore.attr('placeholder', 'Es. Elena Ferrante');
+    }
+}
+
 function toggleNuovaCat() {
-    const box = $('#nuova-cat-box');
-    box.toggle();
+    $('#nuova-cat-box').toggle();
+}
+
+function toggleScontoBox() {
+    const checked = $('#abilita-sconto').is(':checked');
+    $('#sconto-box').toggle(checked);
+    if (checked) caricaLibriPacchetto();
+}
+
+function aggiornaTipoSconto() {
+    const tipo = $('#tipo-sconto').val();
+    if (tipo === 'sconto_semplice') {
+        $('#box-sconto-semplice').show();
+        $('#box-pacchetto').hide();
+    } else {
+        $('#box-sconto-semplice').hide();
+        $('#box-pacchetto').show();
+        // Precompila nome pacchetto in base al tipo
+        const nomi = {
+            'pacchetto_autore': 'Pacchetto stesso autore',
+            'pacchetto_saga':   'Saga completa',
+            'pacchetto_custom': 'Pacchetto personalizzato'
+        };
+        $('input[name=nome_pacchetto]').val(nomi[tipo] || '');
+    }
+}
+
+function caricaLibriPacchetto() {
+    $.get('api/ba_libri_venditore.php', function(resp) {
+        if(resp.status === 'ok' && resp.libri.length > 0) {
+            let html = '';
+            resp.libri.forEach(l => {
+                html += `<label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;">
+                    <input type="checkbox" name="libri_pacchetto[]" value="${l.id_prodotto}">
+                    <span>${l.nome}${l.autore ? ' — ' + l.autore : ''} (€${parseFloat(l.prezzo).toFixed(2)})</span>
+                </label>`;
+            });
+            $('#lista-libri-pacchetto').html(html);
+        } else {
+            $('#lista-libri-pacchetto').html('<p style="color:var(--text-sec);font-size:0.85em;">Nessun prodotto disponibile.</p>');
+        }
+    });
 }
 
 function caricaLibri() {
@@ -235,27 +353,29 @@ function caricaLibri() {
         if(resp.status === 'ok') {
             $('#count-libri').text(resp.libri.length);
             if(resp.libri.length === 0) {
-                $('#lista-libri-venditore').html('<p style="color:var(--text-sec);">Nessun libro in vendita.</p>');
+                $('#lista-libri-venditore').html('<p style="color:var(--text-sec);">Nessun prodotto in vendita.</p>');
                 return;
             }
             let html = '';
             resp.libri.forEach(lib => {
                 const qta = lib.quantita_disponibile;
                 const qtaHtml = qta > 0
-                    ? `<span style="color:var(--primary-green);">${qta} disponibili</span>`
-                    : `<span style="color:#e74c3c;">Non disponibile</span>`;
+                    ? `<span style="color:var(--primary-green);">${qta} disp.</span>`
+                    : `<span style="color:#e74c3c;">Esaurito</span>`;
+                const tipo = lib.tipo_prodotto || 'libro';
+                const badgeTipo = `<span class="badge-tipo tipo-${tipo}">${tipo}</span>`;
                 html += `
                 <div class="manage-book-card">
                     <img src="${lib.url_foto || 'img/default.jpg'}" class="manage-book-img">
                     <div style="flex-grow:1;">
-                        <div style="font-weight:bold;">${lib.nome}</div>
+                        <div style="font-weight:bold;">${lib.nome} ${badgeTipo}</div>
                         <div style="font-size:0.82em; color:var(--text-sec);">
                             ${lib.autore ? lib.autore + ' &nbsp;|&nbsp; ' : ''}
                             €${parseFloat(lib.prezzo).toFixed(2)} &nbsp;|&nbsp; ${qtaHtml}
                         </div>
                     </div>
-                    <button class="btn-modifica-libro" onclick="apriModifica(${lib.id_prodotto},'${lib.nome.replace(/'/g,"\\'")}','${(lib.autore||'').replace(/'/g,"\\'")}','${(lib.descrizione||'').replace(/'/g,"\\'").replace(/\n/g,' ')}',${lib.prezzo},${lib.quantita_disponibile},'${lib.url_foto||''}')">✏️</button>
-                    <button class="btn-elimina" onclick="eliminaLibro(${lib.id_prodotto})">🗑️</button>
+                    <button class="btn-modifica-libro" onclick="apriModifica(${lib.id_prodotto},'${lib.nome.replace(/'/g,"\\'")}','${(lib.autore||'').replace(/'/g,"\\'")}','${(lib.descrizione||'').replace(/'/g,"\\'").replace(/\n/g,' ')}',${lib.prezzo},${lib.quantita_disponibile},'${lib.url_foto||''}')">Modifica</button>
+                    <button class="btn-elimina" onclick="eliminaLibro(${lib.id_prodotto})">Elimina</button>
                 </div>`;
             });
             $('#lista-libri-venditore').html(html);
@@ -268,7 +388,13 @@ function caricaOrdini(stato) {
     $.get('api/ba_ordini_venditore.php', { action: 'list', stato: stato }, function(resp) {
         if(resp.status === 'ok') {
             $('#count-ordini').text(resp.ordini.length);
-            $('#total-guadagno').text('€ ' + parseFloat(resp.guadagno).toFixed(2));
+            const guadagno = parseFloat(resp.guadagno || 0);
+            $('#total-guadagno').text('€ ' + guadagno.toFixed(2));
+            if (guadagno > 0) {
+                $('#btn-trasferisci').show();
+            } else {
+                $('#btn-trasferisci').hide();
+            }
 
             if(resp.ordini.length === 0) {
                 $('#lista-ordini-venditore').html('<p style="color:var(--text-sec);">Nessun ordine trovato.</p>');
@@ -289,18 +415,18 @@ function caricaOrdini(stato) {
                         <img src="${l.Foto}" style="width:40px;height:55px;object-fit:cover;border-radius:4px;">
                         <div>
                             <strong style="font-size:0.9em;">${l.Titolo}</strong><br>
-                            <small style="color:var(--text-sec);">× ${l.Quantita} — €${(parseFloat(l.Prezzo)*parseInt(l.Quantita)).toFixed(2)}</small>
+                            <small style="color:var(--text-sec);">x ${l.Quantita} — €${(parseFloat(l.Prezzo)*parseInt(l.Quantita)).toFixed(2)}</small>
                         </div>
                     </div>`;
                 });
 
                 let azioniHtml = '';
                 if(o.Stato === 'Pagato') {
-                    azioniHtml = `<button class="btn-primary" style="padding:7px 14px;font-size:0.85em;margin-top:10px;" onclick="aggiornaStato(${o.IdOrdine},'In lavorazione')">📦 Conferma ordine</button>`;
+                    azioniHtml = `<button class="btn-primary" style="padding:7px 14px;font-size:0.85em;margin-top:10px;" onclick="aggiornaStato(${o.IdOrdine},'In lavorazione')">Conferma ordine</button>`;
                 } else if(o.Stato === 'In lavorazione') {
-                    azioniHtml = `<button class="btn-primary" style="padding:7px 14px;font-size:0.85em;margin-top:10px;" onclick="aggiornaStato(${o.IdOrdine},'Spedito')">🚚 Segna come Spedito</button>`;
+                    azioniHtml = `<button class="btn-primary" style="padding:7px 14px;font-size:0.85em;margin-top:10px;" onclick="aggiornaStato(${o.IdOrdine},'Spedito')">Segna come Spedito</button>`;
                 } else if(o.Stato === 'Spedito') {
-                    azioniHtml = `<button class="btn-primary" style="padding:7px 14px;font-size:0.85em;margin-top:10px;" onclick="aggiornaStato(${o.IdOrdine},'Consegnato')">✅ Segna come Consegnato</button>`;
+                    azioniHtml = `<button class="btn-primary" style="padding:7px 14px;font-size:0.85em;margin-top:10px;" onclick="aggiornaStato(${o.IdOrdine},'Consegnato')">Segna come Consegnato</button>`;
                 }
 
                 html += `
@@ -309,12 +435,12 @@ function caricaOrdini(stato) {
                         <div>
                             <strong>Ordine #${o.IdOrdine}</strong>
                             <span style="color:var(--text-sec);margin-left:10px;font-size:0.85em;">${o.DataOrdine}</span>
-                            <span style="color:var(--text-sec);margin-left:10px;font-size:0.85em;">👤 ${o.Cliente}</span>
+                            <span style="color:var(--text-sec);margin-left:10px;font-size:0.85em;">${o.Cliente}</span>
                         </div>
                         <div style="display:flex;align-items:center;gap:10px;">
                             <span class="badge-stato ${badgeClass}">${o.Stato}</span>
                             <strong style="color:var(--primary-green);">€${parseFloat(o.Totale).toFixed(2)}</strong>
-                            <span style="color:var(--text-sec);">▼</span>
+                            <span style="color:var(--text-sec);">&#9660;</span>
                         </div>
                     </div>
                     <div class="ordine-body">
@@ -328,35 +454,39 @@ function caricaOrdini(stato) {
     }, 'json');
 }
 
-function toggleOrdine(header) {
-    $(header).next('.ordine-body').slideToggle(200);
+function trasferisciGuadagno() {
+    const guadagno = $('#total-guadagno').text();
+    if (!confirm('Confermi il trasferimento di ' + guadagno + ' sul tuo conto?')) return;
+    $.post('api/ba_trasferisci_guadagno.php', function(resp) {
+        if (resp.status === 'ok') {
+            $('#msg-trasferimento').text(resp.msg);
+            $('#modalTrasferimento').css('display','flex').hide().fadeIn();
+            $('#total-guadagno').text('€ 0.00');
+            $('#btn-trasferisci').hide();
+        } else {
+            alert(resp.msg);
+        }
+    }, 'json');
 }
 
-function filtraOrdini(stato, btn) {
-    $('.filtro-btn').removeClass('active');
-    $(btn).addClass('active');
-    caricaOrdini(stato);
-}
-
-function scrollToOrdini() {
-    $('html,body').animate({ scrollTop: $('#sezione-ordini').offset().top - 20 }, 400);
-}
-
+function toggleOrdine(header) { $(header).next('.ordine-body').slideToggle(200); }
+function filtraOrdini(stato, btn) { $('.filtro-btn').removeClass('active'); $(btn).addClass('active'); caricaOrdini(stato); }
+function scrollToOrdini() { $('html,body').animate({ scrollTop: $('#sezione-ordini').offset().top - 20 }, 400); }
 function aggiornaStato(idOrdine, stato) {
     $.post('api/ba_ordini_venditore.php?action=update_status', { idOrdine: idOrdine, stato: stato }, function(resp) {
         if(resp.status === 'ok') caricaOrdini(filtroCorrente);
         else alert('Errore: ' + resp.msg);
     }, 'json');
 }
-
 function apriModalNuovoLibro() {
     $('#formNuovoLibro')[0].reset();
-    $('#modal-sottocategoria').html('<option value="">Seleziona sottocategoria...</option>');
+    $('#modal-sottocategoria').html('<option value="">Nessuna</option>');
     $('#nuova-cat-box').hide();
+    $('#sconto-box').hide();
+    $('#box-pacchetto').hide();
     $('#msg-nuovo-libro').hide();
     $('#modalLibro').css('display','flex').hide().fadeIn();
 }
-
 function apriModifica(id, nome, autore, desc, prezzo, qta, urlFoto) {
     $('#modifica-id').val(id);
     $('#modifica-nome').val(nome);
@@ -369,7 +499,6 @@ function apriModifica(id, nome, autore, desc, prezzo, qta, urlFoto) {
     $('#msg-modifica').hide();
     $('#modalModifica').css('display','flex').hide().fadeIn();
 }
-
 function salvaModifica() {
     const formData = new FormData();
     formData.append('id_prodotto', $('#modifica-id').val());
@@ -380,23 +509,21 @@ function salvaModifica() {
     formData.append('quantita', $('#modifica-quantita').val());
     const foto = $('#modifica-foto')[0].files[0];
     if(foto) formData.append('fotoLibro', foto);
-
     $.ajax({
         url: 'api/ba_modifica_libro.php', type: 'POST', data: formData,
         cache: false, contentType: false, processData: false,
         success: function(resp) {
             if(resp.status === 'ok') {
-                $('#msg-modifica').text('✅ Salvato!').css('color','green').show();
+                $('#msg-modifica').text('Salvato!').css('color','green').show();
                 setTimeout(() => { $('#modalModifica').fadeOut(); caricaLibri(); }, 1500);
             } else {
-                $('#msg-modifica').text('❌ '+resp.msg).css('color','red').show();
+                $('#msg-modifica').text('Errore: '+resp.msg).css('color','red').show();
             }
         }
     });
 }
-
 function eliminaLibro(id) {
-    if(!confirm('Eliminare questo libro?')) return;
+    if(!confirm('Eliminare questo prodotto?')) return;
     $.post('api/ba_elimina_libro.php', { id_prodotto: id }, function(resp) {
         if(resp.status === 'ok') caricaLibri();
         else alert('Errore: ' + resp.msg);

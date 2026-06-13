@@ -96,6 +96,13 @@ session_start();
             </div>
         </div>
 
+        <!-- RIQUADRO PACCHETTO -->
+        <div id="riquadro-pacchetto" style="display:none; margin-top:30px; background:#fffbf0; border:2px solid #f39c12; border-radius:15px; padding:25px;">
+            <h3 id="titolo-pacchetto" style="margin:0 0 5px; color:#e67e22; font-size:1.1em;"></h3>
+            <p id="desc-pacchetto" style="margin:0 0 18px; color:#666; font-size:0.88em;"></p>
+            <div id="libri-pacchetto-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px;"></div>
+        </div>
+
         <div style="margin-top:50px; background:white; border-radius:15px; padding:30px; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
             <h3 style="color:var(--dark-green); margin-bottom:20px;">Opinioni della Community</h3>
             <div id="reviewsList"></div>
@@ -128,7 +135,7 @@ $(document).ready(function() {
         
         $("#pDesc").text(p.descrizione);
         $("#pCat").text(p.NomeCategoria || 'Generale');
-        $("#pVendorLink").text(p.NomeVenditore).attr("href", "profilo.php?u=" + encodeURIComponent(p.IdVenditore));
+        $("#pVendorLink").text(p.NomeVenditore).attr("href", "profilo_venditore.php?u=" + encodeURIComponent(p.IdVenditore));
         $("#rev-idProdotto").val(p.IdProdotto);
 
         // Immagini
@@ -142,11 +149,14 @@ $(document).ready(function() {
             $("#thumbsContainer").html(th);
         }
 
-        // Prezzo
-        let prezzoHtml = p.ScontoPacchetto > 0
-            ? `<span style="text-decoration:line-through;color:#999;font-size:1em;">€${parseFloat(p.prezzo).toFixed(2)}</span>
-               <span style="font-size:1.8em;font-weight:800;color:var(--primary-green);margin-left:10px;">€${parseFloat(p.PrezzoScontato).toFixed(2)}</span>`
-            : `<span style="font-size:1.8em;font-weight:800;color:var(--primary-green);">€${parseFloat(p.prezzo).toFixed(2)}</span>`;
+        // Prezzo — sconto solo nel carrello, non sul singolo
+        let prezzoHtml = `<span style="font-size:1.8em;font-weight:800;color:var(--primary-green);">€${parseFloat(p.prezzo).toFixed(2)}</span>`;
+        // Mostra info sconto pacchetto se disponibile
+        if (p.id_pacchetto && p.NomePacchetto) {
+            prezzoHtml += `<div style="margin-top:8px;font-size:0.82em;color:#e67e22;font-weight:600;">
+                Pacchetto "${p.NomePacchetto}": 2 libri -${p.sconto_2}% | 3 libri -${p.sconto_3}% | completo -${p.sconto_tutti}%
+            </div>`;
+        }
         $("#priceHtml").html(prezzoHtml);
 
         // Stock
@@ -199,7 +209,7 @@ function cambiaImmagine(url, el) {
 function verificaStatoCarrello(idProdotto) {
     $.get('api/ba_carrello.php', { action: 'list' }, function(resp) {
         if(resp.status === 'ok') {
-            nelCarrello = resp.prodotti.some(p => p.IdProdotto == idProdotto);
+            nelCarrello = resp.prodotti.some(p => (p.IdProdotto || p.id_prodotto) == idProdotto);
             aggiornaBottoneCarrello();
         }
     }, 'json');
@@ -256,6 +266,9 @@ function toggleCarrello() {
                 nelCarrello = true;
                 aggiornaBottoneCarrello();
                 if(typeof updateCartBadge === "function") updateCartBadge();
+                if (prodottoCorrente.libriPacchetto && prodottoCorrente.libriPacchetto.length > 0) {
+                    mostraRiquadroPacchetto();
+                }
             } else {
                 alert(resp.msg);
             }
@@ -275,6 +288,49 @@ function togglePreferito() {
             aggiornaBottonePreferiti();
         } else {
             alert(resp.msg || 'Accedi per usare i preferiti.');
+        }
+    }, 'json');
+}
+
+
+function mostraRiquadroPacchetto() {
+    var p = prodottoCorrente;
+    var nomePack = p.NomePacchetto || 'Pacchetto';
+    var tot = p.totalePacchetto || (p.libriPacchetto.length + 1);
+    $('#titolo-pacchetto').text('Pacchetto "' + nomePack + '" — aggiungi altri libri e risparmia!');
+    var desc = '2 libri: -' + p.sconto_2 + '%';
+    if (tot >= 3) desc += ' | 3 libri: -' + p.sconto_3 + '%';
+    if (tot > 3) desc += ' | tutti (' + tot + '): -' + p.sconto_tutti + '%';
+    $('#desc-pacchetto').text(desc + '. Lo sconto si applica automaticamente nel carrello.');
+
+    var html = '';
+    p.libriPacchetto.forEach(function(l) {
+        var foto = l.foto || 'img/default.jpg';
+        var disp = parseInt(l.quantita_disponibile) > 0;
+        html += '<div style="background:white;border-radius:10px;padding:10px;text-align:center;border:1px solid #ffe082;">';
+        html += '<img src="' + foto + '" style="width:100%;height:120px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="location.href=\'dettaglio_prodotto.php?id=' + l.id_prodotto + '\'">';
+        html += '<p style="margin:6px 0 2px;font-size:0.85em;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + l.nome + '</p>';
+        if (l.autore) html += '<p style="margin:0 0 6px;font-size:0.78em;color:#888;">' + l.autore + '</p>';
+        html += '<div style="color:var(--primary-green);font-weight:800;margin-bottom:8px;">€' + parseFloat(l.prezzo).toFixed(2) + '</div>';
+        if (disp) {
+            html += '<button onclick="aggiungiDaPacchetto(' + l.id_prodotto + ')" class="btn-primary" style="width:100%;padding:7px;font-size:0.8em;">Aggiungi</button>';
+        } else {
+            html += '<span style="font-size:0.78em;color:#e74c3c;">Esaurito</span>';
+        }
+        html += '</div>';
+    });
+    $('#libri-pacchetto-grid').html(html);
+    $('#riquadro-pacchetto').slideDown(300);
+}
+
+function aggiungiDaPacchetto(id) {
+    $.post('api/ba_carrello.php', { action: 'add', idProdotto: id }, function(resp) {
+        if (resp.status === 'ok') {
+            if (typeof updateCartBadge === 'function') updateCartBadge();
+            var btn = $('button[onclick="aggiungiDaPacchetto(' + id + ')"]');
+            btn.text('Aggiunto').prop('disabled', true).css('background', '#27ae60');
+        } else {
+            alert(resp.msg);
         }
     }, 'json');
 }

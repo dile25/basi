@@ -239,8 +239,8 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
                     </svg>
                     Dashboard
                 </a>
-                <a href="gestione_prodotti.php" class="user-btn">Prodotti</a>
-                <a href="gestione_ordini.php" class="user-btn">Ordini</a>
+                
+                
             <?php endif; ?>
             <a href="logout.php" class="user-btn" style="color:#e74c3c;">Esci</a>
         <?php else: ?>
