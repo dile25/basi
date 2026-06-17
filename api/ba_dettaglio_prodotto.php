@@ -10,7 +10,9 @@ $sql = "SELECT p.id_prodotto, p.nome, p.autore, p.descrizione, p.prezzo,
                p.quantita_disponibile, p.id_pacchetto, p.username as IdVenditore,
                (SELECT nome_categoria FROM DESCRIVE WHERE id_prodotto = p.id_prodotto LIMIT 1) as NomeCategoria,
                pk.nome as NomePacchetto,
-               pk.sconto_2, pk.sconto_3, pk.sconto_tutti
+               pk.sconto_2, pk.sconto_3, pk.sconto_tutti,
+               pk.tipo_pacchetto as TipoPacchetto,
+               pk.periodicita as Periodicita
         FROM PRODOTTO p
         LEFT JOIN PACCHETTO pk ON p.id_pacchetto = pk.id_pacchetto AND pk.attivo = 1
         WHERE p.id_prodotto = ?";
@@ -32,7 +34,7 @@ while ($f = $stmtFoto->get_result()->fetch_assoc()) $foto[] = $f['url'];
 // Nome venditore
 $nomeVenditore = $prodotto['IdVenditore'];
 
-// Altri libri dello stesso pacchetto
+// Altri prodotti dello stesso pacchetto/abbonamento
 $libriPacchetto = [];
 if ($prodotto['id_pacchetto']) {
     $stmtPack = $conn->prepare(
@@ -46,7 +48,7 @@ if ($prodotto['id_pacchetto']) {
     while ($r = $resPack->fetch_assoc()) $libriPacchetto[] = $r;
 }
 
-// Totale libri nel pacchetto (incluso questo)
+// Totale prodotti nel pacchetto (incluso questo)
 $totalePacchetto = count($libriPacchetto) + 1;
 
 echo json_encode([
@@ -64,6 +66,8 @@ echo json_encode([
         'sconto_2'        => $prodotto['sconto_2'] ?? 10,
         'sconto_3'        => $prodotto['sconto_3'] ?? 20,
         'sconto_tutti'    => $prodotto['sconto_tutti'] ?? 30,
+        'tipoPacchetto'   => $prodotto['TipoPacchetto'] ?? 'libro',
+        'periodicita'     => $prodotto['Periodicita'] ?? null,
         'totalePacchetto' => $totalePacchetto,
         'QuantitaDisp'    => $prodotto['quantita_disponibile'],
         'IdVenditore'     => $prodotto['IdVenditore'],

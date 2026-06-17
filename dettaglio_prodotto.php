@@ -6,14 +6,14 @@ session_start();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dettaglio Libro | BookArchive</title>
+    <title>Dettaglio Libro | The Shop Around the Corner</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
         .btn-fav { background: none; border: 1px solid #e74c3c; color: #e74c3c; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; flex: 1; }
         .btn-fav:hover, .btn-fav.attivo { background: #e74c3c; color: white; }
-        .btn-carrello { background: var(--primary-green); color: white; border: none; padding: 18px; border-radius: 8px; font-size: 1.1em; font-weight: bold; width: 100%; cursor: pointer; transition: 0.3s; }
-        .btn-carrello:hover { background: var(--dark-green); }
+        .btn-carrello { background: var(--dark-green); color: white; border: none; padding: 18px; border-radius: 8px; font-size: 1.1em; font-weight: bold; width: 100%; cursor: pointer; transition: 0.3s; }
+        .btn-carrello:hover { background: #4d6649; }
         .btn-carrello.nel-carrello { background: white; color: #e74c3c; border: 2px solid #e74c3c; }
         .btn-carrello.nel-carrello:hover { background: #e74c3c; color: white; }
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
@@ -21,7 +21,7 @@ session_start();
         .star-rating { font-size: 30px; cursor: pointer; color: #ddd; margin: 15px 0; }
         .recensione-utente { background: var(--light-green); border: 1px solid var(--border-color); border-radius: 10px; padding: 15px; margin-bottom: 15px; }
         .btn-piccolo { padding: 5px 12px; font-size: 0.82em; border-radius: 6px; cursor: pointer; font-weight: 600; }
-        .btn-modifica-rec { background: none; border: 1px solid var(--primary-green); color: var(--primary-green); }
+        .btn-modifica-rec { background: none; border: 1px solid var(--dark-green); color: var(--dark-green); }
         .btn-elimina-rec { background: none; border: 1px solid #e74c3c; color: #e74c3c; margin-left: 6px; }
     </style>
 </head>
@@ -33,7 +33,7 @@ session_start();
         <span onclick="$('#modalRecensione').fadeOut()" style="float:right; cursor:pointer; font-size:1.5em;">&times;</span>
         <h3 id="modal-rec-titolo">La tua opinione</h3>
         <p style="font-size:0.9em; color:var(--text-sec);">Raccontaci la tua esperienza con questo libro.</p>
-        <form id="formRecensione" style="margin-top:20px;">
+        <form id="formRecensione" style="margin-top:20px;" enctype="multipart/form-data">
             <input type="hidden" name="idProdotto" id="rev-idProdotto">
             <input type="hidden" name="id_recensione" id="rev-id-recensione" value="0">
             <input type="hidden" name="voto" id="rev-voto-val" value="5">
@@ -46,6 +46,11 @@ session_start();
             </div>
             <textarea name="commento" id="rev-commento" rows="4" placeholder="Cosa ne pensi del libro?" required
                 style="width:100%; border:1px solid #ddd; border-radius:8px; padding:10px; font-family:inherit; box-sizing:border-box;"></textarea>
+            <label style="font-size:0.85em; font-weight:600; color:var(--text-dark); display:block; margin-top:12px;">Aggiungi una foto (opzionale)</label>
+            <input type="file" name="fotoRecensione" id="rev-foto" accept="image/*" style="width:100%; margin-top:6px;">
+            <div id="rev-foto-preview" style="margin-top:10px; display:none;">
+                <img id="rev-foto-preview-img" src="" style="max-width:120px; border-radius:8px; border:1px solid #ddd;">
+            </div>
             <button type="submit" class="btn-recensisci" style="width:100%; margin-top:15px; padding:14px;">PUBBLICA RECENSIONE</button>
         </form>
     </div>
@@ -53,7 +58,7 @@ session_start();
 
 <div class="container" style="max-width:1100px; margin:30px auto; padding:0 20px;">
     <div id="loading" style="text-align:center; padding:100px;">
-        <h2 style="color:var(--primary-green);">Caricamento del volume...</h2>
+        <h2 style="color:var(--dark-green);">Caricamento del volume...</h2>
     </div>
 
     <div id="contentWrapper" style="display:none;">
@@ -69,7 +74,7 @@ session_start();
                 <p style="font-size: 1.2em; color: var(--text-dark); margin: 0 0 15px 0;">di <strong id="pAuthor"></strong></p>
                 
                 <p style="color:var(--text-sec); margin-bottom:15px;">
-                    Venduto da: <a href="#" id="pVendorLink" style="font-weight:bold; color:var(--primary-green);"></a>
+                    Venduto da: <a href="#" id="pVendorLink" style="font-weight:bold; color:var(--dark-green);"></a>
                     &nbsp;|&nbsp; Genere: <strong id="pCat"></strong>
                 </p>
                 <div id="priceHtml" style="margin-bottom:10px;"></div>
@@ -150,7 +155,7 @@ $(document).ready(function() {
         }
 
         // Prezzo — sconto solo nel carrello, non sul singolo
-        let prezzoHtml = `<span style="font-size:1.8em;font-weight:800;color:var(--primary-green);">€${parseFloat(p.prezzo).toFixed(2)}</span>`;
+        let prezzoHtml = `<span style="font-size:1.8em;font-weight:800;color:var(--dark-green);">€${parseFloat(p.prezzo).toFixed(2)}</span>`;
         // Mostra info sconto pacchetto se disponibile
         if (p.id_pacchetto && p.NomePacchetto) {
             prezzoHtml += `<div style="margin-top:8px;font-size:0.82em;color:#e67e22;font-weight:600;">
@@ -161,7 +166,7 @@ $(document).ready(function() {
 
         // Stock
         if (p.QuantitaDisp > 0) {
-            $("#stockHtml").html(`<span style="color:var(--primary-green);">✔ ${p.QuantitaDisp} copie disponibili</span>`);
+            $("#stockHtml").html(`<span style="color:var(--dark-green);">✔ ${p.QuantitaDisp} copie disponibili</span>`);
         } else {
             $("#stockHtml").html(`<span style="color:#e74c3c;">✘ Momentaneamente esaurito</span>`);
             $("#btnCarrello").prop("disabled", true).text("Non disponibile").css("opacity", "0.5");
@@ -185,18 +190,44 @@ $(document).ready(function() {
         aggiornaStelle(v);
     });
 
-    // Invio recensione
+    // Invio recensione (FormData per supportare upload immagine)
     $("#formRecensione").on("submit", function(e) {
         e.preventDefault();
-        $.post('api/ba_scrivi_recensione.php', $(this).serialize(), function(resp) {
-            if(resp.status === 'ok') {
-                alert("Recensione pubblicata!");
-                $("#modalRecensione").fadeOut();
-                caricaRecensioni(new URLSearchParams(window.location.search).get('id'));
-            } else {
-                alert(resp.msg);
+        const formData = new FormData(this);
+        $.ajax({
+            url: 'api/ba_scrivi_recensione.php',
+            type: 'POST',
+            data: formData,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success: function(resp) {
+                if(resp.status === 'ok') {
+                    alert("Recensione pubblicata!");
+                    $("#modalRecensione").fadeOut();
+                    $("#rev-foto-preview").hide();
+                    $("#rev-foto").val('');
+                    caricaRecensioni(new URLSearchParams(window.location.search).get('id'));
+                } else {
+                    alert(resp.msg);
+                }
             }
-        }, "json");
+        });
+    });
+
+    // Preview immagine recensione
+    $("#rev-foto").on("change", function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $("#rev-foto-preview-img").attr("src", e.target.result);
+                $("#rev-foto-preview").show();
+            };
+            reader.readAsDataURL(file);
+        } else {
+            $("#rev-foto-preview").hide();
+        }
     });
 });
 
@@ -311,7 +342,7 @@ function mostraRiquadroPacchetto() {
         html += '<img src="' + foto + '" style="width:100%;height:120px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="location.href=\'dettaglio_prodotto.php?id=' + l.id_prodotto + '\'">';
         html += '<p style="margin:6px 0 2px;font-size:0.85em;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + l.nome + '</p>';
         if (l.autore) html += '<p style="margin:0 0 6px;font-size:0.78em;color:#888;">' + l.autore + '</p>';
-        html += '<div style="color:var(--primary-green);font-weight:800;margin-bottom:8px;">€' + parseFloat(l.prezzo).toFixed(2) + '</div>';
+        html += '<div style="color:var(--dark-green);font-weight:800;margin-bottom:8px;">€' + parseFloat(l.prezzo).toFixed(2) + '</div>';
         if (disp) {
             html += '<button onclick="aggiungiDaPacchetto(' + l.id_prodotto + ')" class="btn-primary" style="width:100%;padding:7px;font-size:0.8em;">Aggiungi</button>';
         } else {
@@ -361,12 +392,13 @@ function caricaRecensioni(id) {
                         <div style="display:flex;align-items:center;gap:10px;">
                             <span style="font-size:1.1em;color:#f1c40f;">${stelle}</span>
                             ${isMia ? `
-                            <button class="btn-piccolo btn-modifica-rec" onclick="modificaRecensione(${r.id_recensione}, ${r.valutazione}, \`${r.testo.replace(/`/g,"'")}\`)">✏️ Modifica</button>
-                            <button class="btn-piccolo btn-elimina-rec" onclick="eliminaRecensione(${r.id_recensione})">🗑️ Elimina</button>
+                            <button class="btn-piccolo btn-modifica-rec" onclick="modificaRecensione(${r.id_recensione}, ${r.valutazione}, \`${r.testo.replace(/`/g,"'")}\`)">Modifica</button>
+                            <button class="btn-piccolo btn-elimina-rec" onclick="eliminaRecensione(${r.id_recensione})">Elimina</button>
                             ` : ''}
                         </div>
                     </div>
                     <p style="margin:10px 0;color:var(--text-dark);">${r.testo}</p>
+                    ${r.foto ? `<img src="${r.foto}" style="max-width:160px; border-radius:8px; border:1px solid #ddd; margin-bottom:8px; cursor:pointer;" onclick="window.open('${r.foto}','_blank')">` : ''}
                     <small style="color:var(--text-sec);">${r.data}</small>
                 </div>`;
             });

@@ -17,12 +17,13 @@ if ($action === 'list') {
     $sql = "SELECT ii.id_ordine AS IdOrdine,
                    ii.id_prodotto AS IdProdotto,
                    ii.quantita_prodotto AS Quantita,
+                   ii.prezzo_unitario AS PrezzoUnitario,
                    o.data AS DataOrdine,
                    o.stato AS Stato,
                    o.username AS Cliente,
                    o.totale AS Totale,
                    p.nome AS Titolo,
-                   p.prezzo AS Prezzo,
+                   p.prezzo AS PrezzoAttuale,
                    (SELECT url FROM IMMAGINE_PRODOTTO WHERE id_prodotto = p.id_prodotto LIMIT 1) AS Foto
             FROM INCLUSO_IN ii
             JOIN ORDINE o ON ii.id_ordine = o.id_ordine
@@ -45,10 +46,12 @@ if ($action === 'list') {
     $stmt->execute();
     $res = $stmt->get_result();
 
-    // Raggruppa per ordine
     $ordini = [];
     while ($row = $res->fetch_assoc()) {
         $id = $row['IdOrdine'];
+        // Usa prezzo_unitario salvato (con sconto applicato) se disponibile, altrimenti fallback al prezzo attuale
+        $prezzoEffettivo = $row['PrezzoUnitario'] !== null ? (float)$row['PrezzoUnitario'] : (float)$row['PrezzoAttuale'];
+
         if (!isset($ordini[$id])) {
             $ordini[$id] = [
                 'IdOrdine'   => $id,
@@ -63,13 +66,15 @@ if ($action === 'list') {
             'IdProdotto' => $row['IdProdotto'],
             'Titolo'     => $row['Titolo'],
             'Quantita'   => $row['Quantita'],
-            'Prezzo'     => $row['Prezzo'],
+            'Prezzo'     => $prezzoEffettivo,
             'Foto'       => $row['Foto'] ?? 'img/default.jpg'
         ];
     }
 
-    // Calcola guadagno totale (solo ordini spediti o consegnati)
-    $sqlGuadagno = "SELECT SUM(p.prezzo * ii.quantita_prodotto) as guadagno
+    // Guadagno: usa prezzo_unitario (con sconto reale applicato) se disponibile
+    $sqlGuadagno = "SELECT SUM(
+                        COALESCE(ii.prezzo_unitario, p.prezzo) * ii.quantita_prodotto
+                    ) as guadagno
                     FROM INCLUSO_IN ii
                     JOIN PRODOTTO p ON ii.id_prodotto = p.id_prodotto
                     JOIN ORDINE o ON ii.id_ordine = o.id_ordine
@@ -86,7 +91,6 @@ if ($action === 'list') {
     ]);
 
 } elseif ($action === 'update_status') {
-    // FIX BUG: aggiorna SOLO l'ordine specifico, non tutti dello stesso cliente
     $idOrdine    = intval($_POST['idOrdine'] ?? 0);
     $nuovoStato  = $_POST['stato'] ?? '';
 
@@ -95,7 +99,6 @@ if ($action === 'list') {
         exit;
     }
 
-    // Verifica che l'ordine contenga almeno un prodotto del venditore
     $check = $conn->prepare("SELECT COUNT(*) as cnt FROM INCLUSO_IN ii
                              JOIN PRODOTTO p ON ii.id_prodotto = p.id_prodotto
                              WHERE ii.id_ordine = ? AND p.username = ?");

@@ -3,7 +3,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Profilo Venditore | BookArchive</title>
+    <title>Profilo Venditore | The Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
@@ -50,7 +50,7 @@
         .book-card-info { padding: 14px; flex-grow: 1; display: flex; flex-direction: column; gap: 6px; }
         .book-card-title { font-weight: 700; font-size: 0.95em; color: var(--dark-green); margin: 0; }
         .book-card-author { font-size: 0.82em; color: var(--text-sec); }
-        .book-card-price { font-size: 1.15em; font-weight: 800; color: var(--primary-green); }
+        .book-card-price { font-size: 1.15em; font-weight: 800; color: var(--dark-green); }
         .badge-esaurito { display: inline-block; background: #fdecea; color: #c0392b; font-size: 0.75em; padding: 3px 8px; border-radius: 10px; font-weight: 600; }
     </style>
 </head>
@@ -97,7 +97,7 @@ $(document).ready(function() {
         const dataReg = v.data_registrazione
             ? new Date(v.data_registrazione).toLocaleDateString('it-IT', { day:'2-digit', month:'long', year:'numeric' })
             : '';
-        $('#v-membro').text(dataReg ? 'Su BookArchive dal ' + dataReg : 'Venditore BookArchive');
+        $('#v-membro').text(dataReg ? 'Su The Shop Around the Corner dal ' + dataReg : 'Venditore');
         $('#titolo-libri').text('Libri in vendita (' + resp.libri.length + ')');
 
         if (resp.libri.length === 0) {

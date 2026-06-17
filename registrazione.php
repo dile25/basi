@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Unisciti a BookArchive</title>
+    <title>Unisciti a The Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
@@ -10,7 +10,7 @@
         .auth-input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; }
         .role-selector { display: flex; gap: 10px; margin-bottom: 20px; }
         .role-option { flex: 1; text-align: center; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: 0.3s; }
-        .role-option.active { background: var(--primary-green); color: white; border-color: var(--primary-green); }
+        .role-option.active { background: var(--dark-green); color: white; border-color: var(--dark-green); }
     </style>
 </head>
 <body style="background: var(--light-green);">

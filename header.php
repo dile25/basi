@@ -94,13 +94,13 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
         font-weight: 700 !important;
         font-size: 0.9em !important;
         text-decoration: none !important;
-        box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+        box-shadow: 0 2px 8px rgba(95, 122, 92, 0.35);
         transition: all 0.2s ease !important;
         border: none;
     }
     .btn-dashboard-venditore:hover {
         background: linear-gradient(135deg, #145a32, #1e8449) !important;
-        box-shadow: 0 4px 14px rgba(39, 174, 96, 0.45);
+        box-shadow: 0 4px 14px rgba(95, 122, 92, 0.5);
         transform: translateY(-1px);
         color: white !important;
     }
@@ -187,11 +187,14 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 </style>
 
 <div class="header-container">
-    <a href="index.php" class="logo" style="text-decoration:none; font-weight:800; font-size:1.4em; color:var(--dark-green); display:flex; align-items:center; gap:8px;">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:28px; fill:currentColor;">
-            <path d="M21 4H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1zm-1 15H7a1 1 0 0 1 0-2h13v1a1 1 0 0 1-1 1zm0-4H7V6h13v9zM3 6a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h1V6H3z"/>
+    <a href="index.php" class="logo" style="text-decoration:none; font-weight:700; font-size:1.3em; color:var(--dark-green); display:flex; align-items:center; gap:10px; letter-spacing:-0.01em;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" style="width:34px; height:34px;">
+            <path d="M6 10c0-1.1.9-2 2-2h12c2.2 0 4 1.8 4 4v22c0-1.1-.9-2-2-2H8a2 2 0 0 1-2-2V10z" fill="var(--primary-green)"/>
+            <path d="M42 10c0-1.1-.9-2-2-2H28c-2.2 0-4 1.8-4 4v22c0-1.1.9-2 2-2h14a2 2 0 0 0 2-2V10z" fill="var(--dark-green)"/>
+            <path d="M34 16l9 4-9 4-2-4z" fill="var(--accent-pink)" transform="translate(0,-2)"/>
+            <path d="M34 16l-3 7 3-1.2z" fill="var(--accent-pink-dark)" transform="translate(0,-2)"/>
         </svg>
-        Book<span style="color:var(--primary-green)">Archive</span>
+        <span>The Shop<br><span style="font-size:0.7em; font-weight:600; color:var(--accent-pink-dark); letter-spacing:0.04em;">AROUND THE CORNER</span></span>
     </a>
 
     <div style="display:flex; align-items:center; gap:12px;">
@@ -223,7 +226,7 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
     <div class="user-nav">
         <?php if (isset($_SESSION['IdUtente'])): ?>
             <a href="profilo.php" class="user-btn" style="display:flex; align-items:center; gap:6px;">
-                👤 <?php echo htmlspecialchars($_SESSION['IdUtente']); ?>
+                <?php echo htmlspecialchars($_SESSION['IdUtente']); ?>
             </a>
             <?php if ($_SESSION['tipoUtente'] === 'cliente'): ?>
                 <a href="miei_ordini.php" class="user-btn">I miei ordini</a>

@@ -5,7 +5,7 @@ if(!isset($_SESSION['IdUtente'])) { header("Location: login.php"); exit; }
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>I Miei Preferiti | BookArchive</title>
+    <title>I Miei Preferiti | The Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
@@ -15,12 +15,12 @@ if(!isset($_SESSION['IdUtente'])) { header("Location: login.php"); exit; }
         .book-card img { width: 100%; height: 260px; object-fit: cover; cursor: pointer; }
         .book-info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
         .book-title { font-weight: 700; font-size: 1em; color: var(--dark-green); margin: 0; }
-        .book-price { font-size: 1.2em; font-weight: 800; color: var(--primary-green); }
+        .book-price { font-size: 1.2em; font-weight: 800; color: var(--dark-green); }
         .book-price-old { text-decoration: line-through; color: #999; font-size: 0.85em; }
         .btn-rimuovi { background: none; border: 1px solid #e74c3c; color: #e74c3c; padding: 8px; border-radius: 7px; cursor: pointer; font-size: 0.85em; font-weight: 600; transition: 0.2s; }
         .btn-rimuovi:hover { background: #e74c3c; color: white; }
-        .btn-compra { background: var(--primary-green); color: white; border: none; padding: 10px; border-radius: 7px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .btn-compra:hover { background: var(--dark-green); }
+        .btn-compra { background: var(--dark-green); color: white; border: none; padding: 10px; border-radius: 7px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn-compra:hover { background: #4d6649; }
         .empty-state { text-align: center; padding: 80px 20px; }
         .empty-state h3 { color: var(--dark-green); margin-bottom: 10px; }
     </style>

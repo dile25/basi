@@ -3,7 +3,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Accedi | BookArchive</title>
+    <title>Accedi | The Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
@@ -22,7 +22,7 @@
             <button type="submit" class="btn-recensisci" style="width: 100%; padding: 12px;">ACCEDI</button>
         </form>
 
-        <p style="text-align:center; margin-top:20px; font-size:0.9em;">Nuovo su BookArchive? <a href="registrazione.php">Registrati</a></p>
+        <p style="text-align:center; margin-top:20px; font-size:0.9em;">Nuovo su The Shop Around the Corner? <a href="registrazione.php">Registrati</a></p>
         <p style="text-align:center; margin-top:10px; font-size:0.9em;">
     <a href="index.php" style="color: var(--text-sec);">Torna alla home</a>
 </p>

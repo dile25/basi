@@ -21,34 +21,81 @@ $sottocat      = $_POST['sottocategoria'] ?? '';
 $nuovaCat      = trim($_POST['nuova_categoria'] ?? '');
 $tipoProdotto  = $_POST['tipo_prodotto'] ?? 'libro';
 
-$abilitaSconto   = isset($_POST['abilita_sconto']);
-$tipoSconto      = $_POST['tipo_sconto'] ?? '';
-$percSconto      = intval($_POST['percentuale_sconto'] ?? 0);
-$nomePacchetto   = trim($_POST['nome_pacchetto'] ?? '');
-$libriPacchetto  = $_POST['libri_pacchetto'] ?? [];
-$scontoPacchetto = intval($_POST['sconto_pacchetto'] ?? 0);
+$abilitaSconto = isset($_POST['abilita_sconto']);
+
+// --- Pacchetto libro (saga / autore / promo) ---
+$idPacchettoEsist   = intval($_POST['id_pacchetto_esistente'] ?? 0);
+$nomePacchetto      = trim($_POST['nome_pacchetto'] ?? '');
+$libriPacchetto     = $_POST['libri_pacchetto'] ?? [];
+$sconto2            = intval($_POST['sconto_2'] ?? 10);
+$sconto3            = intval($_POST['sconto_3'] ?? 20);
+$scontoTutti        = intval($_POST['sconto_tutti'] ?? 30);
+
+// --- Abbonamento periodico ---
+$idAbbonamentoEsist = intval($_POST['id_abbonamento_esistente'] ?? 0);
+$nomeAbbonamento    = trim($_POST['nome_abbonamento'] ?? '');
+$periodicita        = $_POST['periodicita'] ?? 'settimanale';
+$numeriAbbonamento  = $_POST['numeri_abbonamento'] ?? [];
+$scontoAbbonamento  = intval($_POST['sconto_abbonamento'] ?? 25);
 
 $conn->begin_transaction();
 
 try {
     $idPacchetto = null;
+    $isAbbonamento = in_array($tipoProdotto, ['rivista', 'magazine', 'periodico']);
 
     if ($abilitaSconto) {
-        if ($tipoSconto === 'sconto_semplice' && $percSconto > 0) {
-            $nPack = 'Sconto ' . $percSconto . '% su ' . $nome;
-            $stmtPack = $conn->prepare("INSERT INTO PACCHETTO (nome, sconto, attivo) VALUES (?, ?, 1)");
-            $stmtPack->bind_param("si", $nPack, $percSconto);
+        if ($isAbbonamento && ($idAbbonamentoEsist > 0 || !empty($nomeAbbonamento))) {
+            // ===== ABBONAMENTO PERIODICO =====
+            if ($idAbbonamentoEsist > 0) {
+                $checkOwn = $conn->prepare(
+                    "SELECT COUNT(*) as cnt FROM PRODOTTO WHERE id_pacchetto = ? AND username = ?"
+                );
+                $checkOwn->bind_param("is", $idAbbonamentoEsist, $user);
+                $checkOwn->execute();
+                $owns = $checkOwn->get_result()->fetch_assoc()['cnt'];
+                if ($owns > 0) {
+                    $idPacchetto = $idAbbonamentoEsist;
+                }
+            } else {
+                // Crea nuovo pacchetto abbonamento: sconto_tutti = sconto_abbonamento,
+                // sconto_2/sconto_3 a 0 perche' non si applicano scaglioni intermedi
+                $stmtPack = $conn->prepare(
+                    "INSERT INTO PACCHETTO (nome, sconto, sconto_2, sconto_3, sconto_tutti, attivo, tipo_pacchetto, periodicita)
+                     VALUES (?, ?, 0, 0, ?, 1, 'abbonamento', ?)"
+                );
+                $stmtPack->bind_param("siis", $nomeAbbonamento, $scontoAbbonamento, $scontoAbbonamento, $periodicita);
+                $stmtPack->execute();
+                $idPacchetto = $conn->insert_id;
+
+                foreach ($numeriAbbonamento as $idNumero) {
+                    $idNumero = intval($idNumero);
+                    $stmtUpd = $conn->prepare("UPDATE PRODOTTO SET id_pacchetto = ? WHERE id_prodotto = ? AND username = ?");
+                    $stmtUpd->bind_param("iis", $idPacchetto, $idNumero, $user);
+                    $stmtUpd->execute();
+                }
+            }
+        } elseif ($idPacchettoEsist > 0) {
+            // ===== PACCHETTO LIBRO ESISTENTE =====
+            $checkOwn = $conn->prepare(
+                "SELECT COUNT(*) as cnt FROM PRODOTTO WHERE id_pacchetto = ? AND username = ?"
+            );
+            $checkOwn->bind_param("is", $idPacchettoEsist, $user);
+            $checkOwn->execute();
+            $owns = $checkOwn->get_result()->fetch_assoc()['cnt'];
+            if ($owns > 0) {
+                $idPacchetto = $idPacchettoEsist;
+            }
+        } elseif (!empty($nomePacchetto)) {
+            // ===== NUOVO PACCHETTO LIBRO con scaglioni =====
+            $stmtPack = $conn->prepare(
+                "INSERT INTO PACCHETTO (nome, sconto, sconto_2, sconto_3, sconto_tutti, attivo, tipo_pacchetto)
+                 VALUES (?, ?, ?, ?, ?, 1, 'libro')"
+            );
+            $stmtPack->bind_param("siiii", $nomePacchetto, $sconto2, $sconto2, $sconto3, $scontoTutti);
             $stmtPack->execute();
             $idPacchetto = $conn->insert_id;
 
-        } elseif (in_array($tipoSconto, ['pacchetto_autore','pacchetto_saga','pacchetto_custom']) && $scontoPacchetto > 0) {
-            $nPack = !empty($nomePacchetto) ? $nomePacchetto : 'Pacchetto ' . $nome;
-            $stmtPack = $conn->prepare("INSERT INTO PACCHETTO (nome, sconto, attivo) VALUES (?, ?, 1)");
-            $stmtPack->bind_param("si", $nPack, $scontoPacchetto);
-            $stmtPack->execute();
-            $idPacchetto = $conn->insert_id;
-
-            // Aggiorna gli altri prodotti del pacchetto
             foreach ($libriPacchetto as $idLibroPack) {
                 $idLibroPack = intval($idLibroPack);
                 $stmtUpd = $conn->prepare("UPDATE PRODOTTO SET id_pacchetto = ? WHERE id_prodotto = ? AND username = ?");
@@ -64,13 +111,6 @@ try {
     $stmtP->bind_param("ssssdisi", $user, $nome, $autore, $desc, $prezzo, $qta, $tipoProdotto, $idPacchetto);
     if (!$stmtP->execute()) throw new Exception("Errore inserimento prodotto");
     $idProdotto = $conn->insert_id;
-
-    // Se pacchetto, aggiorna anche questo nuovo prodotto
-    if ($idPacchetto && $tipoSconto !== 'sconto_semplice') {
-        $stmtSelf = $conn->prepare("UPDATE PRODOTTO SET id_pacchetto = ? WHERE id_prodotto = ?");
-        $stmtSelf->bind_param("ii", $idPacchetto, $idProdotto);
-        $stmtSelf->execute();
-    }
 
     // Foto
     if (isset($_FILES['fotoLibro']) && $_FILES['fotoLibro']['error'] === 0) {

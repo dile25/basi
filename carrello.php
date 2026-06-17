@@ -8,7 +8,7 @@ if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Il Mio Carrello | BookArchive</title>
+    <title>Il Mio Carrello | The Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
@@ -23,10 +23,10 @@ if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
         .qty-btn:disabled { opacity: 0.3; cursor: not-allowed; }
         .qty-display { min-width: 36px; text-align: center; font-weight: bold; font-size: 1.05em; }
         .btn-remove { color: #e74c3c; background: none; border: none; cursor: pointer; font-weight: bold; font-size: 0.85em; margin-top: 8px; padding: 0; text-decoration: underline; font-family: inherit; }
-        .btn-checkout { background: var(--primary-green); color: white; border: none; padding: 16px; border-radius: 8px; font-weight: 800; width: 100%; cursor: pointer; font-size: 1.1em; margin-top: 20px; transition: filter 0.2s; font-family: inherit; }
+        .btn-checkout { background: var(--dark-green); color: white; border: none; padding: 16px; border-radius: 8px; font-weight: 800; width: 100%; cursor: pointer; font-size: 1.1em; margin-top: 20px; transition: filter 0.2s; font-family: inherit; }
         .btn-checkout:hover { filter: brightness(1.1); }
-        .badge-autore { display:inline-block; background:#27ae60; color:white; padding:2px 8px; border-radius:4px; font-size:0.75em; font-weight:bold; margin-top:4px; }
-        .badge-pacchetto { display:inline-block; background:linear-gradient(135deg,#f39c12,#e74c3c); color:white; padding:2px 8px; border-radius:4px; font-size:0.75em; font-weight:bold; margin-top:4px; }
+        .badge-autore { display:inline-block; background:var(--dark-green); color:white; padding:2px 8px; border-radius:4px; font-size:0.75em; font-weight:bold; margin-top:4px; }
+        .badge-pacchetto { display:inline-block; background:linear-gradient(135deg,var(--accent-pink-dark),var(--dark-green)); color:white; padding:2px 8px; border-radius:4px; font-size:0.75em; font-weight:bold; margin-top:4px; }
 
         /* Consigliati */
         .suggestions-box { margin-top: 40px; background: white; padding: 25px; border-radius: 12px; border: 1px solid #eee; }
@@ -58,7 +58,7 @@ if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
                 <span>Titoli:</span><strong id="cart-count-label">0</strong>
             </div>
             <div id="sconti-riepilogo" style="font-size:0.82em; color:var(--primary-green); display:none; margin-bottom:10px;"></div>
-            <div style="display:flex; justify-content:space-between; font-size:1.4em; font-weight:800; color:var(--primary-green); margin-top:10px;">
+            <div style="display:flex; justify-content:space-between; font-size:1.4em; font-weight:800; color:var(--dark-green); margin-top:10px;">
                 <span>Totale:</span><span id="cart-total-label">€0.00</span>
             </div>
             <button class="btn-checkout" onclick="window.location.href='checkout.php'">Procedi al Pagamento</button>
@@ -99,6 +99,10 @@ function caricaCarrello() {
             if (p.scontoAutore) {
                 badgeHtml = `<span class="badge-autore">Promo Autore -${p.percentualeSconto}%</span>`;
                 if (!scontiHtml.includes('Autore')) scontiHtml += `<div>Sconto autore (x2 libri): -${p.percentualeSconto}%</div>`;
+            } else if (p.tipoSconto === 'abbonamento_completo') {
+                badgeHtml = `<span class="badge-pacchetto">Abbonamento completo -${p.percentualeSconto}%</span>`;
+            } else if (p.tipoPacchetto === 'abbonamento' && p.percentualeSconto == 0) {
+                badgeHtml = `<small style="color:var(--text-sec); font-size:0.78em;">${p.libriPackNelCarrello}/${p.libriPackTotale} numeri nel carrello — aggiungi tutti per lo sconto</small>`;
             } else if (p.percentualeSconto > 0) {
                 badgeHtml = `<span class="badge-pacchetto">Offerta -${p.percentualeSconto}%</span>`;
             }
@@ -168,7 +172,7 @@ function caricaConsigliati() {
                 <div class="suggestion-card">
                     <img src="${c.Foto || 'img/default.jpg'}" alt="${c.nome}">
                     <h5 style="margin:8px 0 4px; font-size:0.85em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c.nome}</h5>
-                    <div style="color:var(--primary-green); font-weight:bold; font-size:0.9em; margin-bottom:8px;">€${parseFloat(c.prezzo).toFixed(2)}</div>
+                    <div style="color:var(--dark-green); font-weight:bold; font-size:0.9em; margin-bottom:8px;">€${parseFloat(c.prezzo).toFixed(2)}</div>
                     <a href="dettaglio_prodotto.php?id=${c.id_prodotto}" class="btn-primary" style="font-size:0.78em; padding:5px 10px; text-decoration:none; border-radius:5px; display:inline-block;">Vedi</a>
                 </div>`;
             });

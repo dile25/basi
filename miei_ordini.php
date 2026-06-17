@@ -7,7 +7,7 @@ if(!isset($_SESSION['IdUtente'])) { header("Location: login.php"); exit; }
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>I Miei Ordini | BookArchive</title>
+    <title>I Miei Ordini | The Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
@@ -30,14 +30,14 @@ if(!isset($_SESSION['IdUtente'])) { header("Location: login.php"); exit; }
         .tracker-line-fill { position:absolute; top:14px; left:8%; height:4px; background:var(--primary-green); z-index:2; transition:width 0.5s; }
         .tracker-step { text-align:center; z-index:3; flex:1; font-size:0.75em; color:#aaa; font-weight:600; }
         .tracker-dot { width:28px; height:28px; background:white; border:3px solid #ddd; border-radius:50%; margin:0 auto 6px; display:flex; align-items:center; justify-content:center; font-size:0.8em; }
-        .tracker-step.done .tracker-dot { border-color:var(--primary-green); background:var(--primary-green); color:white; }
+        .tracker-step.done .tracker-dot { border-color:var(--dark-green); background:var(--dark-green); color:white; }
         .tracker-step.done { color:var(--dark-green); }
-        .tracker-step.current .tracker-dot { border-color:var(--primary-green); background:white; color:var(--primary-green); }
+        .tracker-step.current .tracker-dot { border-color:var(--dark-green); background:white; color:var(--dark-green); }
         .tracker-step.current { color:var(--dark-green); }
 
         /* FILTRI */
         .filtro-btn { padding:7px 16px; border-radius:20px; border:1px solid var(--border-color); background:white; cursor:pointer; font-size:0.85em; margin-right:6px; margin-bottom:8px; transition:0.2s; }
-        .filtro-btn.active { background:var(--primary-green); color:white; border-color:var(--primary-green); }
+        .filtro-btn.active { background:var(--dark-green); color:white; border-color:var(--dark-green); }
 
         /* MODAL */
         .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:3000; align-items:center; justify-content:center; }
@@ -121,7 +121,7 @@ function caricaOrdini(stato) {
     $.get('api/ba_miei_ordini.php', { stato: stato }, function(resp) {
         if(resp.status !== 'ok') return;
         if(resp.ordini.length === 0) {
-            $("#ordini-lista").html("<div style='text-align:center;padding:60px;'><h3>Nessun ordine trovato.</h3><a href='index.php' style='color:var(--primary-green);'>Esplora i libri</a></div>");
+            $("#ordini-lista").html("<div style='text-align:center;padding:60px;'><h3>Nessun ordine trovato.</h3><a href='index.php' style='color:var(--dark-green);'>Esplora i libri</a></div>");
             return;
         }
 
@@ -156,7 +156,7 @@ function caricaOrdini(stato) {
                     </div>
                     <div style="display:flex;align-items:center;gap:12px;">
                         <span class="badge ${badgeClass}">${stato}</span>
-                        <strong style="color:var(--primary-green);">€${parseFloat(ord.totale).toFixed(2)}</strong>
+                        <strong style="color:var(--dark-green);">€${parseFloat(ord.totale).toFixed(2)}</strong>
                         <span style="color:#aaa;">▼</span>
                     </div>
                 </div>

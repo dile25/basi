@@ -8,18 +8,18 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Checkout | BookArchive</title>
+    <title>Checkout | The Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         .checkout-box { max-width:650px; margin:40px auto; background:white; padding:35px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.08); }
         .checkout-label { display:block; font-weight:600; margin-bottom:8px; color:var(--dark-green); }
         .checkout-input { width:100%; padding:12px; border:1px solid var(--border-color); border-radius:8px; font-size:0.95em; box-sizing:border-box; margin-bottom:18px; font-family:inherit; }
-        .checkout-input:focus { outline:none; border-color:var(--primary-green); box-shadow:0 0 0 3px rgba(39,174,96,0.1); }
+        .checkout-input:focus { outline:none; border-color:var(--primary-green); box-shadow:0 0 0 3px rgba(95,122,92,0.12); }
         .checkout-input.error { border-color:#e74c3c; }
         .riepilogo { background:var(--light-green); padding:20px; border-radius:10px; margin-bottom:25px; border:1px solid var(--border-color); }
         .riepilogo-riga { display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.95em; }
-        .totale-finale { font-size:1.2em; font-weight:800; color:var(--primary-green); border-top:1px solid var(--border-color); padding-top:12px; margin-top:8px; }
+        .totale-finale { font-size:1.2em; font-weight:800; color:var(--dark-green); border-top:1px solid var(--border-color); padding-top:12px; margin-top:8px; }
         .metodo-card { border:2px solid var(--border-color); border-radius:10px; padding:15px 20px; margin-bottom:12px; cursor:pointer; transition:0.2s; display:flex; align-items:center; gap:12px; }
         .metodo-card:hover { border-color:var(--primary-green); background:var(--light-green); }
         .metodo-card.selected { border-color:var(--primary-green); background:var(--light-green); }

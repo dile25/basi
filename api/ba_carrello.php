@@ -56,6 +56,7 @@ switch ($action) {
                        pk.sconto AS ScontoBase,
                        pk.sconto_2, pk.sconto_3, pk.sconto_tutti,
                        pk.nome AS NomePacchetto,
+                       pk.tipo_pacchetto AS TipoPacchetto,
                        (SELECT url FROM IMMAGINE_PRODOTTO WHERE id_prodotto = p.id_prodotto LIMIT 1) AS Foto
                 FROM CARRELLO c
                 JOIN PRODOTTO p ON c.id_prodotto = p.id_prodotto
@@ -81,9 +82,9 @@ switch ($action) {
             }
             $righe[] = $row;
 
-            // Conteggio autori (per sconto autore)
+            // Conteggio autori (per sconto autore) — solo prodotti tipo libro/non-abbonamento
             $autore = trim($row['autore'] ?? '');
-            if (!empty($autore)) {
+            if (!empty($autore) && $row['TipoPacchetto'] !== 'abbonamento') {
                 $conteggioAutori[$autore] = ($conteggioAutori[$autore] ?? 0) + 1;
             }
 
@@ -98,12 +99,13 @@ switch ($action) {
                     $totDB = $stmtCount->get_result()->fetch_assoc()['tot'];
 
                     $conteggioPacket[$ip] = [
-                        'nel_carrello' => 0,
-                        'totale_db'    => $totDB,
-                        'sconto_2'     => (float)($row['sconto_2'] ?? 10),
-                        'sconto_3'     => (float)($row['sconto_3'] ?? 20),
-                        'sconto_tutti' => (float)($row['sconto_tutti'] ?? 30),
-                        'nome'         => $row['NomePacchetto'] ?? ''
+                        'nel_carrello'   => 0,
+                        'totale_db'      => $totDB,
+                        'sconto_2'       => (float)($row['sconto_2'] ?? 10),
+                        'sconto_3'       => (float)($row['sconto_3'] ?? 20),
+                        'sconto_tutti'   => (float)($row['sconto_tutti'] ?? 30),
+                        'nome'           => $row['NomePacchetto'] ?? '',
+                        'tipo_pacchetto' => $row['TipoPacchetto'] ?? 'libro'
                     ];
                 }
                 $conteggioPacket[$ip]['nel_carrello']++;
@@ -129,22 +131,30 @@ switch ($action) {
                 $totDB  = $pack['totale_db'];
                 $nomePacchetto = $pack['nome'];
 
-                // Sconto crescente in base a quanti libri del pacchetto sono nel carrello
-                if ($nCart >= $totDB && $totDB >= 2) {
-                    // Tutti i libri → sconto massimo
-                    $percSconto = $pack['sconto_tutti'];
-                    $tipoSconto = 'pacchetto_tutti';
-                } elseif ($nCart >= 3) {
-                    $percSconto = $pack['sconto_3'];
-                    $tipoSconto = 'pacchetto_3';
-                } elseif ($nCart >= 2) {
-                    $percSconto = $pack['sconto_2'];
-                    $tipoSconto = 'pacchetto_2';
+                if ($pack['tipo_pacchetto'] === 'abbonamento') {
+                    // ABBONAMENTO PERIODICO: tutto o niente.
+                    // Lo sconto scatta SOLO se tutti i numeri del periodo sono nel carrello.
+                    if ($totDB >= 2 && $nCart >= $totDB) {
+                        $percSconto = $pack['sconto_tutti'];
+                        $tipoSconto = 'abbonamento_completo';
+                    }
+                    // altrimenti nessuno sconto, anche con più numeri ma non tutti
+                } else {
+                    // PACCHETTO LIBRO: sconto crescente in base a quanti prodotti sono nel carrello
+                    if ($nCart >= $totDB && $totDB >= 2) {
+                        $percSconto = $pack['sconto_tutti'];
+                        $tipoSconto = 'pacchetto_tutti';
+                    } elseif ($nCart >= 3) {
+                        $percSconto = $pack['sconto_3'];
+                        $tipoSconto = 'pacchetto_3';
+                    } elseif ($nCart >= 2) {
+                        $percSconto = $pack['sconto_2'];
+                        $tipoSconto = 'pacchetto_2';
+                    }
                 }
-                // 1 solo libro del pacchetto → nessuno sconto
             }
 
-            // Sconto autore (solo se non ha già sconto pacchetto)
+            // Sconto autore (solo se non ha già sconto pacchetto/abbonamento)
             $haScontoAutore = false;
             if ($percSconto == 0 && !empty($autore) && ($conteggioAutori[$autore] ?? 0) >= 2) {
                 $percSconto     = 10;
@@ -174,6 +184,7 @@ switch ($action) {
                 'scontoAutore'        => $haScontoAutore,
                 'nomePacchetto'       => $nomePacchetto,
                 'id_pacchetto'        => $ip,
+                'tipoPacchetto'       => $ip ? ($conteggioPacket[$ip]['tipo_pacchetto'] ?? 'libro') : null,
                 'libriPackNelCarrello'=> $ip ? ($conteggioPacket[$ip]['nel_carrello'] ?? 0) : 0,
                 'libriPackTotale'     => $ip ? ($conteggioPacket[$ip]['totale_db'] ?? 0) : 0,
             ];

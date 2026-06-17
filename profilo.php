@@ -7,7 +7,7 @@ if (!$utentePublico && !isset($_SESSION['IdUtente'])) { header("Location: login.
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Il Mio Profilo | BookArchive</title>
+    <title>Il Mio Profilo | The Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .profile-header { background: var(--light-green); padding: 30px; border-radius: 15px; margin-bottom: 30px; border: 1px solid var(--border-color); }
@@ -17,7 +17,7 @@ if (!$utentePublico && !isset($_SESSION['IdUtente'])) { header("Location: login.
         .venditore-tag { background: #f3e5f5; color: #7b1fa2; }
         .edit-input { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.95em; box-sizing: border-box; }
         .btn-modifica { background: none; border: 1px solid var(--primary-green); color: var(--primary-green); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; }
-        .btn-modifica:hover { background: var(--primary-green); color: white; }
+        .btn-modifica:hover { background: var(--dark-green); color: white; }
         .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media(max-width: 768px) { .dash-grid { grid-template-columns: 1fr; } }
         .form-modifica-section { display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color); }
@@ -217,7 +217,7 @@ if (data.prodotti && data.prodotti.length > 0) {
                     <div style="padding:10px;">
                         <div style="font-weight:700; font-size:0.9em; margin-bottom:4px;">${p.nome}</div>
                         <div style="font-size:0.8em; color:#888;">${p.autore || ''}</div>
-                        <div style="color:var(--primary-green); font-weight:800; margin-top:6px;">€${parseFloat(p.prezzo).toFixed(2)}</div>
+                        <div style="color:var(--dark-green); font-weight:800; margin-top:6px;">€${parseFloat(p.prezzo).toFixed(2)}</div>
                     </div>
                 </div>
             </a>

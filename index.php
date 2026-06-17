@@ -3,7 +3,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>BookArchive | La tua libreria online</title>
+    <title>The Shop Around the Corner | La tua libreria online</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
@@ -15,23 +15,23 @@
         .categories-scroll::-webkit-scrollbar { height: 5px; }
         .categories-scroll::-webkit-scrollbar-thumb { background: var(--primary-green); border-radius: 4px; }
         .cat-group { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
-        .cat-group-label { font-size: 0.7em; font-weight: 800; color: var(--primary-green); text-transform: uppercase; letter-spacing: 0.06em; padding: 0 4px; }
+        .cat-group-label { font-size: 0.7em; font-weight: 800; color: var(--dark-green); text-transform: uppercase; letter-spacing: 0.06em; padding: 0 4px; }
         .cat-group-chips { display: flex; gap: 8px; }
-        .cat-chip { display: flex; align-items: center; padding: 8px 14px; background: white; border: 2px solid #e8f5e9; border-radius: 20px; cursor: pointer; transition: all 0.2s; font-size: 0.85em; font-weight: 600; color: var(--dark-green); white-space: nowrap; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .cat-chip:hover { border-color: var(--primary-green); background: #f0faf2; transform: translateY(-2px); }
+        .cat-chip { display: flex; align-items: center; padding: 8px 14px; background: white; border: 2px solid var(--light-green); border-radius: 20px; cursor: pointer; transition: all 0.2s; font-size: 0.85em; font-weight: 600; color: var(--dark-green); white-space: nowrap; text-decoration: none; box-shadow: 0 2px 8px rgba(95,122,92,0.08); }
+        .cat-chip:hover { border-color: var(--primary-green); background: var(--light-green); transform: translateY(-2px); }
 
         .books-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 30px; padding: 20px; }
         .book-card { background: white; border: 1px solid var(--border-color); border-radius: 15px; overflow: hidden; transition: 0.3s; display: flex; flex-direction: column; cursor: pointer; }
-        .book-card:hover { transform: translateY(-8px); box-shadow: 0 10px 20px rgba(39,174,96,0.15); }
+        .book-card:hover { transform: translateY(-8px); box-shadow: 0 10px 24px rgba(95,122,92,0.18); }
         .book-card img { width: 100%; height: 300px; object-fit: cover; }
         .book-info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
-        .book-price { font-size: 1.3em; color: var(--primary-green); font-weight: 800; margin: 8px 0; }
-        .btn-add-cart { background: var(--primary-green); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: auto; transition: background 0.2s; font-family: inherit; }
-        .btn-add-cart:hover { background: var(--dark-green); }
+        .book-price { font-size: 1.3em; color: var(--dark-green); font-weight: 800; margin: 8px 0; }
+        .btn-add-cart { background: var(--dark-green); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: auto; transition: background 0.2s; font-family: inherit; }
+        .btn-add-cart:hover { background: #4d6649; }
         .btn-avvisami { background: white; color: #e67e22; border: 2px solid #e67e22; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: auto; font-size: 0.9em; transition: all 0.2s; font-family: inherit; }
         .btn-avvisami:hover { background: #e67e22; color: white; }
         .badge-esaurito { display: inline-block; background: #f8d7da; color: #842029; font-size: 0.72em; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-bottom: 6px; }
-        .badge-sconto { display: inline-block; background: linear-gradient(135deg, #f39c12, #e74c3c); color: white; font-size: 0.72em; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-bottom: 4px; }
+        .badge-sconto { display: inline-block; background: linear-gradient(135deg, var(--accent-pink-dark), var(--dark-green)); color: white; font-size: 0.72em; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-bottom: 4px; }
         .section-title { padding: 0 20px; color: var(--dark-green); margin-top: 40px; margin-bottom: 5px; border-left: 5px solid var(--primary-green); }
 
         /* MODAL AVVISAMI */
@@ -54,7 +54,7 @@
 <?php include("header.php"); ?>
 
 <section class="hero">
-    <h1>Benvenuto su BookArchive</h1>
+    <h1>Benvenuto su The Shop Around the Corner</h1>
     <p>Scopri il nostro catalogo completo di libri, riviste e molto altro.</p>
 </section>
 
@@ -179,7 +179,7 @@ $(document).ready(function() {
                         <div style="font-size:3em; margin-bottom:16px; color:#ccc;">&#128218;</div>
                         <h3 style="color:var(--dark-green);">Nessun titolo trovato</h3>
                         <p>Prova con un'altra categoria o termine di ricerca.</p>
-                        <a href="index.php" style="color:var(--primary-green); font-weight:600;">&#8592; Torna alla home</a>
+                        <a href="index.php" style="color:var(--dark-green); font-weight:600;">&#8592; Torna alla home</a>
                     </div>`);
             } else {
                 renderizza(libri, '#grid-filtro');
