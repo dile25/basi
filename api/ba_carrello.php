@@ -52,9 +52,9 @@ switch ($action) {
     case 'list':
         // 1. Carica tutti i prodotti nel carrello con info pacchetto
         $sql = "SELECT c.id_prodotto, c.quantita_prodotto, p.nome, p.autore, p.prezzo,
-                       p.quantita_disponibile, p.id_pacchetto,
+                       p.quantita_disponibile, p.id_pacchetto, p.tipo_prodotto,
                        pk.sconto AS ScontoBase,
-                       pk.sconto_2, pk.sconto_3, pk.sconto_tutti,
+                       pk.sconto_2, pk.sconto_3, pk.sconto_tutti, pk.e_saga,
                        pk.nome AS NomePacchetto,
                        pk.tipo_pacchetto AS TipoPacchetto,
                        (SELECT url FROM IMMAGINE_PRODOTTO WHERE id_prodotto = p.id_prodotto LIMIT 1) AS Foto
@@ -82,9 +82,12 @@ switch ($action) {
             }
             $righe[] = $row;
 
-            // Conteggio autori (per sconto autore) — solo prodotti tipo libro/non-abbonamento
+            // Conteggio autori (per sconto autore) — solo per libri/fumetti, mai per
+            // riviste/periodici/magazine: "stesso editore" non e' uno sconto autore valido,
+            // e l'eventuale sconto per quei prodotti deve venire solo dall'abbonamento.
             $autore = trim($row['autore'] ?? '');
-            if (!empty($autore) && $row['TipoPacchetto'] !== 'abbonamento') {
+            $eLibroOFumetto = !in_array($row['tipo_prodotto'] ?? 'libro', ['rivista', 'magazine', 'periodico']);
+            if (!empty($autore) && $eLibroOFumetto) {
                 $conteggioAutori[$autore] = ($conteggioAutori[$autore] ?? 0) + 1;
             }
 
@@ -104,6 +107,7 @@ switch ($action) {
                         'sconto_2'       => (float)($row['sconto_2'] ?? 10),
                         'sconto_3'       => (float)($row['sconto_3'] ?? 20),
                         'sconto_tutti'   => (float)($row['sconto_tutti'] ?? 30),
+                        'e_saga'         => (bool)($row['e_saga'] ?? 0),
                         'nome'           => $row['NomePacchetto'] ?? '',
                         'tipo_pacchetto' => $row['TipoPacchetto'] ?? 'libro'
                     ];
@@ -140,8 +144,10 @@ switch ($action) {
                     }
                     // altrimenti nessuno sconto, anche con più numeri ma non tutti
                 } else {
-                    // PACCHETTO LIBRO: sconto crescente in base a quanti prodotti sono nel carrello
-                    if ($nCart >= $totDB && $totDB >= 2) {
+                    // PACCHETTO LIBRO: sconto crescente in base a quanti prodotti sono nel carrello.
+                    // Lo sconto "tutti" si applica SOLO se il pacchetto è marcato come saga (e_saga = 1)
+                    // e il cliente ha davvero tutti i volumi del pacchetto nel carrello.
+                    if ($pack['e_saga'] && $nCart >= $totDB && $totDB >= 2) {
                         $percSconto = $pack['sconto_tutti'];
                         $tipoSconto = 'pacchetto_tutti';
                     } elseif ($nCart >= 3) {

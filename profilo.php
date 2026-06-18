@@ -7,7 +7,7 @@ if (!$utentePublico && !isset($_SESSION['IdUtente'])) { header("Location: login.
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Il Mio Profilo | The Shop Around the Corner</title>
+    <title>Il Mio Profilo | The (E-)Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .profile-header { background: var(--light-green); padding: 30px; border-radius: 15px; margin-bottom: 30px; border: 1px solid var(--border-color); }

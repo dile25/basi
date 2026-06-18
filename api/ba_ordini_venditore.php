@@ -71,14 +71,18 @@ if ($action === 'list') {
         ];
     }
 
-    // Guadagno: usa prezzo_unitario (con sconto reale applicato) se disponibile
+    // Guadagno DISPONIBILE: somma solo le righe di INCLUSO_IN con stato
+    // Spedito/Consegnato che NON sono ancora state trasferite (trasferito = 0).
+    // Questo e' indipendente dalla data, quindi funziona correttamente anche
+    // con piu' trasferimenti effettuati nello stesso giorno.
     $sqlGuadagno = "SELECT SUM(
                         COALESCE(ii.prezzo_unitario, p.prezzo) * ii.quantita_prodotto
                     ) as guadagno
                     FROM INCLUSO_IN ii
                     JOIN PRODOTTO p ON ii.id_prodotto = p.id_prodotto
                     JOIN ORDINE o ON ii.id_ordine = o.id_ordine
-                    WHERE p.username = ? AND o.stato IN ('Spedito','Consegnato')";
+                    WHERE p.username = ? AND o.stato IN ('Spedito','Consegnato') AND ii.trasferito = 0";
+
     $stmtG = $conn->prepare($sqlGuadagno);
     $stmtG->bind_param("s", $idVenditore);
     $stmtG->execute();

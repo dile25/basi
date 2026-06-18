@@ -10,33 +10,56 @@ if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
 
 $idVenditore = $_SESSION['IdUtente'];
 
-// Calcola guadagno da ordini spediti/consegnati
-$sql = "SELECT COALESCE(SUM(p.prezzo * ii.quantita_prodotto), 0) as guadagno
-        FROM INCLUSO_IN ii
-        JOIN PRODOTTO p ON ii.id_prodotto = p.id_prodotto
-        JOIN ORDINE o ON ii.id_ordine = o.id_ordine
-        WHERE p.username = ? AND o.stato IN ('Spedito','Consegnato')";
+$conn->begin_transaction();
 
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $idVenditore);
-$stmt->execute();
-$guadagno = (float)$stmt->get_result()->fetch_assoc()['guadagno'];
+try {
+    // Calcola il guadagno disponibile: solo righe non ancora trasferite
+    $sql = "SELECT COALESCE(SUM(
+                COALESCE(ii.prezzo_unitario, p.prezzo) * ii.quantita_prodotto
+            ), 0) as guadagno
+            FROM INCLUSO_IN ii
+            JOIN PRODOTTO p ON ii.id_prodotto = p.id_prodotto
+            JOIN ORDINE o ON ii.id_ordine = o.id_ordine
+            WHERE p.username = ? AND o.stato IN ('Spedito','Consegnato') AND ii.trasferito = 0";
 
-if ($guadagno <= 0) {
-    echo json_encode(['status' => 'error', 'msg' => 'Nessun guadagno disponibile da trasferire.']);
-    exit;
-}
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $idVenditore);
+    $stmt->execute();
+    $guadagno = (float)$stmt->get_result()->fetch_assoc()['guadagno'];
 
-// Registra data trasferimento nella tabella VENDITORE
-$stmtUpd = $conn->prepare("UPDATE VENDITORE SET ultimo_trasferimento = NOW() WHERE username = ?");
-$stmtUpd->bind_param("s", $idVenditore);
+    if ($guadagno <= 0) {
+        $conn->rollback();
+        echo json_encode(['status' => 'error', 'msg' => 'Nessun guadagno disponibile da trasferire.']);
+        exit;
+    }
 
-if ($stmtUpd->execute()) {
+    // Marca come trasferite tutte le righe appena conteggiate, cosi' non
+    // verranno mai piu' incluse in calcoli futuri del guadagno disponibile.
+    $sqlUpdate = "UPDATE INCLUSO_IN ii
+                  JOIN PRODOTTO p ON ii.id_prodotto = p.id_prodotto
+                  JOIN ORDINE o ON ii.id_ordine = o.id_ordine
+                  SET ii.trasferito = 1
+                  WHERE p.username = ? AND o.stato IN ('Spedito','Consegnato') AND ii.trasferito = 0";
+    $stmtUpdate = $conn->prepare($sqlUpdate);
+    $stmtUpdate->bind_param("s", $idVenditore);
+    if (!$stmtUpdate->execute()) {
+        throw new Exception("Errore nel marcare le righe come trasferite");
+    }
+
+    // Aggiorna anche la data dell'ultimo trasferimento, utile per lo storico
+    $stmtUpd = $conn->prepare("UPDATE VENDITORE SET ultimo_trasferimento = NOW() WHERE username = ?");
+    $stmtUpd->bind_param("s", $idVenditore);
+    $stmtUpd->execute();
+
+    $conn->commit();
+
     echo json_encode([
         'status'  => 'ok',
         'importo' => round($guadagno, 2),
         'msg'     => 'Trasferimento di €' . number_format($guadagno, 2, ',', '.') . ' simulato con successo!'
     ]);
-} else {
-    echo json_encode(['status' => 'error', 'msg' => 'Errore durante il trasferimento.']);
+
+} catch (Exception $e) {
+    $conn->rollback();
+    echo json_encode(['status' => 'error', 'msg' => 'Errore durante il trasferimento: ' . $e->getMessage()]);
 }

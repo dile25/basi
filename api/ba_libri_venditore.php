@@ -13,7 +13,7 @@ if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
 $idVenditore = $_SESSION['IdUtente'];
 
 $sql = "SELECT p.id_prodotto, p.nome, p.autore, p.descrizione, p.prezzo,
-               p.quantita_disponibile, p.tipo_prodotto,
+               p.quantita_disponibile, p.tipo_prodotto, p.id_pacchetto,
                i.url AS url_foto,
                (SELECT nome_categoria FROM DESCRIVE WHERE id_prodotto = p.id_prodotto LIMIT 1) as categoria
         FROM PRODOTTO p

@@ -29,7 +29,8 @@ $nomePacchetto      = trim($_POST['nome_pacchetto'] ?? '');
 $libriPacchetto     = $_POST['libri_pacchetto'] ?? [];
 $sconto2            = intval($_POST['sconto_2'] ?? 10);
 $sconto3            = intval($_POST['sconto_3'] ?? 20);
-$scontoTutti        = intval($_POST['sconto_tutti'] ?? 30);
+$eSaga              = isset($_POST['e_saga']);
+$scontoTutti        = $eSaga ? intval($_POST['sconto_tutti'] ?? 30) : 0;
 
 // --- Abbonamento periodico ---
 $idAbbonamentoEsist = intval($_POST['id_abbonamento_esistente'] ?? 0);
@@ -89,10 +90,11 @@ try {
         } elseif (!empty($nomePacchetto)) {
             // ===== NUOVO PACCHETTO LIBRO con scaglioni =====
             $stmtPack = $conn->prepare(
-                "INSERT INTO PACCHETTO (nome, sconto, sconto_2, sconto_3, sconto_tutti, attivo, tipo_pacchetto)
-                 VALUES (?, ?, ?, ?, ?, 1, 'libro')"
+                "INSERT INTO PACCHETTO (nome, sconto, sconto_2, sconto_3, sconto_tutti, attivo, tipo_pacchetto, e_saga)
+                 VALUES (?, ?, ?, ?, ?, 1, 'libro', ?)"
             );
-            $stmtPack->bind_param("siiii", $nomePacchetto, $sconto2, $sconto2, $sconto3, $scontoTutti);
+            $eSagaInt = $eSaga ? 1 : 0;
+            $stmtPack->bind_param("siiiii", $nomePacchetto, $sconto2, $sconto2, $sconto3, $scontoTutti, $eSagaInt);
             $stmtPack->execute();
             $idPacchetto = $conn->insert_id;
 

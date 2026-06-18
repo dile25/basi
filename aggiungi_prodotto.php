@@ -9,7 +9,7 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aggiungi Prodotto | The Shop Around the Corner</title>
+    <title>Aggiungi Prodotto | The (E-)Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
@@ -133,6 +133,12 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
                                 <p style="color:var(--text-sec);">Caricamento tuoi prodotti...</p>
                             </div>
 
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:10px; font-size:0.9em; font-weight:600;">
+                                <input type="checkbox" name="e_saga" id="campo-e-saga" onchange="toggleScontoTutti()">
+                                Questo è un pacchetto chiuso (saga completa con numero fisso di volumi)
+                            </label>
+                            <span class="help-text" style="margin-top:-6px; margin-bottom:10px; display:block;">Solo le saghe complete possono avere uno sconto "tutti i volumi". Per promo generiche o raccolte aperte, lascia deselezionato: ci saranno solo gli scaglioni 2 e 3 prodotti.</span>
+
                             <p style="font-size:0.85em; font-weight:700; color:var(--dark-green); margin:10px 0 6px;">Sconti a scaglioni</p>
                             <div class="row-2" style="gap:10px;">
                                 <div>
@@ -143,7 +149,7 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
                                     <label class="help-text" style="margin-top:0;">3 prodotti (%)</label>
                                     <input type="number" name="sconto_3" min="1" max="90" value="20" class="form-control">
                                 </div>
-                                <div>
+                                <div id="box-sconto-tutti" style="display:none;">
                                     <label class="help-text" style="margin-top:0;">Tutti (%)</label>
                                     <input type="number" name="sconto_tutti" min="1" max="90" value="30" class="form-control">
                                 </div>
@@ -332,6 +338,10 @@ function caricaLibriPacchetto() {
             $('#lista-libri-pacchetto').html('<p style="color:var(--text-sec);font-size:0.85em;">Nessun prodotto disponibile.</p>');
         }
     });
+}
+
+function toggleScontoTutti() {
+    $('#box-sconto-tutti').toggle($('#campo-e-saga').is(':checked'));
 }
 
 function caricaAbbonamentiEsistenti() {

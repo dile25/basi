@@ -194,7 +194,7 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
             <path d="M34 16l9 4-9 4-2-4z" fill="var(--accent-pink)" transform="translate(0,-2)"/>
             <path d="M34 16l-3 7 3-1.2z" fill="var(--accent-pink-dark)" transform="translate(0,-2)"/>
         </svg>
-        <span>The Shop<br><span style="font-size:0.7em; font-weight:600; color:var(--accent-pink-dark); letter-spacing:0.04em;">AROUND THE CORNER</span></span>
+        <span>The (E-)Shop<br><span style="font-size:0.7em; font-weight:600; color:var(--accent-pink-dark); letter-spacing:0.04em;">AROUND THE CORNER</span></span>
     </a>
 
     <div style="display:flex; align-items:center; gap:12px;">

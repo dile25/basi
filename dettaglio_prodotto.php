@@ -6,7 +6,7 @@ session_start();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dettaglio Libro | The Shop Around the Corner</title>
+    <title>Dettaglio Libro | The (E-)Shop Around the Corner</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
@@ -156,11 +156,18 @@ $(document).ready(function() {
 
         // Prezzo — sconto solo nel carrello, non sul singolo
         let prezzoHtml = `<span style="font-size:1.8em;font-weight:800;color:var(--dark-green);">€${parseFloat(p.prezzo).toFixed(2)}</span>`;
-        // Mostra info sconto pacchetto se disponibile
+        // Mostra info sconto pacchetto/abbonamento se disponibile
         if (p.id_pacchetto && p.NomePacchetto) {
-            prezzoHtml += `<div style="margin-top:8px;font-size:0.82em;color:#e67e22;font-weight:600;">
-                Pacchetto "${p.NomePacchetto}": 2 libri -${p.sconto_2}% | 3 libri -${p.sconto_3}% | completo -${p.sconto_tutti}%
-            </div>`;
+            if (p.tipoPacchetto === 'abbonamento') {
+                const periodoLabel = p.periodicita === 'mensile' ? "tutti i numeri dell'anno" : "tutti i numeri del mese";
+                prezzoHtml += `<div style="margin-top:8px;font-size:0.85em;color:#e67e22;font-weight:600;background:#fff8ec;border:1px solid #ffe0b2;border-radius:8px;padding:8px 10px;">
+                    📅 Questo numero fa parte dell'abbonamento "${p.NomePacchetto}". Acquista ${periodoLabel} per ottenere -${p.sconto_tutti}% sul totale.
+                </div>`;
+            } else {
+                prezzoHtml += `<div style="margin-top:8px;font-size:0.82em;color:#e67e22;font-weight:600;">
+                    Pacchetto "${p.NomePacchetto}": 2 libri -${p.sconto_2}% | 3 libri -${p.sconto_3}%${p.sconto_tutti > 0 ? ' | saga completa -' + p.sconto_tutti + '%' : ''}
+                </div>`;
+            }
         }
         $("#priceHtml").html(prezzoHtml);
 
@@ -328,11 +335,18 @@ function mostraRiquadroPacchetto() {
     var p = prodottoCorrente;
     var nomePack = p.NomePacchetto || 'Pacchetto';
     var tot = p.totalePacchetto || (p.libriPacchetto.length + 1);
-    $('#titolo-pacchetto').text('Pacchetto "' + nomePack + '" — aggiungi altri libri e risparmia!');
-    var desc = '2 libri: -' + p.sconto_2 + '%';
-    if (tot >= 3) desc += ' | 3 libri: -' + p.sconto_3 + '%';
-    if (tot > 3) desc += ' | tutti (' + tot + '): -' + p.sconto_tutti + '%';
-    $('#desc-pacchetto').text(desc + '. Lo sconto si applica automaticamente nel carrello.');
+
+    if (p.tipoPacchetto === 'abbonamento') {
+        var periodoLabel = p.periodicita === 'mensile' ? "tutti i numeri dell'anno" : "tutti i numeri del mese";
+        $('#titolo-pacchetto').text('📅 Fa parte dell\'abbonamento "' + nomePack + '"');
+        $('#desc-pacchetto').text('Aggiungi anche gli altri numeri qui sotto: comprando ' + periodoLabel + ' ottieni -' + p.sconto_tutti + '% sul totale. Lo sconto si applica automaticamente nel carrello solo se hai tutti i numeri.');
+    } else {
+        $('#titolo-pacchetto').text('Pacchetto "' + nomePack + '" — aggiungi altri libri e risparmia!');
+        var desc = '2 libri: -' + p.sconto_2 + '%';
+        if (tot >= 3) desc += ' | 3 libri: -' + p.sconto_3 + '%';
+        if (tot > 3 && p.sconto_tutti > 0) desc += ' | tutti (' + tot + '): -' + p.sconto_tutti + '%';
+        $('#desc-pacchetto').text(desc + '. Lo sconto si applica automaticamente nel carrello.');
+    }
 
     var html = '';
     p.libriPacchetto.forEach(function(l) {

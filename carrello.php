@@ -8,7 +8,7 @@ if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Il Mio Carrello | The Shop Around the Corner</title>
+    <title>Il Mio Carrello | The (E-)Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>

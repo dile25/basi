@@ -7,7 +7,7 @@ if(!isset($_SESSION['IdUtente'])) { header("Location: login.php"); exit; }
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>I Miei Ordini | The Shop Around the Corner</title>
+    <title>I Miei Ordini | The (E-)Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>

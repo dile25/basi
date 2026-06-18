@@ -8,7 +8,7 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Checkout | The Shop Around the Corner</title>
+    <title>Checkout | The (E-)Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
@@ -92,8 +92,8 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
             <div class="input-row">
                 <div>
                     <label class="checkout-label">Scadenza</label>
-                    <input type="text" id="cc-scadenza" class="checkout-input" placeholder="MM/AA" maxlength="5">
-                    <div class="err-msg" id="err-scadenza">Formato non valido o carta scaduta.</div>
+                    <input type="text" id="cc-scadenza" class="checkout-input" placeholder="MM/AAAA" maxlength="7" style="margin-bottom:0;">
+                    <div class="err-msg" id="err-scadenza" style="margin-top:6px; position:static;">Formato non valido o carta scaduta.</div>
                 </div>
                 <div>
                     <label class="checkout-label">CVV</label>
@@ -216,10 +216,10 @@ $(document).ready(function() {
         $(this).val(v.replace(/(.{4})/g, '$1 ').trim());
     });
 
-    // Formattazione scadenza MM/AA
+    // Formattazione automatica scadenza MM/AAAA (inserisce la "/" da sola dopo il mese)
     $('#cc-scadenza').on('input', function() {
-        let v = $(this).val().replace(/\D/g, '').substring(0, 4);
-        if(v.length > 2) v = v.substring(0,2) + '/' + v.substring(2);
+        let v = $(this).val().replace(/\D/g, '').substring(0, 6);
+        if (v.length > 2) v = v.substring(0, 2) + '/' + v.substring(2);
         $(this).val(v);
     });
 
@@ -268,15 +268,30 @@ function validaCarta() {
     else { $('#err-numero').hide(); $('#cc-numero').removeClass('error'); }
 
     const scad = $('#cc-scadenza').val();
-    const scadMatch = scad.match(/^(\d{2})\/(\d{2})$/);
-    if(!scadMatch) { $('#err-scadenza').show(); $('#cc-scadenza').addClass('error'); ok = false; }
-    else {
-        const mese = parseInt(scadMatch[1]);
-        const anno = 2000 + parseInt(scadMatch[2]);
-        const now = new Date();
-        if(mese < 1 || mese > 12 || anno < now.getFullYear() || (anno === now.getFullYear() && mese < now.getMonth()+1)) {
-            $('#err-scadenza').show(); $('#cc-scadenza').addClass('error'); ok = false;
-        } else { $('#err-scadenza').hide(); $('#cc-scadenza').removeClass('error'); }
+    const scadMatch = scad.match(/^(\d{2})\/(\d{4})$/);
+    if (!scadMatch) {
+        $('#err-scadenza').text('Inserisci la scadenza nel formato MM/AAAA (es. 09/2027).').show();
+        $('#cc-scadenza').addClass('error'); ok = false;
+    } else {
+        const mese = parseInt(scadMatch[1], 10);
+        const anno = parseInt(scadMatch[2], 10);
+
+        if (mese < 1 || mese > 12) {
+            $('#err-scadenza').text('Il mese deve essere compreso tra 01 e 12.').show();
+            $('#cc-scadenza').addClass('error'); ok = false;
+        } else {
+            const now = new Date();
+            const annoCorrente = now.getFullYear();
+            const meseCorrente = now.getMonth() + 1; // getMonth() è 0-indexed
+
+            const ePassata = (anno < annoCorrente) || (anno === annoCorrente && mese < meseCorrente);
+            if (ePassata) {
+                $('#err-scadenza').text('La carta risulta già scaduta. Inserisci una data futura rispetto a oggi.').show();
+                $('#cc-scadenza').addClass('error'); ok = false;
+            } else {
+                $('#err-scadenza').hide(); $('#cc-scadenza').removeClass('error');
+            }
+        }
     }
 
     const cvv = $('#cc-cvv').val();

@@ -3,7 +3,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Profilo Venditore | The Shop Around the Corner</title>
+    <title>Profilo Venditore | The (E-)Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
@@ -92,12 +92,12 @@ $(document).ready(function() {
         if (resp.status !== 'ok') { $('#loading').text(resp.msg); return; }
 
         const v = resp.venditore;
-        const nome = v.ragione_sociale || (v.nome + ' ' + v.cognome);
+        const nome = v.nome_visualizzato || v.ragione_sociale || (v.nome + ' ' + v.cognome);
         $('#v-nome').text(nome);
         const dataReg = v.data_registrazione
             ? new Date(v.data_registrazione).toLocaleDateString('it-IT', { day:'2-digit', month:'long', year:'numeric' })
             : '';
-        $('#v-membro').text(dataReg ? 'Su The Shop Around the Corner dal ' + dataReg : 'Venditore');
+        $('#v-membro').text(dataReg ? 'Su The (E-)Shop Around the Corner dal ' + dataReg : 'Venditore');
         $('#titolo-libri').text('Libri in vendita (' + resp.libri.length + ')');
 
         if (resp.libri.length === 0) {

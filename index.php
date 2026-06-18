@@ -3,7 +3,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>The Shop Around the Corner | La tua libreria online</title>
+    <title>The (E-)Shop Around the Corner | La tua libreria online</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
@@ -54,8 +54,8 @@
 <?php include("header.php"); ?>
 
 <section class="hero">
-    <h1>Benvenuto su The Shop Around the Corner</h1>
-    <p>Scopri il nostro catalogo completo di libri, riviste e molto altro.</p>
+    <h1>Benvenuto su The (E-)Shop Around the Corner</h1>
+    <p>Scopri il nostro catalogo completo di libri, riviste e altre pubblicazioni.</p>
 </section>
 
 <!-- BANNER CATEGORIE -->

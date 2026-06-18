@@ -9,7 +9,7 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Venditore | The Shop Around the Corner</title>
+    <title>Dashboard Venditore | The (E-)Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
@@ -108,10 +108,11 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
 
 <!-- MODAL MODIFICA -->
 <div id="modalModifica" class="modal-overlay">
-    <div class="modal-box" style="max-width:500px;">
+    <div class="modal-box" style="max-width:520px;">
         <span onclick="$('#modalModifica').fadeOut()" style="float:right; cursor:pointer; font-size:1.5em;">&times;</span>
         <h3 style="color:var(--dark-green); margin-bottom:20px;">Modifica Prodotto</h3>
         <input type="hidden" id="modifica-id">
+        <input type="hidden" id="modifica-tipo-prodotto">
         <label style="font-weight:600;">Titolo</label>
         <input type="text" id="modifica-nome" class="form-control">
         <label style="font-weight:600;">Autore / Editore</label>
@@ -131,6 +132,25 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
         <label style="font-weight:600;">Nuova immagine (opzionale)</label>
         <img id="modifica-preview" src="" style="width:55px;height:75px;object-fit:cover;border-radius:6px;margin-bottom:8px;display:none;">
         <input type="file" id="modifica-foto" accept="image/*" class="form-control">
+
+        <!-- SEZIONE PACCHETTO/ABBONAMENTO -->
+        <div style="border:1px solid var(--border-color); border-radius:10px; padding:15px; margin:10px 0; background:#f9fbf9;">
+            <p style="font-weight:700; color:var(--dark-green); margin:0 0 4px; font-size:0.95em;">Pacchetto sconto</p>
+            <p id="modifica-pacchetto-stato" style="font-size:0.85em; color:var(--text-sec); margin:0 0 10px;">Caricamento stato...</p>
+
+            <div id="modifica-box-libro" style="display:none;">
+                <label style="font-size:0.88em; font-weight:600;">Assegna a un pacchetto sconto esistente, o rimuovi</label>
+                <select id="modifica-scelta-pacchetto" class="form-control"></select>
+            </div>
+
+            <div id="modifica-box-abbonamento" style="display:none;">
+                <label style="font-size:0.88em; font-weight:600;">Assegna a un abbonamento esistente, o rimuovi</label>
+                <select id="modifica-scelta-abbonamento" class="form-control"></select>
+            </div>
+
+            <a href="aggiungi_prodotto.php" style="font-size:0.82em; color:var(--dark-green);">+ Crea un nuovo pacchetto o abbonamento dalla pagina di aggiunta prodotto</a>
+        </div>
+
         <button class="btn-primary" style="width:100%; padding:12px;" onclick="salvaModifica()">Salva Modifiche</button>
         <p id="msg-modifica" style="display:none; font-weight:600; margin-top:8px; text-align:center;"></p>
     </div>
@@ -170,7 +190,7 @@ function caricaLibri() {
                             €${parseFloat(lib.prezzo).toFixed(2)} &nbsp;|&nbsp; ${qtaHtml}
                         </div>
                     </div>
-                    <button class="btn-modifica-libro" onclick="apriModifica(${lib.id_prodotto},'${lib.nome.replace(/'/g,"\\'")}','${(lib.autore||'').replace(/'/g,"\\'")}','${(lib.descrizione||'').replace(/'/g,"\\'").replace(/\n/g,' ')}',${lib.prezzo},${lib.quantita_disponibile},'${lib.url_foto||''}')">Modifica</button>
+                    <button class="btn-modifica-libro" onclick="apriModifica(${lib.id_prodotto},'${lib.nome.replace(/'/g,"\\'")}','${(lib.autore||'').replace(/'/g,"\\'")}','${(lib.descrizione||'').replace(/'/g,"\\'").replace(/\n/g,' ')}',${lib.prezzo},${lib.quantita_disponibile},'${lib.url_foto||''}','${lib.tipo_prodotto||'libro'}',${lib.id_pacchetto || 'null'})">Modifica</button>
                     <button class="btn-elimina" onclick="eliminaLibro(${lib.id_prodotto})">Elimina</button>
                 </div>`;
             });
@@ -274,7 +294,7 @@ function aggiornaStato(idOrdine, stato) {
         else alert('Errore: ' + resp.msg);
     }, 'json');
 }
-function apriModifica(id, nome, autore, desc, prezzo, qta, urlFoto) {
+function apriModifica(id, nome, autore, desc, prezzo, qta, urlFoto, tipoProdotto, idPacchetto) {
     $('#modifica-id').val(id);
     $('#modifica-nome').val(nome);
     $('#modifica-autore').val(autore);
@@ -282,10 +302,48 @@ function apriModifica(id, nome, autore, desc, prezzo, qta, urlFoto) {
     $('#modifica-prezzo').val(prezzo);
     $('#modifica-quantita').val(qta);
     $('#modifica-foto').val('');
+    $('#modifica-tipo-prodotto').val(tipoProdotto || 'libro');
     urlFoto ? $('#modifica-preview').attr('src',urlFoto).show() : $('#modifica-preview').hide();
     $('#msg-modifica').hide();
+    caricaSezionePacchettoModifica(tipoProdotto, idPacchetto);
     $('#modalModifica').css('display','flex').hide().fadeIn();
 }
+
+function caricaSezionePacchettoModifica(tipoProdotto, idPacchettoAttuale) {
+    const eAbbonabile = (tipoProdotto === 'rivista' || tipoProdotto === 'magazine' || tipoProdotto === 'periodico');
+    $('#modifica-box-libro, #modifica-box-abbonamento').hide();
+
+    if (eAbbonabile) {
+        $('#modifica-pacchetto-stato').text('Caricamento abbonamenti...');
+        $.get('api/ba_abbonamenti_venditore.php', function(resp) {
+            const select = $('#modifica-scelta-abbonamento');
+            select.html('<option value="">-- Nessun abbonamento --</option>');
+            if (resp.status === 'ok' && resp.abbonamenti.length > 0) {
+                resp.abbonamenti.forEach(a => {
+                    const sel = (idPacchettoAttuale && a.id_pacchetto == idPacchettoAttuale) ? 'selected' : '';
+                    select.append(`<option value="${a.id_pacchetto}" ${sel}>${a.nome} (${a.tot_prodotti} numeri, ${a.periodicita_label})</option>`);
+                });
+            }
+            $('#modifica-box-abbonamento').show();
+            $('#modifica-pacchetto-stato').text(idPacchettoAttuale ? 'Questo numero è già assegnato a un abbonamento.' : 'Questo numero non è ancora in nessun abbonamento.');
+        }, 'json');
+    } else {
+        $('#modifica-pacchetto-stato').text('Caricamento pacchetti...');
+        $.get('api/ba_pacchetti_venditore.php', function(resp) {
+            const select = $('#modifica-scelta-pacchetto');
+            select.html('<option value="">-- Nessun pacchetto --</option>');
+            if (resp.status === 'ok' && resp.pacchetti.length > 0) {
+                resp.pacchetti.forEach(p => {
+                    const sel = (idPacchettoAttuale && p.id_pacchetto == idPacchettoAttuale) ? 'selected' : '';
+                    select.append(`<option value="${p.id_pacchetto}" ${sel}>${p.nome} (${p.tot_prodotti} prodotti)</option>`);
+                });
+            }
+            $('#modifica-box-libro').show();
+            $('#modifica-pacchetto-stato').text(idPacchettoAttuale ? 'Questo prodotto è già assegnato a un pacchetto sconto.' : 'Questo prodotto non è ancora in nessun pacchetto sconto.');
+        }, 'json');
+    }
+}
+
 function salvaModifica() {
     const formData = new FormData();
     formData.append('id_prodotto', $('#modifica-id').val());
@@ -294,6 +352,15 @@ function salvaModifica() {
     formData.append('descrizione', $('#modifica-descrizione').val());
     formData.append('prezzo', $('#modifica-prezzo').val());
     formData.append('quantita', $('#modifica-quantita').val());
+
+    const tipoProdotto = $('#modifica-tipo-prodotto').val();
+    const eAbbonabile = (tipoProdotto === 'rivista' || tipoProdotto === 'magazine' || tipoProdotto === 'periodico');
+    if (eAbbonabile) {
+        formData.append('id_pacchetto', $('#modifica-scelta-abbonamento').val());
+    } else {
+        formData.append('id_pacchetto', $('#modifica-scelta-pacchetto').val());
+    }
+
     const foto = $('#modifica-foto')[0].files[0];
     if(foto) formData.append('fotoLibro', foto);
     $.ajax({

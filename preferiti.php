@@ -5,7 +5,7 @@ if(!isset($_SESSION['IdUtente'])) { header("Location: login.php"); exit; }
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>I Miei Preferiti | The Shop Around the Corner</title>
+    <title>I Miei Preferiti | The (E-)Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>

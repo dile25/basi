@@ -21,6 +21,10 @@ if (!$venditore) {
     exit;
 }
 
+// Usa lo username come nome visualizzato — sempre aggiornato, non dipende da
+// ragione_sociale o nome/cognome che potrebbero non essere stati aggiornati altrove
+$venditore['nome_visualizzato'] = $username;
+
 // Libri del venditore
 $stmtL = $conn->prepare("SELECT p.id_prodotto, p.nome, p.autore, p.prezzo, p.quantita_disponibile,
                                  (SELECT url FROM IMMAGINE_PRODOTTO WHERE id_prodotto = p.id_prodotto LIMIT 1) as foto,
