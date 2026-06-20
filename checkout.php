@@ -43,7 +43,7 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
 
     <!-- STEP 1: INDIRIZZO + METODO -->
     <div id="step-indirizzo" class="checkout-box">
-        <h2 class="step-title">📦 Completa il tuo ordine</h2>
+        <h2 class="step-title">Completa il tuo ordine</h2>
         <p class="step-sub">Controlla i dati prima di procedere al pagamento.</p>
 
         <div class="riepilogo" id="riepilogo-carrello">
@@ -68,22 +68,34 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
 
         <div id="metodo-nuovo">
             <div class="metodo-card" onclick="selezionaMetodo('Carta', this)">
-                <input type="radio" name="metodo" value="Carta"> 💳 Carta di Credito / Debito
+                <input type="radio" name="metodo" value="Carta">
+                <svg class="metodo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--dark-green)"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+                Carta di Credito / Debito
             </div>
             <div class="metodo-card" onclick="selezionaMetodo('PayPal', this)">
-                <input type="radio" name="metodo" value="PayPal"> 🅿️ PayPal 
+                <input type="radio" name="metodo" value="PayPal">
+                <svg class="metodo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#003087"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.312 2.48 1.007 4.274-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.118zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.59 3.025-2.566 6.082-8.558 6.082H9.824l-1.226 7.78h3.397c.46 0 .85-.335.92-.788l.04-.196.733-4.649.047-.256a.932.932 0 0 1 .92-.788h.58c3.754 0 6.694-1.524 7.552-5.932.358-1.84.173-3.375-.565-4.455-.21-.298-.45-.558-.72-.778z"/></svg>
+                PayPal
             </div>
             <div class="metodo-card" onclick="selezionaMetodo('ApplePay', this)">
-                <input type="radio" name="metodo" value="ApplePay">  Apple Pay 
+                <input type="radio" name="metodo" value="ApplePay">
+                <svg class="metodo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
+                Apple Pay
             </div>
             <div class="metodo-card" onclick="selezionaMetodo('GooglePay', this)">
-                <input type="radio" name="metodo" value="GooglePay"> 🔵 Google Pay
+                <input type="radio" name="metodo" value="GooglePay">
+                <svg class="metodo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11.99 0C5.364 0 0 5.364 0 11.99 0 18.62 5.364 24 11.99 24 18.62 24 24 18.62 24 11.99 24 5.364 18.62 0 11.99 0zm4.974 12.25c0 2.87-1.925 4.854-4.83 4.854a4.998 4.998 0 0 1-5.006-5.004c0-2.77 2.235-5.004 5.006-5.004 1.351 0 2.483.497 3.352 1.314l-1.362 1.362c-.37-.356-.998-.77-1.99-.77-1.704 0-3.094 1.413-3.094 3.098s1.39 3.098 3.094 3.098c1.978 0 2.72-1.42 2.836-2.155h-2.836v-1.787h4.743c.044.25.087.5.087.994z" fill="#4285F4"/></svg>
+                Google Pay
             </div>
             <div class="metodo-card" onclick="selezionaMetodo('Rate', this)">
-                <input type="radio" name="metodo" value="Rate"> 📅 Paga in 3 rate 
+                <input type="radio" name="metodo" value="Rate">
+                <svg class="metodo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--dark-green)"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+                Paga in 3 rate
             </div>
             <div class="metodo-card" onclick="selezionaMetodo('Contrassegno', this)">
-                <input type="radio" name="metodo" value="Contrassegno"> 🚚 Pagamento alla consegna
+                <input type="radio" name="metodo" value="Contrassegno">
+                <svg class="metodo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--dark-green)"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2a3 3 0 0 0 3 3 3 3 0 0 0 3-3h6a3 3 0 0 0 3 3 3 3 0 0 0 3-3h2v-5l-3-4zm-.5 1.5 1.96 2.5H17V9.5h2.5zM6 18a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm2.22-3a3.01 3.01 0 0 0-4.44 0H3V6h12v9H8.22zM18 18a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>
+                Pagamento alla consegna
             </div>
         </div>
 
@@ -167,22 +179,40 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
 
     <!-- STEP 2: RIEPILOGO + CONFERMA -->
     <div id="step-pagamento" class="checkout-box">
-        <h2 class="step-title">✅ Conferma il tuo ordine</h2>
+        <h2 class="step-title" style="display:flex;align-items:center;gap:10px;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--dark-green)" style="width:26px;height:26px;flex-shrink:0;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+            Conferma il tuo ordine
+        </h2>
         <p class="step-sub">Verifica i dettagli prima di confermare.</p>
 
-        <div class="recap-box">
-            <div class="recap-row"><span>Spedizione a:</span><strong id="recap-indirizzo"></strong></div>
-            <div class="recap-row"><span>Metodo:</span><strong id="recap-metodo"></strong></div>
-            <div class="recap-row totale-finale"><span>Totale:</span><span id="recap-totale"></span></div>
+        <div class="recap-box" style="border-radius:12px; padding:22px;">
+            <div class="recap-row" style="align-items:flex-start; gap:12px;">
+                <span style="color:var(--text-sec); white-space:nowrap;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="var(--dark-green)" style="width:15px;height:15px;vertical-align:middle;margin-right:4px;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    Spedizione a:
+                </span>
+                <strong id="recap-indirizzo" style="text-align:right;"></strong>
+            </div>
+            <hr style="border:0;border-top:1px solid var(--border-color);margin:12px 0;">
+            <div class="recap-row" style="align-items:center; gap:12px;">
+                <span style="color:var(--text-sec);">Metodo di pagamento:</span>
+                <strong id="recap-metodo" style="display:flex;align-items:center;gap:6px;"></strong>
+            </div>
+            <hr style="border:0;border-top:1px solid var(--border-color);margin:12px 0;">
+            <div class="recap-row totale-finale" style="margin-top:4px;">
+                <span>Totale:</span>
+                <span id="recap-totale" style="color:var(--dark-green);font-size:1.3em;font-weight:800;"></span>
+            </div>
         </div>
 
-        <div id="recap-prodotti" style="margin-bottom:25px;"></div>
+        <div id="recap-prodotti" style="margin-bottom:25px; background:white; border:1px solid var(--border-color); border-radius:12px; overflow:hidden;"></div>
 
-        <button class="btn-recensisci" style="width:100%; padding:15px; font-size:1.05em;" onclick="confermaPagamento()">
-            💳 PAGA ORA — Conferma Ordine
+        <button class="btn-recensisci" style="width:100%; padding:16px; font-size:1.05em; display:flex; align-items:center; justify-content:center; gap:10px; border-radius:10px;" onclick="confermaPagamento()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width:20px;height:20px;flex-shrink:0;"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+            Paga ora — Conferma ordine
         </button>
         <button onclick="$('#step-pagamento').hide(); $('#step-indirizzo').show();"
-            style="width:100%; padding:12px; margin-top:10px; background:none; border:1px solid var(--border-color); border-radius:8px; cursor:pointer; color:var(--text-sec);">
+            style="width:100%; padding:12px; margin-top:10px; background:none; border:1px solid var(--border-color); border-radius:8px; cursor:pointer; color:var(--text-sec); font-family:inherit;">
             ← Torna indietro
         </button>
     </div>
@@ -210,17 +240,63 @@ $(document).ready(function() {
     $.get('api/ba_carrello.php', { action: 'list' }, function(resp) {
         if(resp.status === 'ok') {
             if(resp.prodotti.length === 0) { window.location.href = 'carrello.php'; return; }
-            let html = '';
-            resp.prodotti.forEach(p => {
-                html += `<div class="riepilogo-riga"><span>${p.nome} × ${p.quantita}</span><span>€${parseFloat(p.subtotale).toFixed(2)}</span></div>`;
-            });
-            html += `<div class="riepilogo-riga totale-finale"><span>Totale</span><span>€${parseFloat(resp.totaleCart).toFixed(2)}</span></div>`;
-            $('#riepilogo-carrello').html(html);
-            datiOrdine.totale = resp.totaleCart;
 
-            // Salva anche per il recap
-            datiOrdine.prodotti = resp.prodotti;
-            datiOrdine.totaleCart = resp.totaleCart;
+            // Controlla se arriva da un piano di abbonamento
+            const abbRaw = sessionStorage.getItem('abbonamento_selezionato');
+            const abb    = abbRaw ? JSON.parse(abbRaw) : null;
+
+            let html = '';
+            datiOrdine.prodotti    = resp.prodotti;
+            datiOrdine.totaleCart  = resp.totaleCart;
+            datiOrdine.abbonamento = abb || null;
+
+            if (abb) {
+                const sconto       = parseFloat(abb.sconto) || 0;
+                const numUscite    = parseInt(abb.numUscite) || 1;
+                const prezzoUnit   = parseFloat(abb.prezzoProdotto) || parseFloat(resp.prodotti[0]?.prezzoOriginale || 0);
+                const prezzoScontato = prezzoUnit * (1 - sconto / 100);
+                const totaleAbb    = prezzoScontato * numUscite;
+
+                const perioLabel   = abb.periodicita === 'settimanale' ? 'numeri settimanali' : 'numeri mensili';
+
+                // Banner piano selezionato
+                html += `<div style="background:#f5eef8; border:1px solid #d2b4de; border-radius:8px; padding:10px 14px; margin-bottom:12px; color:#6c3483; font-size:0.88em; font-weight:600;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#8e44ad" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+                    Piano: <strong>${abb.nomeAbb}</strong> — ${numUscite} ${perioLabel} con sconto ${sconto}%
+                    <button onclick="sessionStorage.removeItem('abbonamento_selezionato'); location.reload();"
+                        style="float:right; background:none; border:none; color:#8e44ad; cursor:pointer; font-size:0.85em; text-decoration:underline; font-family:inherit;">
+                        Rimuovi
+                    </button>
+                </div>`;
+
+                // Riga prodotto base × numero uscite
+                html += `<div class="riepilogo-riga">
+                    <span>${resp.prodotti[0]?.nome || 'Abbonamento'} × ${numUscite} ${perioLabel}</span>
+                    <span>
+                        <small style="text-decoration:line-through; color:#bbb; margin-right:6px;">€${(prezzoUnit * numUscite).toFixed(2)}</small>
+                        <strong style="color:#8e44ad;">€${totaleAbb.toFixed(2)}</strong>
+                    </span>
+                </div>`;
+                html += `<div class="riepilogo-riga" style="font-size:0.82em; color:#8e44ad;">
+                    <span>Sconto abbonamento ${sconto}%</span>
+                    <span>−€${(prezzoUnit * numUscite - totaleAbb).toFixed(2)}</span>
+                </div>`;
+                html += `<div class="riepilogo-riga totale-finale"><span>Totale</span><span>€${totaleAbb.toFixed(2)}</span></div>`;
+
+                datiOrdine.totale        = totaleAbb.toFixed(2);
+                datiOrdine.numUscite     = numUscite;
+                datiOrdine.prezzoUnit    = prezzoUnit;
+                datiOrdine.prezzoScontato = prezzoScontato;
+
+            } else {
+                resp.prodotti.forEach(p => {
+                    html += `<div class="riepilogo-riga"><span>${p.nome} × ${p.quantita}</span><span>€${parseFloat(p.subtotale).toFixed(2)}</span></div>`;
+                });
+                html += `<div class="riepilogo-riga totale-finale"><span>Totale</span><span>€${parseFloat(resp.totaleCart).toFixed(2)}</span></div>`;
+                datiOrdine.totale = resp.totaleCart;
+            }
+
+            $('#riepilogo-carrello').html(html);
         }
     }, 'json');
 
@@ -280,8 +356,18 @@ $(document).ready(function() {
 });
 
 function iconaMetodo(m) {
-    const icons = { 'Carta': '💳', 'PayPal': '🅿️', 'ApplePay': '', 'GooglePay': '🔵', 'Rate': '📅', 'Contrassegno': '🚚' };
-    return icons[m] || '💳';
+    const svgCarta = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;vertical-align:middle;"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>';
+    const svgCamion = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;vertical-align:middle;"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2a3 3 0 0 0 6 0h6a3 3 0 0 0 6 0h2v-5l-3-4zm-2 8a1 1 0 1 1 0 2 1 1 0 0 1 0-2zM6 18a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm11.5-9.5 1.96 2.5H17V8.5h.5z"/></svg>';
+    const svgCal = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;vertical-align:middle;"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>';
+    const icons = {
+        'Carta': svgCarta,
+        'PayPal': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#003087" style="width:16px;height:16px;vertical-align:middle;"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.312 2.48 1.007 4.274-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.118zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.59 3.025-2.566 6.082-8.558 6.082H9.824l-1.226 7.78h3.397c.46 0 .85-.335.92-.788l.733-4.649a.932.932 0 0 1 .92-.788h.58c3.754 0 6.694-1.524 7.552-5.932.358-1.84.173-3.375-.565-4.455z"/></svg>',
+        'ApplePay': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000" style="width:16px;height:16px;vertical-align:middle;"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-3.182-1.221-3.22-4.857.026-6.374-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>',
+        'GooglePay': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width:16px;height:16px;vertical-align:middle;"><path d="M11.99 0C5.364 0 0 5.364 0 11.99 0 18.62 5.364 24 11.99 24 18.62 24 24 18.62 24 11.99 24 5.364 18.62 0 11.99 0zm4.974 12.25c0 2.87-1.925 4.854-4.83 4.854a4.998 4.998 0 0 1-5.006-5.004c0-2.77 2.235-5.004 5.006-5.004 1.351 0 2.483.497 3.352 1.314l-1.362 1.362c-.37-.356-.998-.77-1.99-.77-1.704 0-3.094 1.413-3.094 3.098s1.39 3.098 3.094 3.098c1.978 0 2.72-1.42 2.836-2.155h-2.836v-1.787h4.743c.044.25.087.5.087.994z" fill="#4285F4"/></svg>',
+        'Rate': svgCal,
+        'Contrassegno': svgCamion
+    };
+    return icons[m] || svgCarta;
 }
 
 let metodoCorrente = '';
@@ -446,15 +532,47 @@ function procediAlPagamento() {
 
     // Mostra recap
     $('#recap-indirizzo').text(indirizzo);
-    $('#recap-metodo').text(iconaMetodo(metodoCorrente) + ' ' + metodoCorrente);
+    // Mostra solo il nome del metodo (no SVG HTML che verrebbe stampato come testo)
+    const nomiMetodo = { 'Carta':'Carta di Credito/Debito', 'PayPal':'PayPal', 'ApplePay':'Apple Pay', 'GooglePay':'Google Pay', 'Rate':'Paga in 3 rate', 'Contrassegno':'Pagamento alla consegna' };
+    $('#recap-metodo').text(nomiMetodo[metodoCorrente] || metodoCorrente);
     $('#recap-totale').text('€' + parseFloat(datiOrdine.totale).toFixed(2));
 
     let rpHtml = '';
-    if(datiOrdine.prodotti) {
+    if(datiOrdine.abbonamento) {
+        const a            = datiOrdine.abbonamento;
+        const numUscite    = datiOrdine.numUscite || parseInt(a.numUscite) || 1;
+        const prezzoUnit   = datiOrdine.prezzoUnit || parseFloat(a.prezzoProdotto) || 0;
+        const sconto       = parseFloat(a.sconto) || 0;
+        const prezzoSc     = prezzoUnit * (1 - sconto / 100);
+        const totaleAbb    = prezzoSc * numUscite;
+        const perioLabel   = a.periodicita === 'settimanale' ? 'numeri settimanali' : 'numeri mensili';
+
+        rpHtml += `<div style="background:#f5eef8; border-bottom:1px solid #e8d5f0; padding:12px 18px; color:#6c3483; font-size:0.88em; font-weight:600;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#8e44ad" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+            ${a.nomeAbb} — ${numUscite} ${perioLabel}, sconto ${sconto}%
+        </div>`;
+
+        if(datiOrdine.prodotti && datiOrdine.prodotti[0]) {
+            const p = datiOrdine.prodotti[0];
+            rpHtml += `<div style="display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid #f0f0f0;">
+                <img src="${p.URLfoto || 'img/default.jpg'}" style="width:48px; height:64px; object-fit:cover; border-radius:6px; border:1px solid #eee; flex-shrink:0;">
+                <div style="flex-grow:1;">
+                    <div style="font-weight:700; font-size:0.95em;">${p.nome}</div>
+                    <div style="font-size:0.82em; color:var(--text-sec);">× ${numUscite} ${perioLabel}</div>
+                    <div style="font-size:0.8em; color:#bbb; text-decoration:line-through;">€${(prezzoUnit * numUscite).toFixed(2)} senza sconto</div>
+                </div>
+                <div style="font-weight:700; color:#8e44ad;">€${totaleAbb.toFixed(2)}</div>
+            </div>`;
+        }
+    } else if(datiOrdine.prodotti) {
         datiOrdine.prodotti.forEach(p => {
-            rpHtml += `<div style="display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #eee;">
-                <img src="${p.URLfoto}" style="width:45px; height:60px; object-fit:cover; border-radius:5px;">
-                <div><strong>${p.nome}</strong><br><small style="color:var(--text-sec);">× ${p.quantita} — €${parseFloat(p.subtotale).toFixed(2)}</small></div>
+            rpHtml += `<div style="display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid #f0f0f0;">
+                <img src="${p.URLfoto || 'img/default.jpg'}" style="width:48px; height:64px; object-fit:cover; border-radius:6px; border:1px solid #eee; flex-shrink:0;">
+                <div style="flex-grow:1;">
+                    <div style="font-weight:700; font-size:0.95em;">${p.nome}</div>
+                    <div style="font-size:0.82em; color:var(--text-sec);">× ${p.quantita}</div>
+                </div>
+                <div style="font-weight:700; color:var(--dark-green);">€${parseFloat(p.subtotale).toFixed(2)}</div>
             </div>`;
         });
     }
@@ -471,7 +589,8 @@ function confermaPagamento() {
         metodo: datiOrdine.metodo
     }, function(resp) {
         if(resp.status === 'ok') {
-            alert('✅ Ordine #' + resp.idOrdine + ' confermato e pagato!');
+            sessionStorage.removeItem('abbonamento_selezionato');
+            alert('Ordine #' + resp.idOrdine + ' confermato e pagato!');
             window.location.href = 'miei_ordini.php';
         } else {
             alert('Errore: ' + resp.msg);

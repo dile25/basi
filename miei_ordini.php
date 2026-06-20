@@ -10,46 +10,16 @@ if(!isset($_SESSION['IdUtente'])) { header("Location: login.php"); exit; }
     <title>I Miei Ordini | The (E-)Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        .order-card { background:white; border:1px solid var(--border-color); border-radius:12px; margin-bottom:20px; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,0.05); }
-        .order-header { background:#f8f9fa; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; cursor:pointer; }
-        .order-body { padding:20px; }
-        .book-item { display:flex; align-items:center; gap:15px; padding:10px 0; border-bottom:1px solid #f0f0f0; }
-        .book-item:last-child { border-bottom:none; }
-        .book-img { width:50px; height:75px; object-fit:cover; border-radius:4px; }
-        .badge { padding:5px 12px; border-radius:20px; font-size:0.8em; font-weight:bold; }
-        .stato-pagato { background:#d4edda; color:#155724; }
-        .stato-lavorazione { background:#fff3cd; color:#856404; }
-        .stato-spedito { background:#cce5ff; color:#004085; }
-        .stato-consegnato { background:#d1ecf1; color:#0c5460; }
-
-        /* TRACKER */
-        .tracker { padding:20px; background:#fafafa; border-bottom:1px solid #eee; }
-        .tracker-steps { display:flex; justify-content:space-between; position:relative; }
-        .tracker-line-bg { position:absolute; top:14px; left:8%; right:8%; height:4px; background:#e0e0e0; z-index:1; }
-        .tracker-line-fill { position:absolute; top:14px; left:8%; height:4px; background:var(--primary-green); z-index:2; transition:width 0.5s; }
-        .tracker-step { text-align:center; z-index:3; flex:1; font-size:0.75em; color:#aaa; font-weight:600; }
-        .tracker-dot { width:28px; height:28px; background:white; border:3px solid #ddd; border-radius:50%; margin:0 auto 6px; display:flex; align-items:center; justify-content:center; font-size:0.8em; }
-        .tracker-step.done .tracker-dot { border-color:var(--dark-green); background:var(--dark-green); color:white; }
-        .tracker-step.done { color:var(--dark-green); }
-        .tracker-step.current .tracker-dot { border-color:var(--dark-green); background:white; color:var(--dark-green); }
-        .tracker-step.current { color:var(--dark-green); }
-
-        /* FILTRI */
-        .filtro-btn { padding:7px 16px; border-radius:20px; border:1px solid var(--border-color); background:white; cursor:pointer; font-size:0.85em; margin-right:6px; margin-bottom:8px; transition:0.2s; }
-        .filtro-btn.active { background:var(--dark-green); color:white; border-color:var(--dark-green); }
-
-        /* MODAL */
-        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:3000; align-items:center; justify-content:center; }
-        .modal-content { background:white; padding:30px; border-radius:12px; width:90%; max-width:450px; position:relative; }
-        .star-rating { font-size:28px; cursor:pointer; color:#ddd; margin:12px 0; }
-    </style>
+    <!-- stili in style.css -->
 </head>
 <body>
 <?php include("header.php"); ?>
 
 <div class="container" style="max-width:900px; margin:40px auto; padding:0 20px;">
-    <h2 style="color:var(--dark-green); margin-bottom:20px;">📦 I Miei Ordini</h2>
+    <h2 style="color:var(--dark-green); margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:28px;height:28px;"><path d="M21 3H3a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zm-1 16H4V5h16v14zM6 7h12v2H6zm0 4h12v2H6zm0 4h8v2H6z"/></svg>
+        I Miei Ordini
+    </h2>
 
     <!-- Filtri -->
     <div style="margin-bottom:20px;">
@@ -137,7 +107,12 @@ function caricaOrdini(stato) {
                 'Spedito':'stato-spedito','Consegnato':'stato-consegnato'
             }[stato] || 'stato-pagato';
 
-            const icone = ['✓','📦','🚚','🏠'];
+            const icone = [
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>',
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><path d="M20 6h-2.18c.07-.44.18-.87.18-1.33C18 2.54 15.96.5 13.46.5c-1.29 0-2.4.51-3.19 1.33L9 3.1 7.73 1.83C6.94 1.01 5.83.5 4.54.5 2.04.5 0 2.54 0 4.67c0 .46.11.89.18 1.33H0v2h20v-2z M0 20c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9H0v11z"/></svg>',
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><path d="M20 8H4V6H2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6h-2v2zm0 12H4v-6h16v6zm0-8H4v-2h16v2zM4 2h2v2H4zm14 0h2v2h-2z"/></svg>',
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>'
+            ];
             const label = ['Ricevuto','In preparazione','In spedizione','Consegnato'];
             let stepsHtml = '';
             statiOrdine.forEach((s, i) => {
@@ -182,7 +157,7 @@ function caricaOrdini(stato) {
                     <div>
                         ${lib.gia_recensito
                             ? `<span style="color:#f1c40f;font-size:1.1em;">${'★'.repeat(lib.voto_utente)}</span>`
-                            : `<button class="btn-recensisci" style="padding:7px 12px;font-size:0.85em;" onclick="apriModal(${lib.id_prodotto},'${lib.nome.replace(/'/g,"\\'")}')">⭐ Recensisci</button>`
+                            : `<button class="btn-recensisci-colorato" onclick="apriModal(${lib.id_prodotto},'${lib.nome.replace(/'/g,"\\'")}')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width:14px;height:14px;"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg> Recensisci</button>`
                         }
                     </div>
                 </div>`;

@@ -69,16 +69,39 @@
 
 $("#formRegistrazione").on("submit", function(e) {
     e.preventDefault();
+
+    const username = $('[name="username"]').val().trim();
+    const email    = $('[name="email"]').val().trim();
+    const password = $('[name="password"]').val();
+    const tipo     = $('#tipoUtente').val();
+    const piva     = $('[name="partita_iva"]').val().trim();
+
+    // Validazione email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!emailRegex.test(email)) {
+        alert('Inserisci un indirizzo email valido (es. nome@dominio.it).');
+        return;
+    }
+
+    // Validazione password: min 8 caratteri, almeno 1 maiuscola, 1 numero, 1 carattere speciale
+    const pwRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+    if (!pwRegex.test(password)) {
+        alert('La password deve avere almeno:\n• 8 caratteri totali\n• 1 lettera maiuscola\n• 1 numero\n• 1 carattere speciale (!@#$%...)');
+        return;
+    }
+
+    // Validazione Partita IVA (solo per venditore): 11 cifre
+    if (tipo === 'venditore') {
+        const pivaRegex = /^\d{11}$/;
+        if (!pivaRegex.test(piva)) {
+            alert('La Partita IVA deve essere composta da esattamente 11 cifre numeriche.');
+            return;
+        }
+    }
+
     $.post('api/ba_registrazione.php', $(this).serialize())
         .done(function(resp) {
             if (resp.status === 'ok') {
-                // MODIFICA: Niente più reindirizzamento al login. Andiamo direttamente alla home!
-                // Se preferisci che il venditore vada direttamente alla sua dashboard, puoi decommentare le righe sotto:
-                // if ($('#tipoUtente').val() === 'venditore') {
-                //     window.location.href = "dashboard_venditore.php";
-                // } else {
-                //     window.location.href = "index.php";
-                // }
                 window.location.href = "index.php";
             } else {
                 alert("Errore: " + resp.msg);

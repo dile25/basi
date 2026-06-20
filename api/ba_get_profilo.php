@@ -33,7 +33,12 @@ if ($tipo === 'venditore') {
     $stmt2 = $conn->prepare("SELECT partita_iva, ragione_sociale FROM VENDITORE WHERE username = ?");
     $stmt2->bind_param("s", $id);
     $stmt2->execute();
-    $dettagli = $stmt2->get_result()->fetch_assoc();
+    $dv = $stmt2->get_result()->fetch_assoc();
+    $dettagli = [
+        'partita_iva'     => $dv['partita_iva'] ?? '',
+        'ragione_sociale' => $dv['ragione_sociale'] ?? '',
+        'telefono'        => null
+    ];
 } else {
     $stmt2 = $conn->prepare("SELECT telefono, indirizzo_predefinito FROM CLIENTE WHERE username = ?");
     $stmt2->bind_param("s", $id);

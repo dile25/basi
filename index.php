@@ -6,49 +6,7 @@
     <title>The (E-)Shop Around the Corner | La tua libreria online</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        .hero { background: linear-gradient(135deg, var(--primary-green), var(--dark-green)); color: white; padding: 60px 20px; text-align: center; border-radius: 0 0 50px 50px; margin-bottom: 40px; }
-        .hero h1 { font-size: 2.2em; margin-bottom: 10px; }
-        .hero p { opacity: 0.9; font-size: 1.1em; }
-
-        .categories-scroll { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: thin; scrollbar-color: var(--primary-green) #f0f0f0; }
-        .categories-scroll::-webkit-scrollbar { height: 5px; }
-        .categories-scroll::-webkit-scrollbar-thumb { background: var(--primary-green); border-radius: 4px; }
-        .cat-group { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
-        .cat-group-label { font-size: 0.7em; font-weight: 800; color: var(--dark-green); text-transform: uppercase; letter-spacing: 0.06em; padding: 0 4px; }
-        .cat-group-chips { display: flex; gap: 8px; }
-        .cat-chip { display: flex; align-items: center; padding: 8px 14px; background: white; border: 2px solid var(--light-green); border-radius: 20px; cursor: pointer; transition: all 0.2s; font-size: 0.85em; font-weight: 600; color: var(--dark-green); white-space: nowrap; text-decoration: none; box-shadow: 0 2px 8px rgba(95,122,92,0.08); }
-        .cat-chip:hover { border-color: var(--primary-green); background: var(--light-green); transform: translateY(-2px); }
-
-        .books-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 30px; padding: 20px; }
-        .book-card { background: white; border: 1px solid var(--border-color); border-radius: 15px; overflow: hidden; transition: 0.3s; display: flex; flex-direction: column; cursor: pointer; }
-        .book-card:hover { transform: translateY(-8px); box-shadow: 0 10px 24px rgba(95,122,92,0.18); }
-        .book-card img { width: 100%; height: 300px; object-fit: cover; }
-        .book-info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
-        .book-price { font-size: 1.3em; color: var(--dark-green); font-weight: 800; margin: 8px 0; }
-        .btn-add-cart { background: var(--dark-green); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: auto; transition: background 0.2s; font-family: inherit; }
-        .btn-add-cart:hover { background: #4d6649; }
-        .btn-avvisami { background: white; color: #e67e22; border: 2px solid #e67e22; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: auto; font-size: 0.9em; transition: all 0.2s; font-family: inherit; }
-        .btn-avvisami:hover { background: #e67e22; color: white; }
-        .badge-esaurito { display: inline-block; background: #f8d7da; color: #842029; font-size: 0.72em; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-bottom: 6px; }
-        .badge-sconto { display: inline-block; background: linear-gradient(135deg, var(--accent-pink-dark), var(--dark-green)); color: white; font-size: 0.72em; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-bottom: 4px; }
-        .section-title { padding: 0 20px; color: var(--dark-green); margin-top: 40px; margin-bottom: 5px; border-left: 5px solid var(--primary-green); }
-
-        /* MODAL AVVISAMI */
-        #modal-avvisami { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; }
-        #modal-avvisami.open { display: flex; }
-        .modal-box { background: white; border-radius: 16px; padding: 35px; max-width: 440px; width: 90%; text-align: center; }
-        .modal-box h3 { margin: 0 0 8px; color: var(--dark-green); }
-        .modal-btn-confirm { background: #e67e22; color: white; border: none; padding: 14px 30px; border-radius: 8px; font-weight: 800; width: 100%; margin-bottom: 10px; cursor: pointer; font-family: inherit; font-size: 1em; }
-        .modal-btn-cancel { background: none; border: none; color: #999; cursor: pointer; font-size: 0.9em; text-decoration: underline; font-family: inherit; }
-
-        /* POPUP NOTIFICA */
-        #popup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 99999; display: flex; align-items: center; justify-content: center; }
-        #popup-box { background: white; border-radius: 14px; padding: 30px 35px; text-align: center; max-width: 320px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-        #popup-icon { font-size: 2.5em; margin-bottom: 10px; }
-        #popup-msg { font-size: 1.05em; color: #333; margin-bottom: 20px; }
-        #popup-ok { background: var(--primary-green); color: white; border: none; padding: 10px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: inherit; }
-    </style>
+    <!-- stili in style.css -->
 </head>
 <body>
 <?php include("header.php"); ?>
@@ -116,7 +74,18 @@
 
 <script>
 var TIPO_UTENTE = "<?php echo isset($_SESSION['tipoUtente']) ? $_SESSION['tipoUtente'] : ''; ?>";
+var idCarrelloSet = new Set(); // traccia id prodotti nel carrello per bottone rimuovi
+
 $(document).ready(function() {
+
+    // Carica stato carrello (solo per clienti)
+    <?php if(isset($_SESSION['tipoUtente']) && $_SESSION['tipoUtente'] === 'cliente'): ?>
+    $.get('api/ba_carrello.php', { action: 'list' }, function(resp) {
+        if (resp.status === 'ok' && resp.prodotti) {
+            resp.prodotti.forEach(p => idCarrelloSet.add(parseInt(p.IdProdotto || p.id_prodotto)));
+        }
+    }, 'json');
+    <?php endif; ?>
 
     // Banner categorie + tipi prodotto
     $.get('api/ba_lista_categorie.php', function(resp) {
@@ -186,20 +155,30 @@ $(document).ready(function() {
             }
         } else {
             // Home normale
-            const disponibili = libri.filter(l => parseInt(l.quantita_disponibile) > 0);
-            const esauriti    = libri.filter(l => parseInt(l.quantita_disponibile) === 0);
-            const conSconto   = libri.filter(l => parseFloat(l.sconto_pacchetto) > 0);
+            const disponibili  = libri.filter(l => parseInt(l.quantita_disponibile) > 0);
+            const esauriti     = libri.filter(l => parseInt(l.quantita_disponibile) === 0);
 
-            renderizza(disponibili.slice(0, 8), '#grid-nuovi');
+            // Nuovi arrivi: 10 più recenti disponibili
+            renderizza(disponibili.slice(0, 10), '#grid-nuovi');
 
-            if (conSconto.length > 0) {
-                renderizza(conSconto, '#grid-sconti');
+            // In Offerta: un solo prodotto per pacchetto, max 10
+            const vistoPacchetto = new Set();
+            const inOfferta = [];
+            libri.filter(l => l.nome_pacchetto && parseInt(l.quantita_disponibile) > 0).forEach(l => {
+                if (!vistoPacchetto.has(l.nome_pacchetto) && inOfferta.length < 10) {
+                    vistoPacchetto.add(l.nome_pacchetto);
+                    inOfferta.push(l);
+                }
+            });
+            if (inOfferta.length > 0) {
+                renderizza(inOfferta, '#grid-sconti');
             } else {
                 $('#sezione-sconti-wrapper').hide();
             }
 
+            // Presto disponibile: esauriti max 10
             if (esauriti.length > 0) {
-                renderizza(esauriti, '#grid-presto');
+                renderizza(esauriti.slice(0, 10), '#grid-presto');
             } else {
                 $('#sezione-presto-wrapper').hide();
             }
@@ -210,60 +189,81 @@ $(document).ready(function() {
 function renderizza(libri, selector) {
     let html = '';
     libri.forEach(lib => {
-        const esaurito   = parseInt(lib.quantita_disponibile) === 0;
-        const haPacchetto = parseFloat(lib.sconto_pacchetto) > 0;
+        const esaurito    = parseInt(lib.quantita_disponibile) === 0;
+        const eAbbonabile = ['rivista','magazine','periodico','fumetto'].includes(lib.tipo_prodotto);
+        const haPacchetto = lib.nome_pacchetto && parseFloat(lib.sconto_pacchetto) > 0;
+        const haPacchettoBadge = lib.nome_pacchetto && !eAbbonabile; // saga/promo: badge senza prezzo scontato
         const prezzo      = parseFloat(lib.prezzo);
         const prezzoSc    = parseFloat(lib.PrezzoScontato || lib.prezzo);
+        const nelCarr     = idCarrelloSet.has(parseInt(lib.id_prodotto));
 
+        // Badge sconto pacchetto (saga, promo autore, offerte reali)
         let badgeSconto = '';
-        if (haPacchetto) {
-            const nomePack = lib.nome_pacchetto || '';
-            let labelSconto = '';
-            if (nomePack.toLowerCase().includes('autore')) {
-                labelSconto = 'Sconto Autore';
-            } else if (nomePack.toLowerCase().includes('saga') || nomePack.toLowerCase().includes('serie') || nomePack.toLowerCase().includes('trilogia')) {
-                labelSconto = 'Sconto Saga';
-            } else if (nomePack.toLowerCase().includes('arrivi') || nomePack.toLowerCase().includes('nuovo')) {
-                labelSconto = 'Novita in Offerta';
-            } else if (nomePack) {
-                labelSconto = nomePack;
+        if (haPacchettoBadge) {
+            const nomePack = lib.nome_pacchetto;
+            let label = '';
+            if (nomePack.toLowerCase().includes('autore') || nomePack.toLowerCase().includes('autrice')) {
+                label = 'Promo autore';
+            } else if (nomePack.toLowerCase().includes('saga') || nomePack.toLowerCase().includes('trilogia') || nomePack.toLowerCase().includes('serie')) {
+                label = 'Fa parte di una saga';
+            } else if (lib.tipo_pacchetto === 'abbonamento') {
+                label = 'Abbonamento disponibile';
             } else {
-                labelSconto = 'In Offerta';
+                label = nomePack;
             }
-            badgeSconto = `<span class="badge-sconto">${labelSconto}</span><br>`;
+            badgeSconto = `<span class="badge-sconto" style="font-size:0.7em;">${label}</span><br>`;
         }
 
-        let prezzoHtml = `<div class="book-price">€${prezzoSc.toFixed(2)}</div>`;
+        // Badge abbonamento per periodici
+        let badgeAbb = '';
+        if (eAbbonabile) {
+            badgeAbb = `<span style="display:inline-block;background:#f5eef8;color:#8e44ad;border:1px solid #d2b4de;border-radius:4px;font-size:0.7em;font-weight:700;padding:2px 7px;margin-bottom:4px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#8e44ad" style="width:10px;height:10px;vertical-align:middle;margin-right:2px;"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+                Abbonamento disponibile
+            </span><br>`;
+        }
+
+        // Prezzo (scontato solo se sconto_pacchetto > 0)
+        let prezzoHtml = `<div class="book-price">€${prezzo.toFixed(2)}</div>`;
         if (haPacchetto && prezzoSc < prezzo) {
-            prezzoHtml = `<div class="book-price">
-                €${prezzoSc.toFixed(2)}
-                <small style="text-decoration:line-through; color:#bbb; font-size:0.6em; font-weight:400; margin-left:6px;">€${prezzo.toFixed(2)}</small>
-            </div>`;
+            prezzoHtml = `<div class="book-price">€${prezzoSc.toFixed(2)} <small style="text-decoration:line-through;color:#bbb;font-size:0.6em;font-weight:400;margin-left:4px;">€${prezzo.toFixed(2)}</small></div>`;
         }
 
-        let btnHtml;
+        // Bottone: avvisami / vuoto per venditore / aggiungi o rimuovi
+        let btnHtml = '';
         if (esaurito) {
             btnHtml = `
                 <span class="badge-esaurito">Esaurito</span>
                 <button class="btn-avvisami" onclick="event.stopPropagation(); apriModal(${lib.id_prodotto}, '${lib.nome.replace(/'/g,"\\'")}')">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
                     Avvisami quando torna
                 </button>`;
         } else if (TIPO_UTENTE === 'venditore') {
             btnHtml = '';
+        } else if (nelCarr) {
+            btnHtml = `<button class="btn-add-cart" id="btn-cart-${lib.id_prodotto}"
+                style="background:#e74c3c;"
+                onclick="event.stopPropagation(); rimuoviDaCarrelloHome(${lib.id_prodotto}, this)">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                Rimuovi dal carrello
+            </button>`;
         } else {
-            btnHtml = `<button class="btn-add-cart" onclick="event.stopPropagation(); aggiungiAlCarrello(${lib.id_prodotto})">Aggiungi al carrello</button>`;
+            btnHtml = `<button class="btn-add-cart" id="btn-cart-${lib.id_prodotto}"
+                onclick="event.stopPropagation(); aggiungiAlCarrello(${lib.id_prodotto}, this)">
+                Aggiungi al carrello
+            </button>`;
         }
 
         html += `
         <div class="book-card">
             <img src="${lib.URLfoto || 'img/default.jpg'}" alt="${lib.nome}"
                  onclick="location.href='dettaglio_prodotto.php?id=${lib.id_prodotto}'"
-                 style="cursor:pointer;">
+                 style="cursor:pointer; height:260px; object-fit:cover;">
             <div class="book-info">
-                ${badgeSconto}
+                ${badgeSconto}${badgeAbb}
                 <h3 style="margin:0; font-size:1em; line-height:1.3; cursor:pointer;"
                     onclick="location.href='dettaglio_prodotto.php?id=${lib.id_prodotto}'">${lib.nome}</h3>
-                <small style="color:#888; margin-top:4px;">${lib.autore || ''}</small>
+                <small style="color:#888; margin-top:2px;">${lib.autore || ''}</small>
                 ${prezzoHtml}
                 ${btnHtml}
             </div>
@@ -293,22 +293,12 @@ $('#modal-avvisami').on('click', function(e) {
 });
 
 function confermaAvvisami() {
-    $.post('api/ba_avvisami.php', {
-        idProdotto: $('#modal-id-prodotto').val(),
-        nomeProdotto: $('#modal-nome-prodotto').val()
-    }, function(resp) {
-        if (resp.status === 'ok') {
-            $('#modal-stato-confirm').hide();
-            $('#modal-ok-msg').text(resp.msg);
-            $('#modal-stato-ok').show();
-        } else {
-            chiudiModal();
-            mostraNotifica(resp.msg, true);
-        }
-    }, 'json');
+    $('#modal-stato-confirm').hide();
+    $('#modal-ok-msg').text('Sarai avvisato al tuo indirizzo email personale quando il prodotto torna disponibile.');
+    $('#modal-stato-ok').show();
 }
 
-function aggiungiAlCarrello(id) {
+function aggiungiAlCarrello(id, btn) {
     <?php if(!isset($_SESSION['IdUtente'])): ?>
         if (confirm('Devi essere loggato per aggiungere al carrello. Vuoi accedere?')) {
             window.location.href = 'login.php';
@@ -319,8 +309,28 @@ function aggiungiAlCarrello(id) {
         if (resp.status === 'ok') {
             mostraNotifica('Aggiunto al carrello!');
             if (typeof updateCartBadge === 'function') updateCartBadge();
+            idCarrelloSet.add(parseInt(id));
+            if (btn) {
+                btn.style.background = '#e74c3c';
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg> Rimuovi dal carrello';
+                btn.setAttribute('onclick', `event.stopPropagation(); rimuoviDaCarrelloHome(${id}, this)`);
+            }
         } else {
             mostraNotifica(resp.msg || 'Errore!', true);
+        }
+    }, 'json');
+}
+
+function rimuoviDaCarrelloHome(id, btn) {
+    $.post('api/ba_carrello.php', { action: 'remove', idProdotto: id }, function(resp) {
+        if (resp.status === 'ok') {
+            if (typeof updateCartBadge === 'function') updateCartBadge();
+            idCarrelloSet.delete(parseInt(id));
+            if (btn) {
+                btn.style.background = '';
+                btn.innerHTML = 'Aggiungi al carrello';
+                btn.setAttribute('onclick', `event.stopPropagation(); aggiungiAlCarrello(${id}, this)`);
+            }
         }
     }, 'json');
 }

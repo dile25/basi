@@ -8,28 +8,16 @@ if(!isset($_SESSION['IdUtente'])) { header("Location: login.php"); exit; }
     <title>I Miei Preferiti | The (E-)Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        .books-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 25px; padding: 10px 0; }
-        .book-card { background: white; border: 1px solid var(--border-color); border-radius: 15px; overflow: hidden; transition: all 0.3s; display: flex; flex-direction: column; }
-        .book-card:hover { transform: translateY(-6px); box-shadow: 0 8px 20px rgba(39,174,96,0.15); }
-        .book-card img { width: 100%; height: 260px; object-fit: cover; cursor: pointer; }
-        .book-info { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
-        .book-title { font-weight: 700; font-size: 1em; color: var(--dark-green); margin: 0; }
-        .book-price { font-size: 1.2em; font-weight: 800; color: var(--dark-green); }
-        .book-price-old { text-decoration: line-through; color: #999; font-size: 0.85em; }
-        .btn-rimuovi { background: none; border: 1px solid #e74c3c; color: #e74c3c; padding: 8px; border-radius: 7px; cursor: pointer; font-size: 0.85em; font-weight: 600; transition: 0.2s; }
-        .btn-rimuovi:hover { background: #e74c3c; color: white; }
-        .btn-compra { background: var(--dark-green); color: white; border: none; padding: 10px; border-radius: 7px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .btn-compra:hover { background: #4d6649; }
-        .empty-state { text-align: center; padding: 80px 20px; }
-        .empty-state h3 { color: var(--dark-green); margin-bottom: 10px; }
-    </style>
+    <!-- stili in style.css -->
 </head>
 <body>
     <?php include('header.php'); ?>
 
     <main class="container" style="max-width:1100px; margin:30px auto; padding:0 20px;">
-        <h2 style="color:var(--dark-green); margin-bottom:25px;">❤️ I tuoi Preferiti</h2>
+        <h2 style="color:var(--dark-green); margin-bottom:25px; display:flex; align-items:center; gap:10px;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:26px;height:26px;color:#e74c3c;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            I tuoi Preferiti
+        </h2>
         <div id="lista-preferiti" class="books-grid"></div>
     </main>
 
@@ -58,7 +46,9 @@ if(!isset($_SESSION['IdUtente'])) { header("Location: login.php"); exit; }
                             <div>${prezzoHtml}</div>
                             <div style="display:flex; gap:8px; margin-top:auto;">
                                 <button class="btn-compra" style="flex:1;" onclick="location.href='dettaglio_prodotto.php?id=${p.id_prodotto}'">Vedi dettaglio libro</button>
-                                <button class="btn-rimuovi" onclick="rimuoviPreferito(${p.id_prodotto}, this)">💔 Rimuovi</button>
+                                <button class="btn-fav" onclick="rimuoviPreferito(${p.id_prodotto}, this)" style="flex:0;padding:8px 10px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                </button>
                             </div>
                         </div>
                     </div>`;

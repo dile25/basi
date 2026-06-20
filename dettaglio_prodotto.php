@@ -82,14 +82,16 @@ session_start();
 
                 <div style="display:flex; flex-direction:column; gap:12px;">
                     <button id="btnCarrello" class="btn-carrello" onclick="toggleCarrello()">
-                        🛒 Aggiungi al Carrello
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:19px;height:19px;"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zM7.17 14.75l.03-.12.9-1.63H17c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 21.44 4H5.21L4.54 2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5 16.28 5 17h14v-2H7.42a.25.25 0 0 1-.25-.25z"/></svg>Aggiungi al Carrello
                     </button>
                     <div style="display:flex; gap:10px;">
                         <button id="btnFav" class="btn-fav" onclick="togglePreferito()">
-                            ❤️ Aggiungi ai Preferiti
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:17px;height:17px;flex-shrink:0;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                            Aggiungi ai Preferiti
                         </button>
                         <button id="btnRecensisci" class="btn-recensisci" style="flex:1;" onclick="apriModalRecensione()">
-                            ⭐ Recensisci
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:17px;height:17px;flex-shrink:0;"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                            Recensisci
                         </button>
                     </div>
                 </div>
@@ -102,10 +104,20 @@ session_start();
         </div>
 
         <!-- RIQUADRO PACCHETTO -->
-        <div id="riquadro-pacchetto" style="display:none; margin-top:30px; background:#fffbf0; border:2px solid #f39c12; border-radius:15px; padding:25px;">
-            <h3 id="titolo-pacchetto" style="margin:0 0 5px; color:#e67e22; font-size:1.1em;"></h3>
+        <div id="riquadro-pacchetto" style="display:none; margin-top:30px; background:#f9f4fc; border:2px solid #9b59b6; border-radius:15px; padding:25px;">
+            <h3 id="titolo-pacchetto" style="margin:0 0 5px; color:#6c3483; font-size:1.1em;"></h3>
             <p id="desc-pacchetto" style="margin:0 0 18px; color:#666; font-size:0.88em;"></p>
             <div id="libri-pacchetto-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px;"></div>
+        </div>
+
+        <!-- BANNER ABBONAMENTI per riviste/fumetti/magazine/periodici -->
+        <div id="banner-abbonamenti" style="display:none; margin-top:30px; background:#f5eef8; border:2px solid #9b59b6; border-radius:15px; padding:25px;">
+            <h3 style="margin:0 0 6px; color:#6c3483; font-size:1.1em; display:flex; align-items:center; gap:8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#8e44ad" style="width:20px;height:20px;flex-shrink:0;"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+                Abbonati e risparmia
+            </h3>
+            <p style="margin:0 0 18px; font-size:0.88em; color:#555;">Acquistando più numeri insieme risparmi. Scegli il piano e avvia il checkout:</p>
+            <div id="lista-abbonamenti-dettaglio" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px;"></div>
         </div>
 
         <div style="margin-top:50px; background:white; border-radius:15px; padding:30px; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
@@ -161,14 +173,21 @@ $(document).ready(function() {
         if (p.id_pacchetto && p.NomePacchetto) {
             if (p.tipoPacchetto === 'abbonamento') {
                 const periodoLabel = p.periodicita === 'mensile' ? "tutti i numeri dell'anno" : "tutti i numeri del mese";
-                prezzoHtml += `<div style="margin-top:8px;font-size:0.85em;color:#e67e22;font-weight:600;background:#fff8ec;border:1px solid #ffe0b2;border-radius:8px;padding:8px 10px;">
-                    📅 Questo numero fa parte dell'abbonamento "${p.NomePacchetto}". Acquista ${periodoLabel} per ottenere -${p.sconto_tutti}% sul totale.
+                prezzoHtml += `<div style="margin-top:8px;font-size:0.85em;color:#8e44ad;font-weight:600;background:#f5eef8;border:1px solid #d2b4de;border-radius:8px;padding:8px 10px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#8e44ad" style="width:13px;height:13px;vertical-align:middle;margin-right:3px;"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+                    Questo numero fa parte dell'abbonamento "${p.NomePacchetto}". Acquista ${periodoLabel} per ottenere -${p.sconto_tutti}% sul totale.
                 </div>`;
             } else {
-                prezzoHtml += `<div style="margin-top:8px;font-size:0.82em;color:#e67e22;font-weight:600;">
+                prezzoHtml += `<div style="margin-top:8px;font-size:0.82em;color:#8e44ad;font-weight:600;">
                     Pacchetto "${p.NomePacchetto}": 2 libri -${p.sconto_2}% | 3 libri -${p.sconto_3}%${p.sconto_tutti > 0 ? ' | saga completa -' + p.sconto_tutti + '%' : ''}
                 </div>`;
             }
+        } else if (['rivista','magazine','periodico','fumetto'].indexOf(p.TipoProdotto || '') !== -1) {
+            // Periodico senza pacchetto collegato: suggerisci abbonamento generico
+            prezzoHtml += `<div style="margin-top:8px;font-size:0.85em;color:#8e44ad;font-weight:600;background:#f5eef8;border:1px solid #d2b4de;border-radius:8px;padding:8px 10px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#8e44ad" style="width:13px;height:13px;vertical-align:middle;margin-right:3px;"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+                Abbonamenti disponibili — aggiungilo al carrello per vedere le opzioni di risparmio.
+            </div>`;
         }
         $("#priceHtml").html(prezzoHtml);
 
@@ -180,9 +199,10 @@ $(document).ready(function() {
             $("#btnCarrello").prop("disabled", true).text("Non disponibile").css("opacity", "0.5");
             // Mostra bottone "Avvisami quando torna disponibile"
             $("#btnCarrello").after(`
-                <button id="btnAvvisami" class="btn-secondary" style="width:100%; margin-top:10px; padding:12px;"
+                <button id="btnAvvisami" class="btn-avvisami" style="margin-top:10px; padding:12px;"
                     onclick="attivaAvvisami(${p.IdProdotto})">
-                    🔔 Avvisami quando torna disponibile
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+                    Avvisami quando torna disponibile
                 </button>
                 <p id="msg-avvisami" style="display:none; font-size:0.85em; color:var(--dark-green); margin-top:6px; text-align:center;"></p>
             `);
@@ -194,6 +214,52 @@ $(document).ready(function() {
         // Controlla stato carrello e preferiti
         verificaStatoCarrello(p.IdProdotto);
         verificaStatoPreferiti(p.IdProdotto);
+
+        // Banner abbonamenti
+        if (p.abbonamenti && p.abbonamenti.length > 0) {
+            let abbHtml = '';
+            p.abbonamenti.forEach(a => {
+                const durata = a.nome.toLowerCase().includes('12') ? '12 mesi' :
+                               a.nome.toLowerCase().includes('6')  ? '6 mesi' : 'il periodo';
+                const perioLabel = a.periodicita === 'settimanale' ? 'numeri settimanali' : 'numeri mensili';
+
+                // Calcola numero di uscite del piano
+                let mesi = a.nome.toLowerCase().includes('12') ? 12 : 6;
+                let numUscite;
+                if (a.periodicita === 'settimanale') {
+                    numUscite = mesi === 12 ? 52 : 26;
+                } else {
+                    numUscite = mesi; // mensile: 1 numero al mese
+                }
+                abbHtml += `
+                <div style="background:white; border:1px solid #d2b4de; border-radius:12px; padding:18px; display:flex; flex-direction:column; gap:10px;">
+                    <div style="font-weight:700; color:#6c3483; font-size:0.95em;">${a.nome}</div>
+                    <div style="font-size:0.82em; color:#666;">${a.descrizione || ''}</div>
+                    <div style="font-size:0.88em; color:#8e44ad; font-weight:600; background:#f5eef8; border-radius:6px; padding:6px 10px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#8e44ad" style="width:13px;height:13px;vertical-align:middle;margin-right:3px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                        Risparmia il <strong>${a.sconto_tutti}%</strong> acquistando tutti i ${perioLabel} per ${durata}
+                    </div>
+                    <button data-id="${a.id_pacchetto}" data-nome="${a.nome.replace(/"/g,'&quot;')}" data-sconto="${a.sconto_tutti}" data-uscite="${numUscite}" data-periodicita="${a.periodicita}"
+                        class="btn-avvia-abbonamento"
+                        style="background:#8e44ad; color:white; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.85em; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:6px; margin-top:auto;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width:14px;height:14px;flex-shrink:0;"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+                        Seleziona e vai al checkout
+                    </button>
+                </div>`;
+            });
+            $('#lista-abbonamenti-dettaglio').html(abbHtml);
+            $('#banner-abbonamenti').show();
+
+            // Handler bottoni abbonamento (event delegation per evitare problemi inline)
+            $(document).on('click', '.btn-avvia-abbonamento', function() {
+                const idPacchetto   = $(this).data('id');
+                const nomeAbb       = $(this).data('nome');
+                const sconto        = $(this).data('sconto');
+                const numUscite     = $(this).data('uscite');
+                const periodicita   = $(this).data('periodicita');
+                avviaAbbonamento(idPacchetto, nomeAbb, sconto, numUscite, periodicita);
+            });
+        }
     });
 
     // Recensioni
@@ -279,7 +345,7 @@ function aggiornaBottoneCarrello() {
     if (nelCarrello) {
         btn.text("🗑️ Rimuovi dal Carrello").addClass("nel-carrello");
     } else {
-        btn.text("🛒 Aggiungi al Carrello").removeClass("nel-carrello");
+        btn.html('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zM7.17 14.75l.03-.12.9-1.63H17c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 21.44 4H5.21L4.54 2H1v2h2l3.6 7.59-1.35 2.44A2 2 0 0 0 7 18h14v-2H7.42a.25.25 0 0 1-.25-.25z"/></svg> Aggiungi al Carrello').removeClass("nel-carrello");
     }
 }
 
@@ -288,7 +354,7 @@ function aggiornaBottonePreferiti() {
     if (neiPeferiti) {
         btn.text("💔 Rimuovi dai Preferiti").addClass("attivo");
     } else {
-        btn.text("❤️ Aggiungi ai Preferiti").removeClass("attivo");
+        btn.html('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:17px;height:17px;vertical-align:middle;margin-right:5px;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> Aggiungi ai Preferiti').removeClass("attivo");
     }
 }
 
@@ -348,7 +414,7 @@ function mostraRiquadroPacchetto() {
 
     if (p.tipoPacchetto === 'abbonamento') {
         var periodoLabel = p.periodicita === 'mensile' ? "tutti i numeri dell'anno" : "tutti i numeri del mese";
-        $('#titolo-pacchetto').text('📅 Fa parte dell\'abbonamento "' + nomePack + '"');
+        $('#titolo-pacchetto').text('Abbonamento "' + nomePack + '"');
         $('#desc-pacchetto').text('Aggiungi anche gli altri numeri qui sotto: comprando ' + periodoLabel + ' ottieni -' + p.sconto_tutti + '% sul totale. Lo sconto si applica automaticamente nel carrello solo se hai tutti i numeri.');
     } else {
         $('#titolo-pacchetto').text('Pacchetto "' + nomePack + '" — aggiungi altri libri e risparmia!');
@@ -364,7 +430,7 @@ function mostraRiquadroPacchetto() {
         var disp = parseInt(l.quantita_disponibile) > 0;
         var url = 'dettaglio_prodotto.php?id=' + l.id_prodotto;
         var giaInCarrello = idCarrelloSet.has(parseInt(l.id_prodotto));
-        html += '<div style="background:white;border-radius:10px;padding:10px;text-align:center;border:1px solid #ffe082;">';
+        html += '<div style="background:white;border-radius:10px;padding:10px;text-align:center;border:1px solid #d2b4de;">';
         html += '<a href="' + url + '"><img src="' + foto + '" style="width:100%;height:120px;object-fit:cover;border-radius:6px;cursor:pointer;"></a>';
         html += '<p style="margin:6px 0 2px;font-size:0.85em;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><a href="' + url + '" style="color:inherit;text-decoration:none;" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">' + l.nome + '</a></p>';
         if (l.autore) html += '<p style="margin:0 0 6px;font-size:0.78em;color:#888;">' + l.autore + '</p>';
@@ -383,17 +449,32 @@ function mostraRiquadroPacchetto() {
 }
 
 function attivaAvvisami(idProdotto) {
-    $.post('api/ba_avvisami.php', { id_prodotto: idProdotto }, function(resp) {
-        const msg = $('#msg-avvisami');
-        if (resp.status === 'ok') {
-            $('#btnAvvisami').prop('disabled', true).css('opacity', '0.6');
-            msg.text('✅ Ti avviseremo quando torna disponibile!').css('color', 'var(--dark-green)').show();
-        } else if (resp.status === 'already') {
-            msg.text('ℹ️ Sei già nella lista di attesa per questo prodotto.').css('color', '#888').show();
-        } else {
-            msg.text('❌ ' + (resp.msg || 'Errore. Riprova.')).css('color', '#e74c3c').show();
-        }
-    }, 'json');
+    $('#btnAvvisami').prop('disabled', true).css('opacity', '0.6');
+    $('#msg-avvisami').text('Sarai avvisato al tuo indirizzo email personale quando il prodotto torna disponibile.')
+        .css('color', 'var(--dark-green)').show();
+}
+
+function avviaAbbonamento(idPacchetto, nomeAbb, sconto, numUscite, periodicita) {
+    <?php if (!isset($_SESSION['IdUtente'])): ?>
+        if (confirm('Devi essere loggato per procedere. Vuoi accedere?')) window.location.href = 'login.php';
+        return;
+    <?php endif; ?>
+    const idProdotto = prodottoCorrente ? prodottoCorrente.IdProdotto : 0;
+    const prezzoProdotto = prodottoCorrente ? parseFloat(prodottoCorrente.prezzo) : 0;
+    if (!idProdotto) return;
+    const procedi = function() {
+        sessionStorage.setItem('abbonamento_selezionato', JSON.stringify({
+            idPacchetto, nomeAbb, sconto, numUscite, periodicita, prezzoProdotto
+        }));
+        window.location.href = 'checkout.php';
+    };
+    if (!nelCarrello) {
+        $.post('api/ba_carrello.php', { action: 'add', idProdotto: idProdotto }, function(resp) {
+            if (resp.status === 'ok') { nelCarrello = true; procedi(); }
+        }, 'json');
+    } else {
+        procedi();
+    }
 }
 
 function aggiungiDaPacchetto(id) {

@@ -11,30 +11,7 @@ if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
     <title>Il Mio Carrello | The (E-)Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        .cart-container { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-top: 30px; }
-        @media (max-width: 768px) { .cart-container { grid-template-columns: 1fr; } }
-        .cart-item { display: flex; align-items: center; padding: 20px; background: white; border: 1px solid #ddd; border-radius: 12px; margin-bottom: 15px; transition: 0.2s; }
-        .cart-item:hover { border-color: var(--primary-green); }
-        .summary-card { background: #f9fbf9; padding: 25px; border-radius: 12px; position: sticky; top: 20px; height: fit-content; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .qty-wrapper { display: flex; align-items: center; gap: 6px; }
-        .qty-btn { width: 28px; height: 28px; border: 2px solid var(--primary-green); background: white; color: var(--primary-green); border-radius: 50%; font-size: 1.1em; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; padding: 0; font-family: inherit; }
-        .qty-btn:hover { background: var(--primary-green); color: white; }
-        .qty-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .qty-display { min-width: 36px; text-align: center; font-weight: bold; font-size: 1.05em; }
-        .btn-remove { color: #e74c3c; background: none; border: none; cursor: pointer; font-weight: bold; font-size: 0.85em; margin-top: 8px; padding: 0; text-decoration: underline; font-family: inherit; }
-        .btn-checkout { background: var(--dark-green); color: white; border: none; padding: 16px; border-radius: 8px; font-weight: 800; width: 100%; cursor: pointer; font-size: 1.1em; margin-top: 20px; transition: filter 0.2s; font-family: inherit; }
-        .btn-checkout:hover { filter: brightness(1.1); }
-        .badge-autore { display:inline-block; background:var(--dark-green); color:white; padding:2px 8px; border-radius:4px; font-size:0.75em; font-weight:bold; margin-top:4px; }
-        .badge-pacchetto { display:inline-block; background:linear-gradient(135deg,var(--accent-pink-dark),var(--dark-green)); color:white; padding:2px 8px; border-radius:4px; font-size:0.75em; font-weight:bold; margin-top:4px; }
-
-        /* Consigliati */
-        .suggestions-box { margin-top: 40px; background: white; padding: 25px; border-radius: 12px; border: 1px solid #eee; }
-        .suggestions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 20px; }
-        .suggestion-card { border: 1px solid #eee; padding: 12px; border-radius: 10px; text-align: center; transition: box-shadow 0.2s; }
-        .suggestion-card:hover { box-shadow: 0 4px 12px rgba(39,174,96,0.12); border-color: #c8e6c9; }
-        .suggestion-card img { width: 100%; height: 120px; object-fit: cover; border-radius: 6px; }
-    </style>
+    <!-- stili in style.css -->
 </head>
 <body>
 <?php include("header.php"); ?>
@@ -45,6 +22,15 @@ if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
     <div id="cart-wrapper" class="cart-container">
         <div>
             <div id="cart-items-list"><p>Caricamento...</p></div>
+            <!-- BOX ABBONAMENTO: appare se nel carrello c'è almeno una rivista/magazine/fumetto/periodico -->
+            <div id="box-abbonamento" style="display:none; margin-top:20px; background:#f5eef8; border:2px solid #9b59b6; border-radius:14px; padding:22px;">
+                <h3 style="margin:0 0 6px; color:#6c3483; font-size:1.05em; display:flex; align-items:center; gap:8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#8e44ad" style="width:20px;height:20px;"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+                    Risparmia con un abbonamento
+                </h3>
+                <p style="margin:0 0 14px; font-size:0.88em; color:#555;">Hai aggiunto una pubblicazione periodica. Abbonati e ricevi ogni numero con uno sconto esclusivo:</p>
+                <div id="lista-abbonamenti" style="display:flex; flex-wrap:wrap; gap:12px;"></div>
+            </div>
             <div class="suggestions-box">
                 <h3 style="margin:0;">Potrebbero interessarti anche</h3>
                 <div id="consigliati-list" class="suggestions-grid"></div>
@@ -71,6 +57,7 @@ if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
 $(document).ready(function() {
     caricaCarrello();
     caricaConsigliati();
+    caricaSuggerimentoAbbonamento();
 });
 
 function caricaCarrello() {
@@ -121,7 +108,10 @@ function caricaCarrello() {
                         <span style="font-weight:bold; color:var(--primary-green); font-size:1.1em;">€${prezzoSc.toFixed(2)}</span>
                         ${prezzoSc < prezzo ? `<small style="text-decoration:line-through; color:#bbb; margin-left:6px;">€${prezzo.toFixed(2)}</small>` : ''}
                     </div>
-                    <button class="btn-remove" onclick="rimuoviDalCarrello(${p.IdProdotto})">Rimuovi</button>
+                    <button class="btn-remove" onclick="rimuoviDalCarrello(${p.IdProdotto})" style="display:inline-flex;align-items:center;gap:4px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:13px;height:13px;"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                        Rimuovi
+                    </button>
                 </div>
                 <div style="text-align:right;">
                     <label style="font-size:0.8em; color:#888; display:block; margin-bottom:6px;">Quantità</label>
@@ -163,11 +153,45 @@ function rimuoviDalCarrello(id) {
     }
 }
 
+function caricaSuggerimentoAbbonamento() {
+    $.get('api/ba_abbonamenti_disponibili.php', function(resp) {
+        if (resp.status !== 'ok' || !resp.abbonamenti || resp.abbonamenti.length === 0) return;
+
+        let html = '';
+        resp.abbonamenti.forEach(a => {
+            html += `
+            <div style="flex:1; min-width:200px; background:white; border:1px solid #d2b4de; border-radius:10px; padding:14px;">
+                <div style="font-weight:700; color:#6c3483; margin-bottom:4px; font-size:0.92em;">${a.nome}</div>
+                <div style="font-size:0.82em; color:#555; margin-bottom:10px;">${a.descrizione || ''}</div>
+                <div style="font-size:0.9em; font-weight:700; color:#8e44ad; margin-bottom:10px;">
+                    Sconto ${a.sconto_tutti}% su tutti i numeri del periodo
+                </div>
+                <button onclick="aggiungiAbbonamento(${a.id_pacchetto})"
+                    style="background:#8e44ad; color:white; border:none; padding:9px 16px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.85em; width:100%; font-family:inherit;">
+                    Abbonati ora
+                </button>
+            </div>`;
+        });
+
+        $('#lista-abbonamenti').html(html);
+        $('#box-abbonamento').show();
+    }, 'json');
+}
+
+function aggiungiAbbonamento(idPacchetto) {
+    // Simula l'aggiunta all'abbonamento: mostra conferma
+    // (implementazione reale richiederebbe logica dedicata)
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = 'Richiesta inviata!';
+    btn.style.background = 'var(--dark-green)';
+}
+
 function caricaConsigliati() {
     $.get('api/ba_consigliati.php', function(resp) {
         if (resp.status === 'ok' && resp.consigliati && resp.consigliati.length > 0) {
             let html = '';
-            resp.consigliati.forEach(c => {
+            resp.consigliati.slice(0, 4).forEach(c => {
                 html += `
                 <div class="suggestion-card">
                     <img src="${c.Foto || 'img/default.jpg'}" alt="${c.nome}">

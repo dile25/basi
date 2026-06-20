@@ -225,31 +225,45 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
     <div class="user-nav">
         <?php if (isset($_SESSION['IdUtente'])): ?>
-            <a href="profilo.php" class="user-btn" style="display:flex; align-items:center; gap:6px;">
+            <a href="profilo.php" class="user-btn" style="display:flex;align-items:center;gap:6px;">
                 <?php echo htmlspecialchars($_SESSION['IdUtente']); ?>
             </a>
             <?php if ($_SESSION['tipoUtente'] === 'cliente'): ?>
-                <a href="miei_ordini.php" class="user-btn">I miei ordini</a>
-                <a href="preferiti.php" class="user-btn">Preferiti</a>
-                <a href="carrello.php" class="user-btn cart-link">
-                    Carrello <span class="cart-badge" id="cartCount">0</span>
+                <a href="miei_ordini.php" class="user-btn" title="I miei ordini" style="display:flex;align-items:center;gap:5px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:19px;height:19px;"><path d="M21 3H3a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zm-1 16H4V5h16v14zM6 7h12v2H6zm0 4h12v2H6zm0 4h8v2H6z"/></svg>
+                    <span>Ordini</span>
+                </a>
+                <a href="preferiti.php" class="user-btn" title="Preferiti" style="display:flex;align-items:center;gap:5px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:19px;height:19px;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    <span>Preferiti</span>
+                </a>
+                <a href="carrello.php" class="user-btn cart-link" title="Carrello" style="display:flex;align-items:center;gap:5px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:19px;height:19px;"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zM7.17 14.75l.03-.12.9-1.63H17c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 21.44 4H5.21L4.54 2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5 16.28 5 17h14v-2H7.42a.25.25 0 0 1-.25-.25z"/></svg>
+                    <span>Carrello</span>
+                    <span class="cart-badge" id="cartCount">0</span>
                 </a>
             <?php endif; ?>
             <?php if ($_SESSION['tipoUtente'] === 'venditore'): ?>
                 <a href="dashboard_venditore.php" class="btn-dashboard-venditore">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
                     Dashboard
                 </a>
-                
-                
             <?php endif; ?>
-            <a href="logout.php" class="user-btn" style="color:#e74c3c;">Esci</a>
+            <button onclick="apriLogout()" class="user-btn" style="color:#e74c3c;background:none;border:none;cursor:pointer;font-family:inherit;font-size:0.95em;font-weight:600;padding:0;">Esci</button>
         <?php else: ?>
             <a href="login.php" class="user-btn">Accedi</a>
             <a href="registrazione.php" class="user-btn btn-reg-header">Registrati</a>
         <?php endif; ?>
+    </div>
+</div>
+
+<!-- POPUP LOGOUT -->
+<div id="logout-overlay">
+    <div class="logout-box">
+        <h3>Uscire dall'account?</h3>
+        <p>Verrai reindirizzato alla pagina di login.</p>
+        <button class="logout-btn-confirm" onclick="window.location.href='logout.php'">Sì, esci</button>
+        <button class="logout-btn-cancel" onclick="chiudiLogout()">Annulla</button>
     </div>
 </div>
 
@@ -281,6 +295,20 @@ padri.forEach(padre => {
             </div>
         `);
     });
+});
+
+// Aggiungi sezione "Altro" con tipi prodotto periodici
+$("#dropdownCategorie").append(`<div class="dropdown-padre">Altro</div>`);
+[
+    { tipo: 'rivista',   label: 'Riviste' },
+    { tipo: 'magazine',  label: 'Magazine' },
+    { tipo: 'periodico', label: 'Periodici' },
+    { tipo: 'fumetto',   label: 'Fumetti' }
+].forEach(t => {
+    $("#dropdownCategorie").append(`
+        <div class="dropdown-figlio" onclick="window.location.href='index.php?tipo=${encodeURIComponent(t.tipo)}'">
+            ${t.label}
+        </div>`);
 });
     }, "json");
 
@@ -356,5 +384,8 @@ function eseguiRicerca() {
 function handleSearchKeyPress(e) {
     if (e.key === 'Enter') eseguiRicerca();
 }
+
+function apriLogout() { document.getElementById('logout-overlay').classList.add('open'); }
+function chiudiLogout() { document.getElementById('logout-overlay').classList.remove('open'); }
 
 </script>

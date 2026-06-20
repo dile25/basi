@@ -8,51 +8,40 @@ if (!isset($_SESSION['IdUtente'])) {
     exit;
 }
 
-$id   = $_SESSION['IdUtente'];
-$tipo = $_SESSION['tipoUtente'];
+$input = json_decode(file_get_contents('php://input'), true);
+$id    = $_SESSION['IdUtente'];
+$tipo  = $_SESSION['tipoUtente'];
 
-// Supporta sia JSON (da profilo.php) che POST normale (da checkout.php)
-$contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-if (strpos($contentType, 'application/json') !== false) {
-    $input = json_decode(file_get_contents('php://input'), true) ?? [];
-} else {
-    $input = $_POST;
-}
-
-$nuovoUsername = trim($input['username'] ?? '');
-$email         = $input['email']     ?? '';
-$telefono      = $input['telefono']  ?? '';
-$indirizzo     = $input['indirizzo'] ?? '';
-$password      = $input['password']  ?? '';
+$email          = trim($input['email']          ?? '');
+$telefono       = trim($input['telefono']       ?? '');
+$indirizzo      = trim($input['indirizzo']      ?? '');
+$password       = $input['password']            ?? '';
+$nuovoUsername  = trim($input['username']       ?? '');
+$ragioneSociale = trim($input['ragione_sociale']?? '');
+$partitaIva     = trim($input['partita_iva']    ?? '');
 
 $conn->begin_transaction();
 
 try {
-    // --- CAMBIO USERNAME (se diverso dall'attuale) ---
+    // Cambio username (se fornito e diverso)
     if (!empty($nuovoUsername) && $nuovoUsername !== $id) {
-        // Validazione formato
         if (!preg_match('/^[a-zA-Z0-9_\-]{3,30}$/', $nuovoUsername)) {
-            throw new Exception('Username non valido: usa solo lettere, numeri, _ o - (3-30 caratteri).');
+            throw new Exception('Username non valido (3-30 caratteri: lettere, numeri, _ o -).');
         }
-        // Verifica univocita'
         $check = $conn->prepare("SELECT COUNT(*) as cnt FROM UTENTE WHERE username = ?");
         $check->bind_param("s", $nuovoUsername);
         $check->execute();
         if ($check->get_result()->fetch_assoc()['cnt'] > 0) {
-            throw new Exception('Username già in uso, scegline un altro.');
+            throw new Exception('Username già in uso.');
         }
-        // Aggiorna UTENTE (CASCADE sulle FK propaga il cambio a tutte le tabelle
-        // collegate: CLIENTE/VENDITORE, ORDINE, PRODOTTO, CARRELLO, PREFERITI, ecc.)
-        $stmt = $conn->prepare("UPDATE UTENTE SET username = ? WHERE username = ?");
-        $stmt->bind_param("ss", $nuovoUsername, $id);
-        if (!$stmt->execute()) throw new Exception('Errore aggiornamento username.');
-
-        // Aggiorna la sessione con il nuovo username
+        $stmtU = $conn->prepare("UPDATE UTENTE SET username = ? WHERE username = ?");
+        $stmtU->bind_param("ss", $nuovoUsername, $id);
+        $stmtU->execute();
         $_SESSION['IdUtente'] = $nuovoUsername;
         $id = $nuovoUsername;
     }
 
-    // --- EMAIL e PASSWORD ---
+    // Aggiorna email e/o password (solo se fornita email)
     if (!empty($email)) {
         if (!empty($password)) {
             $hash = password_hash($password, PASSWORD_DEFAULT);
@@ -63,26 +52,28 @@ try {
             $stmt->bind_param("ss", $email, $id);
         }
         $stmt->execute();
+    } elseif (!empty($password)) {
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $conn->prepare("UPDATE UTENTE SET password_hash=? WHERE username=?");
+        $stmt->bind_param("ss", $hash, $id);
+        $stmt->execute();
     }
 
-    // --- DATI CLIENTE ---
+    // Aggiorna dati specifici per ruolo
     if ($tipo === 'cliente') {
-        if (!empty($telefono) && !empty($indirizzo)) {
-            $stmt2 = $conn->prepare("UPDATE CLIENTE SET telefono=?, indirizzo_predefinito=? WHERE username=?");
-            $stmt2->bind_param("sss", $telefono, $indirizzo, $id);
-        } elseif (!empty($indirizzo)) {
-            $stmt2 = $conn->prepare("UPDATE CLIENTE SET indirizzo_predefinito=? WHERE username=?");
-            $stmt2->bind_param("ss", $indirizzo, $id);
-        } elseif (!empty($telefono)) {
-            $stmt2 = $conn->prepare("UPDATE CLIENTE SET telefono=? WHERE username=?");
-            $stmt2->bind_param("ss", $telefono, $id);
+        $stmt2 = $conn->prepare("UPDATE CLIENTE SET telefono=?, indirizzo_predefinito=? WHERE username=?");
+        $stmt2->bind_param("sss", $telefono, $indirizzo, $id);
+        $stmt2->execute();
+    } elseif ($tipo === 'venditore') {
+        if (!empty($ragioneSociale)) {
+            $stmt2 = $conn->prepare("UPDATE VENDITORE SET ragione_sociale=?, partita_iva=? WHERE username=?");
+            $stmt2->bind_param("sss", $ragioneSociale, $partitaIva, $id);
+            $stmt2->execute();
         }
-        if (isset($stmt2)) $stmt2->execute();
     }
 
     $conn->commit();
     echo json_encode(['status' => 'ok']);
-
 } catch (Exception $e) {
     $conn->rollback();
     echo json_encode(['status' => 'error', 'msg' => $e->getMessage()]);

@@ -7,7 +7,7 @@ $id = intval($_GET['id'] ?? 0);
 if (!$id) { echo json_encode(['status' => 'error', 'msg' => 'ID non valido']); exit; }
 
 $sql = "SELECT p.id_prodotto, p.nome, p.autore, p.descrizione, p.prezzo,
-               p.quantita_disponibile, p.id_pacchetto, p.username as IdVenditore,
+               p.quantita_disponibile, p.id_pacchetto, p.tipo_prodotto, p.username as IdVenditore,
                (SELECT nome_categoria FROM DESCRIVE WHERE id_prodotto = p.id_prodotto LIMIT 1) as NomeCategoria,
                pk.nome as NomePacchetto,
                pk.sconto_2, pk.sconto_3, pk.sconto_tutti,
@@ -20,10 +20,7 @@ $sql = "SELECT p.id_prodotto, p.nome, p.autore, p.descrizione, p.prezzo,
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $id);
 $stmt->execute();
-$result = $stmt->get_result();
-$prodotto = $result->fetch_assoc();
-$result->free();
-$stmt->close();
+$prodotto = $stmt->get_result()->fetch_assoc();
 
 if (!$prodotto) { echo json_encode(['status' => 'error', 'msg' => 'Prodotto non trovato']); exit; }
 
@@ -31,11 +28,8 @@ if (!$prodotto) { echo json_encode(['status' => 'error', 'msg' => 'Prodotto non 
 $stmtFoto = $conn->prepare("SELECT url FROM IMMAGINE_PRODOTTO WHERE id_prodotto = ? ORDER BY id_immagine_prodotto ASC");
 $stmtFoto->bind_param("i", $id);
 $stmtFoto->execute();
-$resFoto = $stmtFoto->get_result();
 $foto = [];
-while ($f = $resFoto->fetch_assoc()) $foto[] = $f['url'];
-$resFoto->free();
-$stmtFoto->close();
+while ($f = $stmtFoto->get_result()->fetch_assoc()) $foto[] = $f['url'];
 
 // Nome venditore
 $nomeVenditore = $prodotto['IdVenditore'];
@@ -52,12 +46,26 @@ if ($prodotto['id_pacchetto']) {
     $stmtPack->execute();
     $resPack = $stmtPack->get_result();
     while ($r = $resPack->fetch_assoc()) $libriPacchetto[] = $r;
-    $resPack->free();
-    $stmtPack->close();
 }
 
 // Totale prodotti nel pacchetto (incluso questo)
 $totalePacchetto = count($libriPacchetto) + 1;
+
+// Abbonamenti disponibili per prodotti periodici
+$abbonamenti = [];
+$tipoP = $prodotto['tipo_prodotto'] ?? 'libro';
+if (in_array($tipoP, ['rivista','magazine','periodico','fumetto'])) {
+    $stmtAbb = $conn->prepare(
+        "SELECT id_pacchetto, nome, descrizione, sconto_tutti, periodicita
+         FROM PACCHETTO WHERE tipo_pacchetto = 'abbonamento' AND attivo = 1
+         ORDER BY id_pacchetto"
+    );
+    $stmtAbb->execute();
+    $resAbb = $stmtAbb->get_result();
+    while ($a = $resAbb->fetch_assoc()) $abbonamenti[] = $a;
+    $resAbb->free();
+    $stmtAbb->close();
+}
 
 echo json_encode([
     'status'   => 'ok',
@@ -74,6 +82,7 @@ echo json_encode([
         'sconto_2'        => $prodotto['sconto_2'] ?? 10,
         'sconto_3'        => $prodotto['sconto_3'] ?? 20,
         'sconto_tutti'    => $prodotto['sconto_tutti'] ?? 30,
+        'TipoProdotto'    => $prodotto['tipo_prodotto'] ?? 'libro',
         'tipoPacchetto'   => $prodotto['TipoPacchetto'] ?? 'libro',
         'periodicita'     => $prodotto['Periodicita'] ?? null,
         'totalePacchetto' => $totalePacchetto,
@@ -82,6 +91,7 @@ echo json_encode([
         'NomeVenditore'   => $nomeVenditore,
         'NomeCategoria'   => $prodotto['NomeCategoria'] ?? 'Generale',
         'foto'            => $foto,
-        'libriPacchetto'  => $libriPacchetto
+        'libriPacchetto'  => $libriPacchetto,
+        'abbonamenti'     => $abbonamenti
     ]
 ]);
