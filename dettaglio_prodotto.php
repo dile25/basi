@@ -119,6 +119,7 @@ session_start();
 let prodottoCorrente = null;
 let nelCarrello = false;
 let neiPeferiti = false;
+let idCarrelloSet = new Set(); // id prodotti attualmente nel carrello
 
 $(document).ready(function() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -177,6 +178,14 @@ $(document).ready(function() {
         } else {
             $("#stockHtml").html(`<span style="color:#e74c3c;">✘ Momentaneamente esaurito</span>`);
             $("#btnCarrello").prop("disabled", true).text("Non disponibile").css("opacity", "0.5");
+            // Mostra bottone "Avvisami quando torna disponibile"
+            $("#btnCarrello").after(`
+                <button id="btnAvvisami" class="btn-secondary" style="width:100%; margin-top:10px; padding:12px;"
+                    onclick="attivaAvvisami(${p.IdProdotto})">
+                    🔔 Avvisami quando torna disponibile
+                </button>
+                <p id="msg-avvisami" style="display:none; font-size:0.85em; color:var(--dark-green); margin-top:6px; text-align:center;"></p>
+            `);
         }
 
         $("#loading").hide();
@@ -247,7 +256,8 @@ function cambiaImmagine(url, el) {
 function verificaStatoCarrello(idProdotto) {
     $.get('api/ba_carrello.php', { action: 'list' }, function(resp) {
         if(resp.status === 'ok') {
-            nelCarrello = resp.prodotti.some(p => (p.IdProdotto || p.id_prodotto) == idProdotto);
+            idCarrelloSet = new Set(resp.prodotti.map(p => parseInt(p.IdProdotto || p.id_prodotto)));
+            nelCarrello = idCarrelloSet.has(parseInt(idProdotto));
             aggiornaBottoneCarrello();
         }
     }, 'json');
@@ -352,15 +362,19 @@ function mostraRiquadroPacchetto() {
     p.libriPacchetto.forEach(function(l) {
         var foto = l.foto || 'img/default.jpg';
         var disp = parseInt(l.quantita_disponibile) > 0;
+        var url = 'dettaglio_prodotto.php?id=' + l.id_prodotto;
+        var giaInCarrello = idCarrelloSet.has(parseInt(l.id_prodotto));
         html += '<div style="background:white;border-radius:10px;padding:10px;text-align:center;border:1px solid #ffe082;">';
-        html += '<img src="' + foto + '" style="width:100%;height:120px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="location.href=\'dettaglio_prodotto.php?id=' + l.id_prodotto + '\'">';
-        html += '<p style="margin:6px 0 2px;font-size:0.85em;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + l.nome + '</p>';
+        html += '<a href="' + url + '"><img src="' + foto + '" style="width:100%;height:120px;object-fit:cover;border-radius:6px;cursor:pointer;"></a>';
+        html += '<p style="margin:6px 0 2px;font-size:0.85em;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><a href="' + url + '" style="color:inherit;text-decoration:none;" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">' + l.nome + '</a></p>';
         if (l.autore) html += '<p style="margin:0 0 6px;font-size:0.78em;color:#888;">' + l.autore + '</p>';
         html += '<div style="color:var(--dark-green);font-weight:800;margin-bottom:8px;">€' + parseFloat(l.prezzo).toFixed(2) + '</div>';
-        if (disp) {
-            html += '<button onclick="aggiungiDaPacchetto(' + l.id_prodotto + ')" class="btn-primary" style="width:100%;padding:7px;font-size:0.8em;">Aggiungi</button>';
-        } else {
+        if (!disp) {
             html += '<span style="font-size:0.78em;color:#e74c3c;">Esaurito</span>';
+        } else if (giaInCarrello) {
+            html += '<button onclick="rimuoviDaPacchetto(' + l.id_prodotto + ')" class="btn-secondary" style="width:100%;padding:7px;font-size:0.8em;background:#e74c3c;color:white;border:none;border-radius:6px;cursor:pointer;">✕ Rimuovi</button>';
+        } else {
+            html += '<button onclick="aggiungiDaPacchetto(' + l.id_prodotto + ')" class="btn-primary" style="width:100%;padding:7px;font-size:0.8em;">Aggiungi</button>';
         }
         html += '</div>';
     });
@@ -368,12 +382,48 @@ function mostraRiquadroPacchetto() {
     $('#riquadro-pacchetto').slideDown(300);
 }
 
+function attivaAvvisami(idProdotto) {
+    $.post('api/ba_avvisami.php', { id_prodotto: idProdotto }, function(resp) {
+        const msg = $('#msg-avvisami');
+        if (resp.status === 'ok') {
+            $('#btnAvvisami').prop('disabled', true).css('opacity', '0.6');
+            msg.text('✅ Ti avviseremo quando torna disponibile!').css('color', 'var(--dark-green)').show();
+        } else if (resp.status === 'already') {
+            msg.text('ℹ️ Sei già nella lista di attesa per questo prodotto.').css('color', '#888').show();
+        } else {
+            msg.text('❌ ' + (resp.msg || 'Errore. Riprova.')).css('color', '#e74c3c').show();
+        }
+    }, 'json');
+}
+
 function aggiungiDaPacchetto(id) {
     $.post('api/ba_carrello.php', { action: 'add', idProdotto: id }, function(resp) {
         if (resp.status === 'ok') {
             if (typeof updateCartBadge === 'function') updateCartBadge();
+            idCarrelloSet.add(parseInt(id));
+            // Aggiorna il bottone in-place
             var btn = $('button[onclick="aggiungiDaPacchetto(' + id + ')"]');
-            btn.text('Aggiunto').prop('disabled', true).css('background', '#27ae60');
+            btn.text('✕ Rimuovi')
+               .attr('onclick', 'rimuoviDaPacchetto(' + id + ')')
+               .css({'background':'#e74c3c','color':'white','border':'none'})
+               .prop('disabled', false);
+        } else {
+            alert(resp.msg);
+        }
+    }, 'json');
+}
+
+function rimuoviDaPacchetto(id) {
+    $.post('api/ba_carrello.php', { action: 'remove', idProdotto: id }, function(resp) {
+        if (resp.status === 'ok') {
+            if (typeof updateCartBadge === 'function') updateCartBadge();
+            idCarrelloSet.delete(parseInt(id));
+            // Aggiorna il bottone in-place
+            var btn = $('button[onclick="rimuoviDaPacchetto(' + id + ')"]');
+            btn.text('Aggiungi')
+               .attr('onclick', 'aggiungiDaPacchetto(' + id + ')')
+               .css({'background':'','color':'','border':''})
+               .addClass('btn-primary');
         } else {
             alert(resp.msg);
         }

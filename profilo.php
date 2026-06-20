@@ -61,6 +61,8 @@ if (!$utentePublico && !isset($_SESSION['IdUtente'])) { header("Location: login.
 
                 <div id="form-modifica" class="form-modifica-section">
                     <p style="font-weight:600; margin-bottom:12px;">Modifica i tuoi dati:</p>
+                    <input type="text" id="edit-username" placeholder="Username" class="edit-input">
+                    <p id="err-username" style="display:none; color:#e74c3c; font-size:0.85em; margin:-8px 0 10px;">Username non disponibile o non valido.</p>
                     <input type="email" id="edit-email" placeholder="Email" class="edit-input">
                     <input type="tel" id="edit-telefono" placeholder="Telefono" class="edit-input" <?php echo ($_SESSION['tipoUtente'] === 'venditore') ? 'style="display:none"' : ''; ?>>
                     <input type="password" id="edit-password" placeholder="Nuova Password (lascia vuoto per non cambiarla)" class="edit-input">
@@ -118,10 +120,20 @@ if (!$utentePublico && !isset($_SESSION['IdUtente'])) { header("Location: login.
                     <option value="Carta">💳 Carta di Credito/Debito</option>
                     <option value="PayPal">🅿️ PayPal</option>
                     <option value="ApplePay"> Apple Pay</option>
+                    <option value="GooglePay">🔵 Google Pay</option>
                     <option value="Rate">📅 Paga in 3 rate</option>
                 </select>
                 <div id="campo-carta-profilo" style="display:none;">
-                    <input type="text" id="nuovo-cc" placeholder="Numero carta" class="edit-input" maxlength="19">
+                    <input type="text" id="nuovo-cc" placeholder="Numero carta" class="edit-input" maxlength="19" style="margin-bottom:8px;">
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" id="nuovo-scadenza" placeholder="MM/AAAA" class="edit-input" maxlength="7" style="flex:1; margin-bottom:8px;">
+                        <input type="text" id="nuovo-cvv" placeholder="CVV" class="edit-input" maxlength="3" style="flex:1; margin-bottom:8px;">
+                    </div>
+                    <p id="err-carta-profilo" style="display:none; color:#e74c3c; font-size:0.85em; margin:0 0 8px;"></p>
+                </div>
+                <div id="campo-digitalpay-profilo" style="display:none;">
+                    <input type="text" id="nuovo-account-digitalpay" placeholder="Account associato (es. email)" class="edit-input" style="margin-bottom:8px;">
+                    <p id="err-digitalpay-profilo" style="display:none; color:#e74c3c; font-size:0.85em; margin:0 0 8px;"></p>
                 </div>
                 <div id="campo-paypal-profilo" style="display:none;">
                     <input type="email" id="nuovo-pp" placeholder="Email PayPal" class="edit-input">
@@ -163,6 +175,7 @@ fetch('api/ba_get_profilo.php' + uParam)
                     document.getElementById('p-telefono').innerText = d.telefono || 'Non inserito';
 
                     document.getElementById('edit-email').value = u.email || '';
+                    document.getElementById('edit-username') && (document.getElementById('edit-username').value = u.username || '');
                     document.getElementById('edit-telefono') && (document.getElementById('edit-telefono').value = d.telefono || '');
 
                     const typeTag = document.getElementById('user-type');
@@ -196,7 +209,9 @@ fetch('api/ba_get_profilo.php' + uParam)
         </div>
         <p><strong>Membro dal:</strong> ${dataReg}</p>
         <br>
-        <button class="btn-recensisci" onclick="location.href='preferiti.php'">❤️ Vedi i tuoi preferiti</button>
+        <button class="btn-recensisci" style="width:100%; margin-bottom:8px;" onclick="location.href='preferiti.php'">❤️ I miei preferiti</button>
+        <button class="btn-recensisci" style="width:100%; margin-bottom:8px;" onclick="location.href='miei_ordini.php'">📦 I miei ordini</button>
+        <button class="btn-recensisci" style="width:100%;" onclick="location.href='carrello.php'">🛒 Il mio carrello</button>
     `;
 }
 document.getElementById('content-extra').innerHTML = extraHtml;
@@ -256,7 +271,7 @@ if (data.prodotti && data.prodotti.length > 0) {
     }
 
     function iconaMetodo(m) {
-        const i = { 'Carta':'💳','PayPal':'🅿️','ApplePay':'','Rate':'📅','Contrassegno':'🚚' };
+        const i = { 'Carta':'💳','PayPal':'🅿️','ApplePay':'','GooglePay':'🔵','Rate':'📅','Contrassegno':'🚚' };
         return i[m] || '💳';
     }
 
@@ -276,22 +291,98 @@ if (data.prodotti && data.prodotti.length > 0) {
 
     function mostraCampiMetodo() {
         const tipo = document.getElementById('nuovo-metodo-tipo').value;
-        document.getElementById('campo-carta-profilo').style.display = tipo === 'Carta' ? 'block' : 'none';
+        const eCarta = (tipo === 'Carta' || tipo === 'Rate');
+        const eDigital = (tipo === 'ApplePay' || tipo === 'GooglePay');
+        document.getElementById('campo-carta-profilo').style.display = eCarta ? 'block' : 'none';
         document.getElementById('campo-paypal-profilo').style.display = tipo === 'PayPal' ? 'block' : 'none';
+        document.getElementById('campo-digitalpay-profilo').style.display = eDigital ? 'block' : 'none';
+        document.getElementById('err-carta-profilo').style.display = 'none';
+        document.getElementById('err-digitalpay-profilo').style.display = 'none';
+        // Aggiorna il placeholder account in base al tipo
+        if (eDigital) {
+            document.getElementById('nuovo-account-digitalpay').placeholder =
+                tipo === 'ApplePay' ? 'Apple ID (es. nome@icloud.com)' : 'Account Google (es. nome@gmail.com)';
+        }
     }
+
+    // Formattazione automatica numero carta (gruppi di 4)
+    document.addEventListener('DOMContentLoaded', function() {
+        const ccInput = document.getElementById('nuovo-cc');
+        if (ccInput) {
+            ccInput.addEventListener('input', function() {
+                let v = this.value.replace(/\D/g, '').substring(0, 16);
+                this.value = v.replace(/(.{4})/g, '$1 ').trim();
+            });
+        }
+        const scadInput = document.getElementById('nuovo-scadenza');
+        if (scadInput) {
+            scadInput.addEventListener('input', function() {
+                let v = this.value.replace(/\D/g, '').substring(0, 6);
+                if (v.length > 2) v = v.substring(0, 2) + '/' + v.substring(2);
+                this.value = v;
+            });
+        }
+        const cvvInput = document.getElementById('nuovo-cvv');
+        if (cvvInput) {
+            cvvInput.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').substring(0, 3);
+            });
+        }
+    });
 
     function salvaMetodo() {
         const tipo = document.getElementById('nuovo-metodo-tipo').value;
         if (!tipo) { alert('Seleziona un tipo di metodo.'); return; }
         let dati = tipo;
-        if (tipo === 'Carta') {
+
+        if (tipo === 'Carta' || tipo === 'Rate') {
             const num = document.getElementById('nuovo-cc').value.replace(/\s/g,'');
-            if (num.length < 4) { alert('Inserisci il numero carta.'); return; }
-            dati = 'Carta che termina con ' + num.slice(-4);
+            const scad = document.getElementById('nuovo-scadenza').value;
+            const cvv = document.getElementById('nuovo-cvv').value;
+            const errEl = document.getElementById('err-carta-profilo');
+
+            if (num.length < 13) {
+                errEl.textContent = 'Inserisci un numero di carta valido.';
+                errEl.style.display = 'block'; return;
+            }
+            const scadMatch = scad.match(/^(\d{2})\/(\d{4})$/);
+            if (!scadMatch) {
+                errEl.textContent = 'Inserisci la scadenza nel formato MM/AAAA (es. 09/2027).';
+                errEl.style.display = 'block'; return;
+            }
+            const mese = parseInt(scadMatch[1], 10);
+            const anno = parseInt(scadMatch[2], 10);
+            if (mese < 1 || mese > 12) {
+                errEl.textContent = 'Il mese deve essere compreso tra 01 e 12.';
+                errEl.style.display = 'block'; return;
+            }
+            const now = new Date();
+            if (anno < now.getFullYear() || (anno === now.getFullYear() && mese < now.getMonth() + 1)) {
+                errEl.textContent = 'La carta risulta già scaduta. Inserisci una data futura.';
+                errEl.style.display = 'block'; return;
+            }
+            if (cvv.length !== 3) {
+                errEl.textContent = 'Il CVV deve essere di 3 cifre.';
+                errEl.style.display = 'block'; return;
+            }
+            errEl.style.display = 'none';
+            const prefisso = tipo === 'Rate' ? 'Rate — Carta che termina con ' : 'Carta che termina con ';
+            dati = prefisso + num.slice(-4);
+
         } else if (tipo === 'PayPal') {
             const email = document.getElementById('nuovo-pp').value;
             if (!email) { alert('Inserisci email PayPal.'); return; }
             dati = email;
+
+        } else if (tipo === 'ApplePay' || tipo === 'GooglePay') {
+            const account = document.getElementById('nuovo-account-digitalpay').value.trim();
+            const errEl = document.getElementById('err-digitalpay-profilo');
+            if (!account) {
+                errEl.textContent = 'Inserisci l\'account associato.';
+                errEl.style.display = 'block'; return;
+            }
+            errEl.style.display = 'none';
+            dati = account;
         }
 
         fetch('api/ba_metodi_pagamento_cliente.php', {
@@ -343,7 +434,22 @@ if (data.prodotti && data.prodotti.length > 0) {
     }
 
     function salvaDati() {
+        const nuovoUsername = document.getElementById('edit-username').value.trim();
+        if (!nuovoUsername) { 
+            document.getElementById('err-username').textContent = 'L\'username non può essere vuoto.';
+            document.getElementById('err-username').style.display = 'block'; 
+            return; 
+        }
+        // Username: solo lettere, numeri, underscore, trattino; 3-30 caratteri
+        if (!/^[a-zA-Z0-9_\-]{3,30}$/.test(nuovoUsername)) {
+            document.getElementById('err-username').textContent = 'Username non valido: usa solo lettere, numeri, _ o - (3-30 caratteri).';
+            document.getElementById('err-username').style.display = 'block';
+            return;
+        }
+        document.getElementById('err-username').style.display = 'none';
+
         const payload = {
+            username: nuovoUsername,
             email:    document.getElementById('edit-email').value,
             telefono: document.getElementById('edit-telefono') ? document.getElementById('edit-telefono').value : '',
             password: document.getElementById('edit-password').value
@@ -356,6 +462,7 @@ if (data.prodotti && data.prodotti.length > 0) {
             if (data.status === 'ok') {
                 document.getElementById('msg-ok').style.display = 'block';
                 document.getElementById('msg-err').style.display = 'none';
+                document.getElementById('p-username').innerText = nuovoUsername;
                 document.getElementById('p-email').innerText = payload.email;
                 document.getElementById('p-telefono').innerText = payload.telefono || 'Non inserito';
                 setTimeout(() => toggleModifica(), 1500);

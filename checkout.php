@@ -76,6 +76,9 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
             <div class="metodo-card" onclick="selezionaMetodo('ApplePay', this)">
                 <input type="radio" name="metodo" value="ApplePay">  Apple Pay 
             </div>
+            <div class="metodo-card" onclick="selezionaMetodo('GooglePay', this)">
+                <input type="radio" name="metodo" value="GooglePay"> 🔵 Google Pay
+            </div>
             <div class="metodo-card" onclick="selezionaMetodo('Rate', this)">
                 <input type="radio" name="metodo" value="Rate"> 📅 Paga in 3 rate 
             </div>
@@ -115,11 +118,39 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
             </label>
         </div>
 
-        <!-- Rate info -->
+        <!-- Campi Rate: stessa carta ma con info rata mensile -->
         <div id="campos-rate" class="card-fields">
-            <div style="background:#fff3cd; padding:15px; border-radius:8px;">
-                💡 L'importo verrà diviso in 3 rate mensili uguali senza interessi (simulato).
+            <div style="background:#fff3cd; padding:12px; border-radius:8px; margin-bottom:12px; font-size:0.9em;">
+                💡 L'importo verrà diviso in 3 rate mensili uguali senza interessi (simulato). Inserisci la carta con cui pagare le rate.
             </div>
+            <label class="checkout-label">Numero carta</label>
+            <input type="text" id="rate-numero" class="checkout-input" placeholder="1234 5678 9012 3456" maxlength="19">
+            <div class="err-msg" id="err-rate-numero">Inserisci un numero carta valido (16 cifre).</div>
+            <div class="input-row">
+                <div>
+                    <label class="checkout-label">Scadenza</label>
+                    <input type="text" id="rate-scadenza" class="checkout-input" placeholder="MM/AAAA" maxlength="7" style="margin-bottom:0;">
+                    <div class="err-msg" id="err-rate-scadenza" style="margin-top:6px; position:static;">Formato non valido o carta scaduta.</div>
+                </div>
+                <div>
+                    <label class="checkout-label">CVV</label>
+                    <input type="text" id="rate-cvv" class="checkout-input" placeholder="123" maxlength="3">
+                    <div class="err-msg" id="err-rate-cvv">Il CVV deve essere di 3 cifre.</div>
+                </div>
+            </div>
+            <label style="font-size:0.9em; cursor:pointer;">
+                <input type="checkbox" id="salva-rate" style="accent-color:var(--primary-green);"> &nbsp;Salva questa carta per i prossimi acquisti
+            </label>
+        </div>
+
+        <!-- Apple Pay / Google Pay: account associato -->
+        <div id="campos-digitalpay" class="card-fields">
+            <label class="checkout-label" id="label-digitalpay">Account associato</label>
+            <input type="text" id="digitalpay-account" class="checkout-input" placeholder="es. nome@icloud.com">
+            <div class="err-msg" id="err-digitalpay">Inserisci l'account associato.</div>
+            <label style="font-size:0.9em; cursor:pointer;">
+                <input type="checkbox" id="salva-digitalpay" style="accent-color:var(--primary-green);"> &nbsp;Salva per i prossimi acquisti
+            </label>
         </div>
 
         <!-- Contrassegno info -->
@@ -228,6 +259,20 @@ $(document).ready(function() {
         $(this).val($(this).val().replace(/\D/g, '').substring(0,3));
     });
 
+    // Stessa formattazione per i campi Rate
+    $('#rate-numero').on('input', function() {
+        let v = $(this).val().replace(/\D/g, '').substring(0, 16);
+        $(this).val(v.replace(/(.{4})/g, '$1 ').trim());
+    });
+    $('#rate-scadenza').on('input', function() {
+        let v = $(this).val().replace(/\D/g, '').substring(0, 6);
+        if (v.length > 2) v = v.substring(0, 2) + '/' + v.substring(2);
+        $(this).val(v);
+    });
+    $('#rate-cvv').on('input', function() {
+        $(this).val($(this).val().replace(/\D/g, '').substring(0,3));
+    });
+
     // Solo cifre CAP
     $('#campo-cap').on('input', function() {
         $(this).val($(this).val().replace(/\D/g, '').substring(0,5));
@@ -235,7 +280,7 @@ $(document).ready(function() {
 });
 
 function iconaMetodo(m) {
-    const icons = { 'Carta': '💳', 'PayPal': '🅿️', 'ApplePay': '', 'Rate': '📅', 'Contrassegno': '🚚' };
+    const icons = { 'Carta': '💳', 'PayPal': '🅿️', 'ApplePay': '', 'GooglePay': '🔵', 'Rate': '📅', 'Contrassegno': '🚚' };
     return icons[m] || '💳';
 }
 
@@ -246,11 +291,17 @@ function selezionaMetodo(metodo, el) {
     $(el).addClass('selected');
     $(el).find('input[type=radio]').prop('checked', true);
     metodoCorrente = metodo;
-    $('#campos-carta, #campos-paypal, #campos-rate, #campos-contrassegno').hide();
-    if(metodo === 'Carta') $('#campos-carta').show();
-    else if(metodo === 'PayPal') $('#campos-paypal').show();
-    else if(metodo === 'Rate') $('#campos-rate').show();
-    else if(metodo === 'Contrassegno') $('#campos-contrassegno').show();
+    datiOrdine.idPagamentoSalvato = null;
+    $('#campos-carta, #campos-paypal, #campos-rate, #campos-contrassegno, #campos-digitalpay').hide();
+    if (metodo === 'Carta') $('#campos-carta').show();
+    else if (metodo === 'PayPal') $('#campos-paypal').show();
+    else if (metodo === 'Rate') $('#campos-rate').show();
+    else if (metodo === 'Contrassegno') $('#campos-contrassegno').show();
+    else if (metodo === 'ApplePay' || metodo === 'GooglePay') {
+        $('#label-digitalpay').text(metodo === 'ApplePay' ? 'Apple ID (es. nome@icloud.com)' : 'Account Google (es. nome@gmail.com)');
+        $('#digitalpay-account').attr('placeholder', metodo === 'ApplePay' ? 'nome@icloud.com' : 'nome@gmail.com');
+        $('#campos-digitalpay').show();
+    }
 }
 
 function selezionaMetodoSalvato(id, metodo, dati, el) {
@@ -258,7 +309,7 @@ function selezionaMetodoSalvato(id, metodo, dati, el) {
     $(el).addClass('selected');
     metodoCorrente = metodo;
     datiOrdine.idPagamentoSalvato = id;
-    $('#campos-carta, #campos-paypal, #campos-rate, #campos-contrassegno').hide();
+    $('#campos-carta, #campos-paypal, #campos-rate, #campos-contrassegno, #campos-digitalpay').hide();
 }
 
 function validaCarta() {
@@ -301,6 +352,41 @@ function validaCarta() {
     return ok;
 }
 
+function validaRate() {
+    let ok = true;
+    const numero = $('#rate-numero').val().replace(/\s/g, '');
+    if (numero.length !== 16) { $('#err-rate-numero').show(); $('#rate-numero').addClass('error'); ok = false; }
+    else { $('#err-rate-numero').hide(); $('#rate-numero').removeClass('error'); }
+
+    const scad = $('#rate-scadenza').val();
+    const scadMatch = scad.match(/^(\d{2})\/(\d{4})$/);
+    if (!scadMatch) {
+        $('#err-rate-scadenza').text('Inserisci la scadenza nel formato MM/AAAA.').show();
+        $('#rate-scadenza').addClass('error'); ok = false;
+    } else {
+        const mese = parseInt(scadMatch[1], 10);
+        const anno = parseInt(scadMatch[2], 10);
+        if (mese < 1 || mese > 12) {
+            $('#err-rate-scadenza').text('Il mese deve essere tra 01 e 12.').show();
+            $('#rate-scadenza').addClass('error'); ok = false;
+        } else {
+            const now = new Date();
+            if (anno < now.getFullYear() || (anno === now.getFullYear() && mese < now.getMonth() + 1)) {
+                $('#err-rate-scadenza').text('La carta risulta già scaduta.').show();
+                $('#rate-scadenza').addClass('error'); ok = false;
+            } else {
+                $('#err-rate-scadenza').hide(); $('#rate-scadenza').removeClass('error');
+            }
+        }
+    }
+
+    const cvv = $('#rate-cvv').val();
+    if (cvv.length !== 3) { $('#err-rate-cvv').show(); $('#rate-cvv').addClass('error'); ok = false; }
+    else { $('#err-rate-cvv').hide(); $('#rate-cvv').removeClass('error'); }
+
+    return ok;
+}
+
 function procediAlPagamento() {
     const via = $('#campo-via').val().trim();
     const citta = $('#campo-citta').val().trim();
@@ -311,8 +397,17 @@ function procediAlPagamento() {
     if(cap.length !== 5) { alert('Il CAP deve essere di 5 cifre.'); return; }
     if(!metodoCorrente) { alert('Seleziona un metodo di pagamento.'); return; }
 
-    if(metodoCorrente === 'Carta' && !datiOrdine.idPagamentoSalvato) {
-        if(!validaCarta()) return;
+    // Validazione campi per metodo selezionato (solo se non si usa un metodo salvato)
+    if (!datiOrdine.idPagamentoSalvato) {
+        if (metodoCorrente === 'Carta') {
+            if (!validaCarta()) return;
+        } else if (metodoCorrente === 'Rate') {
+            if (!validaRate()) return;
+        } else if (metodoCorrente === 'ApplePay' || metodoCorrente === 'GooglePay') {
+            const account = $('#digitalpay-account').val().trim();
+            if (!account) { $('#err-digitalpay').show(); return; }
+            $('#err-digitalpay').hide();
+        }
     }
 
     const indirizzo = `${via}, ${citta}, ${cap}${prov ? ', ' + prov : ''}`;
@@ -320,16 +415,30 @@ function procediAlPagamento() {
     datiOrdine.metodo = metodoCorrente;
 
     // Salva metodo se richiesto
-    if(metodoCorrente === 'Carta' && $('#salva-carta').is(':checked')) {
+    if (metodoCorrente === 'Carta' && $('#salva-carta').is(':checked')) {
         const ultime4 = $('#cc-numero').val().replace(/\s/g,'').slice(-4);
         $.post('api/ba_metodi_pagamento_cliente.php', {
             action: 'add', metodo: 'Carta', dati: 'Carta che termina con ' + ultime4
         });
     }
-    if(metodoCorrente === 'PayPal' && $('#salva-paypal').is(':checked') && $('#pp-email').val()) {
+    if (metodoCorrente === 'Rate' && $('#salva-rate').is(':checked')) {
+        const ultime4 = $('#rate-numero').val().replace(/\s/g,'').slice(-4);
+        $.post('api/ba_metodi_pagamento_cliente.php', {
+            action: 'add', metodo: 'Rate', dati: 'Rate — Carta che termina con ' + ultime4
+        });
+    }
+    if (metodoCorrente === 'PayPal' && $('#salva-paypal').is(':checked') && $('#pp-email').val()) {
         $.post('api/ba_metodi_pagamento_cliente.php', {
             action: 'add', metodo: 'PayPal', dati: $('#pp-email').val()
         });
+    }
+    if ((metodoCorrente === 'ApplePay' || metodoCorrente === 'GooglePay') && $('#salva-digitalpay').is(':checked')) {
+        const account = $('#digitalpay-account').val().trim();
+        if (account) {
+            $.post('api/ba_metodi_pagamento_cliente.php', {
+                action: 'add', metodo: metodoCorrente, dati: account
+            });
+        }
     }
 
     // Aggiorna indirizzo predefinito se diverso

@@ -19,13 +19,40 @@ if (strpos($contentType, 'application/json') !== false) {
     $input = $_POST;
 }
 
-$email     = $input['email']     ?? '';
-$telefono  = $input['telefono']  ?? '';
-$indirizzo = $input['indirizzo'] ?? '';
-$password  = $input['password']  ?? '';
+$nuovoUsername = trim($input['username'] ?? '');
+$email         = $input['email']     ?? '';
+$telefono      = $input['telefono']  ?? '';
+$indirizzo     = $input['indirizzo'] ?? '';
+$password      = $input['password']  ?? '';
+
+$conn->begin_transaction();
 
 try {
-    // Aggiorna UTENTE
+    // --- CAMBIO USERNAME (se diverso dall'attuale) ---
+    if (!empty($nuovoUsername) && $nuovoUsername !== $id) {
+        // Validazione formato
+        if (!preg_match('/^[a-zA-Z0-9_\-]{3,30}$/', $nuovoUsername)) {
+            throw new Exception('Username non valido: usa solo lettere, numeri, _ o - (3-30 caratteri).');
+        }
+        // Verifica univocita'
+        $check = $conn->prepare("SELECT COUNT(*) as cnt FROM UTENTE WHERE username = ?");
+        $check->bind_param("s", $nuovoUsername);
+        $check->execute();
+        if ($check->get_result()->fetch_assoc()['cnt'] > 0) {
+            throw new Exception('Username già in uso, scegline un altro.');
+        }
+        // Aggiorna UTENTE (CASCADE sulle FK propaga il cambio a tutte le tabelle
+        // collegate: CLIENTE/VENDITORE, ORDINE, PRODOTTO, CARRELLO, PREFERITI, ecc.)
+        $stmt = $conn->prepare("UPDATE UTENTE SET username = ? WHERE username = ?");
+        $stmt->bind_param("ss", $nuovoUsername, $id);
+        if (!$stmt->execute()) throw new Exception('Errore aggiornamento username.');
+
+        // Aggiorna la sessione con il nuovo username
+        $_SESSION['IdUtente'] = $nuovoUsername;
+        $id = $nuovoUsername;
+    }
+
+    // --- EMAIL e PASSWORD ---
     if (!empty($email)) {
         if (!empty($password)) {
             $hash = password_hash($password, PASSWORD_DEFAULT);
@@ -38,7 +65,7 @@ try {
         $stmt->execute();
     }
 
-    // Aggiorna CLIENTE
+    // --- DATI CLIENTE ---
     if ($tipo === 'cliente') {
         if (!empty($telefono) && !empty($indirizzo)) {
             $stmt2 = $conn->prepare("UPDATE CLIENTE SET telefono=?, indirizzo_predefinito=? WHERE username=?");
@@ -53,7 +80,10 @@ try {
         if (isset($stmt2)) $stmt2->execute();
     }
 
+    $conn->commit();
     echo json_encode(['status' => 'ok']);
+
 } catch (Exception $e) {
+    $conn->rollback();
     echo json_encode(['status' => 'error', 'msg' => $e->getMessage()]);
 }
