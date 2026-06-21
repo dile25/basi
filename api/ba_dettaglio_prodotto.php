@@ -20,7 +20,10 @@ $sql = "SELECT p.id_prodotto, p.nome, p.autore, p.descrizione, p.prezzo,
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $id);
 $stmt->execute();
-$prodotto = $stmt->get_result()->fetch_assoc();
+$resMain = $stmt->get_result();
+$prodotto = $resMain->fetch_assoc();
+$resMain->free();
+$stmt->close();
 
 if (!$prodotto) { echo json_encode(['status' => 'error', 'msg' => 'Prodotto non trovato']); exit; }
 
@@ -29,7 +32,10 @@ $stmtFoto = $conn->prepare("SELECT url FROM IMMAGINE_PRODOTTO WHERE id_prodotto 
 $stmtFoto->bind_param("i", $id);
 $stmtFoto->execute();
 $foto = [];
-while ($f = $stmtFoto->get_result()->fetch_assoc()) $foto[] = $f['url'];
+$resFoto = $stmtFoto->get_result();
+while ($f = $resFoto->fetch_assoc()) $foto[] = $f['url'];
+$resFoto->free();
+$stmtFoto->close();
 
 // Nome venditore
 $nomeVenditore = $prodotto['IdVenditore'];
@@ -46,6 +52,8 @@ if ($prodotto['id_pacchetto']) {
     $stmtPack->execute();
     $resPack = $stmtPack->get_result();
     while ($r = $resPack->fetch_assoc()) $libriPacchetto[] = $r;
+    $resPack->free();
+    $stmtPack->close();
 }
 
 // Totale prodotti nel pacchetto (incluso questo)

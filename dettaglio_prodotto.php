@@ -193,9 +193,9 @@ $(document).ready(function() {
 
         // Stock
         if (p.QuantitaDisp > 0) {
-            $("#stockHtml").html(`<span style="color:var(--dark-green);">✔ ${p.QuantitaDisp} copie disponibili</span>`);
+            $("#stockHtml").html(`<span style="color:var(--dark-green);display:flex;align-items:center;gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg> ${p.QuantitaDisp} copie disponibili</span>`);
         } else {
-            $("#stockHtml").html(`<span style="color:#e74c3c;">✘ Momentaneamente esaurito</span>`);
+            $("#stockHtml").html(`<span style="color:#e74c3c;display:flex;align-items:center;gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> Momentaneamente esaurito</span>`);
             $("#btnCarrello").prop("disabled", true).text("Non disponibile").css("opacity", "0.5");
             // Mostra bottone "Avvisami quando torna disponibile"
             $("#btnCarrello").after(`
@@ -336,7 +336,7 @@ function verificaStatoPreferiti(idProdotto) {
 function aggiornaBottoneCarrello() {
     const btn = $("#btnCarrello");
     if (nelCarrello) {
-        btn.text("🗑️ Rimuovi dal Carrello").addClass("nel-carrello");
+        btn.html("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"currentColor\" style=\"width:18px;height:18px;vertical-align:middle;margin-right:6px;\"><path d=\"M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z\"/></svg> Rimuovi dal Carrello").addClass("nel-carrello");
     } else {
         btn.html('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zM7.17 14.75l.03-.12.9-1.63H17c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 21.44 4H5.21L4.54 2H1v2h2l3.6 7.59-1.35 2.44A2 2 0 0 0 7 18h14v-2H7.42a.25.25 0 0 1-.25-.25z"/></svg> Aggiungi al Carrello').removeClass("nel-carrello");
     }
@@ -345,7 +345,7 @@ function aggiornaBottoneCarrello() {
 function aggiornaBottonePreferiti() {
     const btn = $("#btnFav");
     if (neiPeferiti) {
-        btn.text("💔 Rimuovi dai Preferiti").addClass("attivo");
+        btn.html("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"currentColor\" style=\"width:18px;height:18px;vertical-align:middle;margin-right:6px;\"><path d=\"M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z\"/></svg> Rimuovi dai Preferiti").addClass("attivo");
     } else {
         btn.html('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:17px;height:17px;vertical-align:middle;margin-right:5px;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> Aggiungi ai Preferiti').removeClass("attivo");
     }
