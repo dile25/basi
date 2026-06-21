@@ -37,21 +37,23 @@ if(!isset($_SESSION['IdUtente'])) { header("Location: login.php"); exit; }
 
 <!-- MODAL RECENSIONE -->
 <div id="modalRecensione" class="modal-overlay">
-    <div class="modal-content">
-        <span onclick="$('#modalRecensione').fadeOut()" style="position:absolute;top:15px;right:20px;font-size:22px;cursor:pointer;">&times;</span>
-        <h3 id="rev-titolo" style="margin-bottom:5px;">Recensisci il libro</h3>
-        <p style="color:#666;font-size:0.9em;">La tua opinione aiuterà altri lettori!</p>
+    <div style="background:#fff; border-radius:16px; padding:32px; width:100%; max-width:440px; position:relative; box-shadow:0 8px 30px rgba(0,0,0,0.15);">
+        <button onclick="$('#modalRecensione').fadeOut()" style="position:absolute;top:14px;right:16px;background:none;border:none;cursor:pointer;padding:4px;line-height:1;color:#999;" title="Chiudi">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:22px;height:22px;display:block;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+        <h3 id="rev-titolo" style="margin:0 0 4px; color:var(--dark-green); font-size:1.1em; padding-right:30px;">Recensisci il libro</h3>
+        <p style="color:#999; font-size:0.88em; margin:0 0 20px;">La tua opinione aiuterà altri lettori!</p>
         <form id="formRecensione">
             <input type="hidden" name="idProdotto" id="rev-idProdotto">
             <input type="hidden" name="voto" id="rev-voto-val" value="5">
-            <div class="star-rating">
+            <div class="star-rating" style="margin-bottom:16px;">
                 <span class="star" data-v="1">★</span><span class="star" data-v="2">★</span>
                 <span class="star" data-v="3">★</span><span class="star" data-v="4">★</span>
                 <span class="star" data-v="5">★</span>
             </div>
             <textarea name="commento" rows="4" placeholder="Scrivi la tua recensione..." required
-                style="width:100%;border:1px solid #ddd;border-radius:8px;padding:10px;font-family:inherit;box-sizing:border-box;"></textarea>
-            <button type="submit" class="btn-primary" style="width:100%;margin-top:15px;padding:14px;font-weight:bold;">PUBBLICA</button>
+                style="width:100%;border:1px solid #ddd;border-radius:10px;padding:12px;font-family:inherit;box-sizing:border-box;font-size:0.95em;resize:vertical;"></textarea>
+            <button type="submit" class="btn-primary" style="width:100%;margin-top:14px;padding:14px;font-weight:700;border-radius:10px;font-size:1em;">PUBBLICA</button>
         </form>
     </div>
 </div>
