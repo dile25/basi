@@ -219,18 +219,11 @@ $(document).ready(function() {
         if (p.abbonamenti && p.abbonamenti.length > 0) {
             let abbHtml = '';
             p.abbonamenti.forEach(a => {
-                const durata = a.nome.toLowerCase().includes('12') ? '12 mesi' :
-                               a.nome.toLowerCase().includes('6')  ? '6 mesi' : 'il periodo';
+                const durata    = a.nome.toLowerCase().includes('12') ? '12 mesi' :
+                                   a.nome.toLowerCase().includes('6')  ? '6 mesi'  : 'il periodo';
                 const perioLabel = a.periodicita === 'settimanale' ? 'numeri settimanali' : 'numeri mensili';
-
-                // Calcola numero di uscite del piano
                 let mesi = a.nome.toLowerCase().includes('12') ? 12 : 6;
-                let numUscite;
-                if (a.periodicita === 'settimanale') {
-                    numUscite = mesi === 12 ? 52 : 26;
-                } else {
-                    numUscite = mesi; // mensile: 1 numero al mese
-                }
+                const numUscite = a.periodicita === 'settimanale' ? (mesi === 12 ? 52 : 26) : mesi;
                 abbHtml += `
                 <div style="background:white; border:1px solid #d2b4de; border-radius:12px; padding:18px; display:flex; flex-direction:column; gap:10px;">
                     <div style="font-weight:700; color:#6c3483; font-size:0.95em;">${a.nome}</div>
@@ -252,11 +245,11 @@ $(document).ready(function() {
 
             // Handler bottoni abbonamento (event delegation per evitare problemi inline)
             $(document).on('click', '.btn-avvia-abbonamento', function() {
-                const idPacchetto   = $(this).data('id');
-                const nomeAbb       = $(this).data('nome');
-                const sconto        = $(this).data('sconto');
-                const numUscite     = $(this).data('uscite');
-                const periodicita   = $(this).data('periodicita');
+                const idPacchetto  = $(this).data('id');
+                const nomeAbb      = $(this).data('nome');
+                const sconto       = $(this).data('sconto');
+                const numUscite    = $(this).data('uscite');
+                const periodicita  = $(this).data('periodicita');
                 avviaAbbonamento(idPacchetto, nomeAbb, sconto, numUscite, periodicita);
             });
         }
@@ -459,12 +452,17 @@ function avviaAbbonamento(idPacchetto, nomeAbb, sconto, numUscite, periodicita) 
         if (confirm('Devi essere loggato per procedere. Vuoi accedere?')) window.location.href = 'login.php';
         return;
     <?php endif; ?>
-    const idProdotto = prodottoCorrente ? prodottoCorrente.IdProdotto : 0;
-    const prezzoProdotto = prodottoCorrente ? parseFloat(prodottoCorrente.prezzo) : 0;
-    if (!idProdotto) return;
+    if (!prodottoCorrente) return;
+    const idProdotto    = prodottoCorrente.IdProdotto;
+    const prezzoProdotto = parseFloat(prodottoCorrente.prezzo);
+    const nomeProdotto  = prodottoCorrente.NomeProdotto;
+    const fotoProdotto  = (prodottoCorrente.foto && prodottoCorrente.foto.length > 0)
+                          ? prodottoCorrente.foto[0] : 'img/default.jpg';
+
     const procedi = function() {
         sessionStorage.setItem('abbonamento_selezionato', JSON.stringify({
-            idPacchetto, nomeAbb, sconto, numUscite, periodicita, prezzoProdotto
+            idPacchetto, nomeAbb, sconto, numUscite, periodicita,
+            prezzoProdotto, nomeProdotto, fotoProdotto
         }));
         window.location.href = 'checkout.php';
     };

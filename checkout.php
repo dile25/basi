@@ -50,7 +50,11 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
             <p style="color:var(--text-sec);">Caricamento...</p>
         </div>
 
-        <label class="checkout-label">Indirizzo di spedizione</label>
+        <label class="checkout-label">Indirizzo di spedizione
+            <span id="hint-indirizzo" style="display:none; font-size:0.78em; font-weight:400; color:var(--primary-green); margin-left:8px;">
+                ✓ precompilato dal profilo — puoi modificarlo
+            </span>
+        </label>
         <input type="text" id="campo-via" class="checkout-input" placeholder="Via e numero civico" required>
         <div class="input-row">
             <div>
@@ -227,14 +231,17 @@ $(document).ready(function() {
 
     // Carica indirizzo predefinito dal profilo
     $.get('api/ba_get_profilo.php', function(resp) {
-        if(resp.status === 'ok' && resp.dettagli.indirizzo_predefinito) {
-            const parts = resp.dettagli.indirizzo_predefinito.split(',');
-            if(parts[0]) $('#campo-via').val(parts[0].trim());
-            if(parts[1]) $('#campo-citta').val(parts[1].trim());
-            if(parts[2]) $('#campo-cap').val(parts[2].trim());
-            if(parts[3]) $('#campo-provincia').val(parts[3].trim());
+        if(resp.status === 'ok' && resp.dettagli && resp.dettagli.indirizzo_predefinito) {
+            const ind = resp.dettagli.indirizzo_predefinito.trim();
+            if (!ind) return;
+            const parts = ind.split(',').map(s => s.trim());
+            if(parts[0]) $('#campo-via').val(parts[0]);
+            if(parts[1]) $('#campo-citta').val(parts[1]);
+            if(parts[2]) $('#campo-cap').val(parts[2]);
+            if(parts[3]) $('#campo-provincia').val(parts[3]);
+            $('#hint-indirizzo').show();
         }
-    });
+    }, 'json');
 
     // Carica riepilogo carrello
     $.get('api/ba_carrello.php', { action: 'list' }, function(resp) {
@@ -251,15 +258,15 @@ $(document).ready(function() {
             datiOrdine.abbonamento = abb || null;
 
             if (abb) {
-                const sconto       = parseFloat(abb.sconto) || 0;
-                const numUscite    = parseInt(abb.numUscite) || 1;
-                const prezzoUnit   = parseFloat(abb.prezzoProdotto) || parseFloat(resp.prodotti[0]?.prezzoOriginale || 0);
+                const sconto         = parseFloat(abb.sconto) || 0;
+                const numUscite      = parseInt(abb.numUscite) || 1;
+                const perioLabel     = abb.periodicita === 'settimanale' ? 'numeri settimanali' : 'numeri mensili';
+                const prezzoUnit     = parseFloat(abb.prezzoProdotto) || parseFloat(resp.prodotti[0]?.prezzoOriginale || 0);
+                const nomeProdotto   = abb.nomeProdotto  || resp.prodotti[0]?.nome   || 'Abbonamento';
+                const fotoProdotto   = abb.fotoProdotto  || resp.prodotti[0]?.URLfoto || 'img/default.jpg';
                 const prezzoScontato = prezzoUnit * (1 - sconto / 100);
-                const totaleAbb    = prezzoScontato * numUscite;
+                const totaleAbb      = prezzoScontato * numUscite;
 
-                const perioLabel   = abb.periodicita === 'settimanale' ? 'numeri settimanali' : 'numeri mensili';
-
-                // Banner piano selezionato
                 html += `<div style="background:#f5eef8; border:1px solid #d2b4de; border-radius:8px; padding:10px 14px; margin-bottom:12px; color:#6c3483; font-size:0.88em; font-weight:600;">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#8e44ad" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
                     Piano: <strong>${abb.nomeAbb}</strong> — ${numUscite} ${perioLabel} con sconto ${sconto}%
@@ -268,10 +275,8 @@ $(document).ready(function() {
                         Rimuovi
                     </button>
                 </div>`;
-
-                // Riga prodotto base × numero uscite
                 html += `<div class="riepilogo-riga">
-                    <span>${resp.prodotti[0]?.nome || 'Abbonamento'} × ${numUscite} ${perioLabel}</span>
+                    <span>${nomeProdotto} × ${numUscite} ${perioLabel}</span>
                     <span>
                         <small style="text-decoration:line-through; color:#bbb; margin-right:6px;">€${(prezzoUnit * numUscite).toFixed(2)}</small>
                         <strong style="color:#8e44ad;">€${totaleAbb.toFixed(2)}</strong>
@@ -283,10 +288,12 @@ $(document).ready(function() {
                 </div>`;
                 html += `<div class="riepilogo-riga totale-finale"><span>Totale</span><span>€${totaleAbb.toFixed(2)}</span></div>`;
 
-                datiOrdine.totale        = totaleAbb.toFixed(2);
-                datiOrdine.numUscite     = numUscite;
-                datiOrdine.prezzoUnit    = prezzoUnit;
-                datiOrdine.prezzoScontato = prezzoScontato;
+                datiOrdine.totale       = totaleAbb.toFixed(2);
+                datiOrdine.numUscite    = numUscite;
+                datiOrdine.prezzoUnit   = prezzoUnit;
+                datiOrdine.nomeProdotto = nomeProdotto;
+                datiOrdine.fotoProdotto = fotoProdotto;
+                datiOrdine.abbonamento  = abb;
 
             } else {
                 resp.prodotti.forEach(p => {
@@ -528,7 +535,7 @@ function procediAlPagamento() {
     }
 
     // Aggiorna indirizzo predefinito se diverso
-    $.post('api/ba_aggiorna_profilo.php', { indirizzo: indirizzo });
+    $.ajax({ url: 'api/ba_aggiorna_profilo.php', method: 'POST', contentType: 'application/json', data: JSON.stringify({ indirizzo: indirizzo }) });
 
     // Mostra recap
     $('#recap-indirizzo').text(indirizzo);
@@ -553,11 +560,12 @@ function procediAlPagamento() {
         </div>`;
 
         if(datiOrdine.prodotti && datiOrdine.prodotti[0]) {
-            const p = datiOrdine.prodotti[0];
+            const foto = datiOrdine.fotoProdotto || datiOrdine.prodotti[0].URLfoto || 'img/default.jpg';
+            const nome = datiOrdine.nomeProdotto || datiOrdine.prodotti[0].nome || 'Abbonamento';
             rpHtml += `<div style="display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid #f0f0f0;">
-                <img src="${p.URLfoto || 'img/default.jpg'}" style="width:48px; height:64px; object-fit:cover; border-radius:6px; border:1px solid #eee; flex-shrink:0;">
+                <img src="${foto}" style="width:48px; height:64px; object-fit:cover; border-radius:6px; border:1px solid #eee; flex-shrink:0;">
                 <div style="flex-grow:1;">
-                    <div style="font-weight:700; font-size:0.95em;">${p.nome}</div>
+                    <div style="font-weight:700; font-size:0.95em;">${nome}</div>
                     <div style="font-size:0.82em; color:var(--text-sec);">× ${numUscite} ${perioLabel}</div>
                     <div style="font-size:0.8em; color:#bbb; text-decoration:line-through;">€${(prezzoUnit * numUscite).toFixed(2)} senza sconto</div>
                 </div>
@@ -584,10 +592,25 @@ function procediAlPagamento() {
 
 function confermaPagamento() {
     if(!confirm('Confermi il pagamento?')) return;
-    $.post('api/ba_processa_ordine.php', {
+
+    const postData = {
         indirizzo: datiOrdine.indirizzo,
-        metodo: datiOrdine.metodo
-    }, function(resp) {
+        metodo:    datiOrdine.metodo
+    };
+
+    if (datiOrdine.abbonamento) {
+        const a = datiOrdine.abbonamento;
+        postData.abb_idPacchetto    = a.idPacchetto   || '';
+        postData.abb_nomeAbb        = a.nomeAbb        || '';
+        postData.abb_sconto         = parseFloat(a.sconto)       || 0;
+        postData.abb_numUscite      = parseInt(datiOrdine.numUscite || a.numUscite) || 1;
+        postData.abb_periodicita    = a.periodicita    || '';
+        postData.abb_prezzoProdotto = parseFloat(datiOrdine.prezzoUnit || a.prezzoProdotto) || 0;
+        postData.abb_nomeProdotto   = datiOrdine.nomeProdotto || a.nomeProdotto || '';
+    }
+
+
+    $.post('api/ba_processa_ordine.php', postData, function(resp) {
         if(resp.status === 'ok') {
             sessionStorage.removeItem('abbonamento_selezionato');
             alert('Ordine #' + resp.idOrdine + ' confermato e pagato!');

@@ -53,6 +53,26 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
                 <option value="fumetto">Fumetto</option>
             </select>
 
+            <!-- CAMPO TESTATA (solo per periodici/fumetti) -->
+            <div id="box-testata" style="display:none; margin-bottom:14px;">
+                <label class="field-label">Testata *
+                    <span class="help-text" style="display:inline; font-weight:400;">Collega questo numero alla sua testata per abilitare gli abbonamenti automatici.</span>
+                </label>
+                <select id="select-testata" class="form-control" onchange="cambiaTestata(this.value)">
+                    <option value="">Caricamento testate...</option>
+                </select>
+                <div id="box-nuova-testata" style="display:none; margin-top:8px;">
+                    <input type="text" name="nuova_testata" id="campo-nuova-testata" placeholder="Nome testata (es. Dylan Dog)" class="form-control" style="margin-bottom:6px;">
+                    <label class="field-label" style="font-size:0.9em;">Periodicità</label>
+                    <select name="nuova_testata_periodicita" id="campo-nuova-testata-periodicita" class="form-control">
+                        <option value="mensile">Mensile</option>
+                        <option value="settimanale">Settimanale</option>
+                    </select>
+                    <span class="help-text">Verranno creati automaticamente i pacchetti abbonamento da 6 e 12 mesi per questa testata.</span>
+                </div>
+                <input type="hidden" name="testata" id="campo-testata">
+            </div>
+
             <label class="field-label">Titolo *</label>
             <input type="text" name="nome" placeholder="Titolo" class="form-control" required>
 
@@ -70,22 +90,44 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
                 </div>
             </div>
 
-            <label class="field-label">Categoria *</label>
-            <select name="categoria" id="modal-categoria" class="form-control" required onchange="caricaSottocategorie(this.value)">
-                <option value="">Seleziona categoria...</option>
+            <label class="field-label">Categoria
+                <span style="font-weight:400; color:var(--text-sec); font-size:0.88em;">(opzionale)</span>
+            </label>
+            <select name="categoria" id="modal-categoria" class="form-control" onchange="caricaSottocategorie(this.value)">
+                <option value="">Nessuna categoria</option>
             </select>
 
-            <label class="field-label">Sottocategoria</label>
+            <label class="field-label" style="margin-top:8px;">Sottocategoria
+                <span style="font-weight:400; color:var(--text-sec); font-size:0.88em;">(opzionale)</span>
+            </label>
             <select name="sottocategoria" id="modal-sottocategoria" class="form-control">
                 <option value="">Nessuna</option>
             </select>
 
-            <div style="margin-bottom:14px;">
+            <!-- CREA NUOVA CATEGORIA -->
+            <div style="margin-bottom:14px; margin-top:6px;">
                 <a href="#" onclick="toggleNuovaCat(); return false;" style="font-size:0.85em; color:var(--dark-green);">
-                    + Aggiungi nuova categoria
+                    + Crea nuova categoria o sottocategoria
                 </a>
-                <div id="nuova-cat-box" style="display:none; margin-top:8px;">
-                    <input type="text" name="nuova_categoria" id="campo-nuova-cat" placeholder="Nome nuova categoria" class="form-control" style="margin-bottom:0;">
+                <div id="nuova-cat-box" style="display:none; margin-top:10px; background:#f9fbf9; border:1px solid var(--border-color); border-radius:8px; padding:14px;">
+                    <p style="margin:0 0 10px; font-size:0.88em; color:var(--text-sec);">
+                        Puoi creare una <strong>categoria padre</strong> (es. "Narrativa") e/o una <strong>sottocategoria</strong> figlia (es. "Romanzi").
+                        Appariranno subito nel menu a tendina e nella barra scorribile in home.
+                    </p>
+
+                    <label class="field-label" style="font-size:0.9em;">Nuova categoria padre <span style="font-weight:400;">(lascia vuoto se non necessaria)</span></label>
+                    <input type="text" name="nuova_categoria_padre" id="campo-nuova-cat-padre"
+                           placeholder="Es. Narrativa, Saggistica, Arte..." class="form-control">
+
+                    <label class="field-label" style="font-size:0.9em; margin-top:6px;">Nuova sottocategoria <span style="font-weight:400;">(lascia vuoto se non necessaria)</span></label>
+                    <input type="text" name="nuova_categoria" id="campo-nuova-cat"
+                           placeholder="Es. Romanzi, Horror, Cucina..." class="form-control" style="margin-bottom:6px;">
+
+                    <label class="field-label" style="font-size:0.9em;">Categoria padre della sottocategoria</label>
+                    <select name="padre_sottocategoria" id="select-padre-sottocategoria" class="form-control">
+                        <option value="">-- Usa la nuova categoria padre sopra (se compilata) --</option>
+                    </select>
+                    <span class="help-text">Se hai compilato "Nuova categoria padre", la sottocategoria verrà automaticamente collegata a quella. Altrimenti seleziona una categoria esistente dall'elenco.</span>
                 </div>
             </div>
 
@@ -182,11 +224,6 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
                                 <option value="mensile">Mensile (sconto su tutti i numeri dell'anno)</option>
                             </select>
 
-                            <label class="field-label" style="font-size:0.9em;">Seleziona altri numeri della stessa testata da includere (opzionale ora)</label>
-                            <div id="lista-numeri-abbonamento" class="checklist-box">
-                                <p style="color:var(--text-sec);">Caricamento tuoi numeri...</p>
-                            </div>
-
                             <label class="field-label" style="font-size:0.9em;">Sconto abbonamento completo (%)</label>
                             <input type="number" name="sconto_abbonamento" min="1" max="90" value="25" class="form-control">
                             <span class="help-text">Lo sconto si applica solo quando il cliente ha nel carrello TUTTI i numeri del periodo (mese o anno). Comprando un numero singolo, o solo alcuni, non c'è alcuno sconto.</span>
@@ -210,6 +247,18 @@ $(document).ready(function() {
 
     $("#formNuovoLibro").on("submit", function(e) {
         e.preventDefault();
+
+        // Validazione: nuova sottocategoria deve avere un padre
+        const nuovaSottocat = $('#campo-nuova-cat').val().trim();
+        const nuovaPadre    = $('#campo-nuova-cat-padre').val().trim();
+        const padreSel      = $('#select-padre-sottocategoria').val();
+        const catSel        = $('#modal-categoria').val();
+
+        if (nuovaSottocat && !nuovaPadre && !padreSel && !catSel) {
+            alert('La nuova sottocategoria "' + nuovaSottocat + '" deve essere associata a una categoria padre.\nCompila il campo "Nuova categoria padre" oppure seleziona una categoria esistente.');
+            return;
+        }
+
         const formData = new FormData(this);
         $.ajax({
             url: 'api/ba_aggiungi_libro.php', type: 'POST', data: formData,
@@ -232,8 +281,15 @@ function caricaCategorieModal() {
         if(!resp.categorie) return;
         categorieDB = resp.categorie;
         const padri = resp.categorie.filter(c => !c.nome_categoria_padre);
+
+        // Popola select categoria principale
         padri.forEach(c => {
             $('#modal-categoria').append(`<option value="${c.nome_categoria}">${c.nome_categoria}</option>`);
+        });
+
+        // Popola select "padre della sottocategoria" nel box nuova categoria
+        padri.forEach(c => {
+            $('#select-padre-sottocategoria').append(`<option value="${c.nome_categoria}">${c.nome_categoria}</option>`);
         });
     });
 }
@@ -252,22 +308,55 @@ function caricaSottocategorie(catPadre) {
 function aggiornaCampiTipo(tipo) {
     const labelAutore = $('#label-autore');
     const campoAutore = $('#campo-autore');
-    const isPeriodico = (tipo === 'rivista' || tipo === 'magazine' || tipo === 'periodico');
+    const isPeriodico = ['rivista', 'magazine', 'periodico', 'fumetto'].includes(tipo);
 
-    if (isPeriodico) {
+    if (tipo === 'rivista' || tipo === 'magazine' || tipo === 'periodico') {
         labelAutore.text('Editore');
         campoAutore.attr('placeholder', 'Es. Condé Nast, RCS Media');
         $('#tab-abbonamento').show();
     } else if (tipo === 'fumetto') {
         labelAutore.text('Autore / Casa editrice');
         campoAutore.attr('placeholder', 'Es. Walt Disney, Marvel');
-        $('#tab-abbonamento').hide();
-        if ($('#tab-abbonamento').hasClass('active')) selezionaTabPromo('libro');
+        $('#tab-abbonamento').show();
     } else {
         labelAutore.text('Autore *');
         campoAutore.attr('placeholder', 'Es. Elena Ferrante');
         $('#tab-abbonamento').hide();
-        if ($('#tab-abbonamento').hasClass('active')) selezionaTabPromo('libro');
+        if ($('.tab-btn[data-tipo="abbonamento"]').hasClass('active')) selezionaTabPromo('libro');
+    }
+
+    if (isPeriodico) {
+        $('#box-testata').show();
+        caricaTestate();
+    } else {
+        $('#box-testata').hide();
+        $('#campo-testata').val('');
+    }
+}
+
+function caricaTestate() {
+    $.get('api/ba_testate.php', function(resp) {
+        const sel = $('#select-testata');
+        sel.html('<option value="">-- Seleziona testata --</option>');
+        if (resp.testate && resp.testate.length > 0) {
+            resp.testate.forEach(t => {
+                sel.append(`<option value="${t}">${t}</option>`);
+            });
+        }
+        sel.append('<option value="__nuova__">+ Crea nuova testata...</option>');
+    }, 'json').fail(function() {
+        // API non ancora esistente: mostra solo l'opzione nuova
+        $('#select-testata').html('<option value="">-- Seleziona testata --</option><option value="__nuova__">+ Crea nuova testata...</option>');
+    });
+}
+
+function cambiaTestata(val) {
+    if (val === '__nuova__') {
+        $('#box-nuova-testata').show();
+        $('#campo-testata').val('');
+    } else {
+        $('#box-nuova-testata').hide();
+        $('#campo-testata').val(val);
     }
 }
 

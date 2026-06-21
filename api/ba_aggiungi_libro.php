@@ -19,7 +19,15 @@ $qta           = intval($_POST['quantita'] ?? 0);
 $cat           = $_POST['categoria'] ?? '';
 $sottocat      = $_POST['sottocategoria'] ?? '';
 $nuovaCat      = trim($_POST['nuova_categoria'] ?? '');
+$nuovaCatPadre = trim($_POST['nuova_categoria_padre'] ?? '');
+$padreSottocat = trim($_POST['padre_sottocategoria'] ?? '');
+$padreSottocat = trim($_POST['padre_sottocategoria'] ?? '');
 $tipoProdotto  = $_POST['tipo_prodotto'] ?? 'libro';
+
+// Testata (per periodici/fumetti)
+$testata              = trim($_POST['testata'] ?? '');
+$nuovaTestata         = trim($_POST['nuova_testata'] ?? '');
+$nuovaTestataPerio    = $_POST['nuova_testata_periodicita'] ?? 'mensile';
 
 $abilitaSconto = isset($_POST['abilita_sconto']);
 
@@ -29,8 +37,7 @@ $nomePacchetto      = trim($_POST['nome_pacchetto'] ?? '');
 $libriPacchetto     = $_POST['libri_pacchetto'] ?? [];
 $sconto2            = intval($_POST['sconto_2'] ?? 10);
 $sconto3            = intval($_POST['sconto_3'] ?? 20);
-$eSaga              = isset($_POST['e_saga']);
-$scontoTutti        = $eSaga ? intval($_POST['sconto_tutti'] ?? 30) : 0;
+$scontoTutti        = intval($_POST['sconto_tutti'] ?? 30);
 
 // --- Abbonamento periodico ---
 $idAbbonamentoEsist = intval($_POST['id_abbonamento_esistente'] ?? 0);
@@ -43,6 +50,47 @@ $conn->begin_transaction();
 
 try {
     $idPacchetto = null;
+    $isPeriodico = in_array($tipoProdotto, ['rivista', 'magazine', 'periodico', 'fumetto']);
+
+    // ===== GESTIONE TESTATA =====
+    // Se è un prodotto periodico, risolvi la testata:
+    // - testata esistente: usa quella
+    // - nuova testata: crea i due pacchetti abbonamento (6 e 12 mesi) e salva la testata
+    if ($isPeriodico) {
+        if (!empty($nuovaTestata)) {
+            // Verifica che non esista già
+            $checkT = $conn->prepare("SELECT COUNT(*) as cnt FROM PACCHETTO WHERE testata = ? AND tipo_pacchetto = 'abbonamento'");
+            $checkT->bind_param("s", $nuovaTestata);
+            $checkT->execute();
+            $esisteGia = $checkT->get_result()->fetch_assoc()['cnt'] > 0;
+            $checkT->close();
+
+            if (!$esisteGia) {
+                // Crea pacchetto 6 mesi
+                $nome6 = "Abbonamento {$nuovaTestata} - 6 mesi";
+                $stmt6 = $conn->prepare(
+                    "INSERT INTO PACCHETTO (nome, sconto, sconto_2, sconto_3, sconto_tutti, attivo, tipo_pacchetto, e_saga, periodicita, testata)
+                     VALUES (?, NULL, 0, 0, 15, 1, 'abbonamento', 0, ?, ?)"
+                );
+                $stmt6->bind_param("sss", $nome6, $nuovaTestataPerio, $nuovaTestata);
+                $stmt6->execute();
+                $stmt6->close();
+
+                // Crea pacchetto 12 mesi
+                $nome12 = "Abbonamento {$nuovaTestata} - 12 mesi";
+                $stmt12 = $conn->prepare(
+                    "INSERT INTO PACCHETTO (nome, sconto, sconto_2, sconto_3, sconto_tutti, attivo, tipo_pacchetto, e_saga, periodicita, testata)
+                     VALUES (?, NULL, 0, 0, 25, 1, 'abbonamento', 0, ?, ?)"
+                );
+                $stmt12->bind_param("sss", $nome12, $nuovaTestataPerio, $nuovaTestata);
+                $stmt12->execute();
+                $stmt12->close();
+            }
+            $testata = $nuovaTestata;
+        }
+        // $testata è ora valorizzata (esistente o appena creata)
+    }
+
     $isAbbonamento = in_array($tipoProdotto, ['rivista', 'magazine', 'periodico']);
 
     if ($abilitaSconto) {
@@ -90,11 +138,10 @@ try {
         } elseif (!empty($nomePacchetto)) {
             // ===== NUOVO PACCHETTO LIBRO con scaglioni =====
             $stmtPack = $conn->prepare(
-                "INSERT INTO PACCHETTO (nome, sconto, sconto_2, sconto_3, sconto_tutti, attivo, tipo_pacchetto, e_saga)
-                 VALUES (?, ?, ?, ?, ?, 1, 'libro', ?)"
+                "INSERT INTO PACCHETTO (nome, sconto, sconto_2, sconto_3, sconto_tutti, attivo, tipo_pacchetto)
+                 VALUES (?, ?, ?, ?, ?, 1, 'libro')"
             );
-            $eSagaInt = $eSaga ? 1 : 0;
-            $stmtPack->bind_param("siiiii", $nomePacchetto, $sconto2, $sconto2, $sconto3, $scontoTutti, $eSagaInt);
+            $stmtPack->bind_param("siiii", $nomePacchetto, $sconto2, $sconto2, $sconto3, $scontoTutti);
             $stmtPack->execute();
             $idPacchetto = $conn->insert_id;
 
@@ -108,9 +155,10 @@ try {
     }
 
     // Inserimento prodotto
-    $sqlP = "INSERT INTO PRODOTTO (username, nome, autore, descrizione, prezzo, quantita_disponibile, tipo_prodotto, id_pacchetto) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    $sqlP = "INSERT INTO PRODOTTO (username, nome, autore, descrizione, prezzo, quantita_disponibile, tipo_prodotto, id_pacchetto, testata) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmtP = $conn->prepare($sqlP);
-    $stmtP->bind_param("ssssdisi", $user, $nome, $autore, $desc, $prezzo, $qta, $tipoProdotto, $idPacchetto);
+    $testataSave = !empty($testata) ? $testata : null;
+    $stmtP->bind_param("ssssdisis", $user, $nome, $autore, $desc, $prezzo, $qta, $tipoProdotto, $idPacchetto, $testataSave);
     if (!$stmtP->execute()) throw new Exception("Errore inserimento prodotto");
     $idProdotto = $conn->insert_id;
 
@@ -132,28 +180,58 @@ try {
     }
 
     // Categoria
+    // ===== GESTIONE CATEGORIE =====
     $categoriaFinale = '';
-    if (!empty($nuovaCat)) {
-        $checkCat = $conn->prepare("SELECT nome_categoria FROM CATEGORIA WHERE nome_categoria = ?");
-        $checkCat->bind_param("s", $nuovaCat);
-        $checkCat->execute();
-        if ($checkCat->get_result()->num_rows === 0) {
-            $stmtCat = $conn->prepare("INSERT INTO CATEGORIA (nome_categoria, nome_categoria_padre) VALUES (?, ?)");
-            $padre = !empty($cat) ? $cat : null;
-            $stmtCat->bind_param("ss", $nuovaCat, $padre);
-            $stmtCat->execute();
+
+    // Validazione: sottocategoria nuova deve avere un padre
+    if (!empty($nuovaCat) && empty($nuovaCatPadre) && empty($padreSottocat) && empty($cat)) {
+        throw new Exception('La nuova sottocategoria deve essere associata a una categoria padre.');
+    }
+
+    // 1. Crea nuova categoria padre (se compilata)
+    if (!empty($nuovaCatPadre)) {
+        $checkP = $conn->prepare("SELECT COUNT(*) as cnt FROM CATEGORIA WHERE nome_categoria = ?");
+        $checkP->bind_param("s", $nuovaCatPadre);
+        $checkP->execute();
+        if ($checkP->get_result()->fetch_assoc()['cnt'] == 0) {
+            $stmtP = $conn->prepare("INSERT INTO CATEGORIA (nome_categoria, nome_categoria_padre) VALUES (?, NULL)");
+            $stmtP->bind_param("s", $nuovaCatPadre);
+            $stmtP->execute();
+            $stmtP->close();
         }
+        $checkP->close();
+    }
+
+    // 2. Crea nuova sottocategoria (se compilata)
+    if (!empty($nuovaCat)) {
+        $padrePerFiglia = !empty($nuovaCatPadre) ? $nuovaCatPadre
+                        : (!empty($padreSottocat) ? $padreSottocat
+                        : (!empty($cat) ? $cat : null));
+
+        $checkF = $conn->prepare("SELECT COUNT(*) as cnt FROM CATEGORIA WHERE nome_categoria = ?");
+        $checkF->bind_param("s", $nuovaCat);
+        $checkF->execute();
+        if ($checkF->get_result()->fetch_assoc()['cnt'] == 0) {
+            $stmtF = $conn->prepare("INSERT INTO CATEGORIA (nome_categoria, nome_categoria_padre) VALUES (?, ?)");
+            $stmtF->bind_param("ss", $nuovaCat, $padrePerFiglia);
+            $stmtF->execute();
+            $stmtF->close();
+        }
+        $checkF->close();
         $categoriaFinale = $nuovaCat;
     } elseif (!empty($sottocat)) {
         $categoriaFinale = $sottocat;
     } elseif (!empty($cat)) {
         $categoriaFinale = $cat;
+    } elseif (!empty($nuovaCatPadre)) {
+        $categoriaFinale = $nuovaCatPadre;
     }
 
     if (!empty($categoriaFinale)) {
         $stmtD = $conn->prepare("INSERT INTO DESCRIVE (id_prodotto, nome_categoria) VALUES (?, ?)");
         $stmtD->bind_param("is", $idProdotto, $categoriaFinale);
         $stmtD->execute();
+        $stmtD->close();
     }
 
     $conn->commit();

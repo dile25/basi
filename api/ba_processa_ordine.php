@@ -102,6 +102,49 @@ try {
 
     $totaleFinale = round($totaleFinale, 2);
 
+    // 2b. Se c'è un abbonamento, calcola il suo contributo e sostituisce/integra il totale
+    $abbDati = null;
+    if (!empty($_POST['abb_idPacchetto'])) {
+        $abbIdPacchetto    = (int)$_POST['abb_idPacchetto'];
+        $abbSconto         = (float)($_POST['abb_sconto']         ?? 0);
+        $abbNumUscite      = (int)($_POST['abb_numUscite']        ?? 1);
+        $abbPrezzoProdotto = (float)($_POST['abb_prezzoProdotto'] ?? 0);
+        $abbNomeAbb        = $_POST['abb_nomeAbb']       ?? '';
+        $abbNomeProdotto   = $_POST['abb_nomeProdotto']  ?? '';
+        $abbPeriodicita    = $_POST['abb_periodicita']   ?? '';
+
+        // Trova il prodotto corrente nel carrello che appartiene a questa testata
+        $stmtAbbProd = $conn->prepare(
+            "SELECT p.id_prodotto FROM PRODOTTO p
+             JOIN PACCHETTO pk ON p.testata = pk.testata
+             JOIN CARRELLO c ON c.id_prodotto = p.id_prodotto
+             WHERE pk.id_pacchetto = ? AND c.username = ?
+             LIMIT 1"
+        );
+        $stmtAbbProd->bind_param("is", $abbIdPacchetto, $idCliente);
+        $stmtAbbProd->execute();
+        $rowAbbProd = $stmtAbbProd->get_result()->fetch_assoc();
+        $abbIdProdotto = $rowAbbProd ? (int)$rowAbbProd['id_prodotto'] : null;
+
+        $prezzoScontato = $abbPrezzoProdotto * (1 - $abbSconto / 100);
+        $totaleAbbonamento = round($prezzoScontato * $abbNumUscite, 2);
+
+        // Totale finale = abbonamento + eventuali altri prodotti NON periodici nel carrello
+        $totaleAltri = 0;
+        foreach ($righeFinali as $r) {
+            if ($abbIdProdotto && $r['id_prodotto'] == $abbIdProdotto) continue; // già coperto dall'abb
+            $totaleAltri += $r['prezzo_unitario'] * $r['quantita'];
+        }
+        $totaleFinale = round($totaleAbbonamento + $totaleAltri, 2);
+
+        $perioLabel = $abbPeriodicita === 'settimanale' ? 'numeri settimanali' : 'numeri mensili';
+        $abbDati = [
+            'id_prodotto'     => $abbIdProdotto,
+            'prezzo_unitario' => $totaleAbbonamento,  // prezzo totale abbonamento come riga singola
+            'label'           => "Abbonamento \"{$abbNomeAbb}\" — {$abbNumUscite} {$perioLabel}",
+        ];
+    }
+
     // 3. Registra il pagamento simulato
     $stmtPag = $conn->prepare("INSERT INTO PAGAMENTO (username, metodo, stato) VALUES (?, ?, 'Completato')");
     $stmtPag->bind_param("ss", $idCliente, $metodo);
@@ -115,7 +158,17 @@ try {
     $idOrdine = $conn->insert_id;
 
     // 5. Inserisci in INCLUSO_IN con prezzo_unitario reale (post-sconto)
+    if ($abbDati && $abbDati['id_prodotto']) {
+        // Riga abbonamento: qty=1, prezzo=totale abbonamento (copre tutte le uscite)
+        $stmtIncl = $conn->prepare(
+            "INSERT INTO INCLUSO_IN (id_ordine, id_prodotto, quantita_prodotto, prezzo_unitario) VALUES (?, ?, 1, ?)"
+        );
+        $stmtIncl->bind_param("iid", $idOrdine, $abbDati['id_prodotto'], $abbDati['prezzo_unitario']);
+        $stmtIncl->execute();
+    }
     foreach ($righeFinali as $r) {
+        // Salta il prodotto già inserito come abbonamento
+        if ($abbDati && $abbDati['id_prodotto'] && $r['id_prodotto'] == $abbDati['id_prodotto']) continue;
         $stmtIncl = $conn->prepare(
             "INSERT INTO INCLUSO_IN (id_ordine, id_prodotto, quantita_prodotto, prezzo_unitario) VALUES (?, ?, ?, ?)"
         );
@@ -138,7 +191,9 @@ try {
     $stmtDel->execute();
 
     $conn->commit();
-    echo json_encode(['status' => 'ok', 'idOrdine' => $idOrdine]);
+    $risposta = ['status' => 'ok', 'idOrdine' => $idOrdine];
+    if ($abbDati) $risposta['labelAbbonamento'] = $abbDati['label'];
+    echo json_encode($risposta);
 
 } catch (Exception $e) {
     $conn->rollback();

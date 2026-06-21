@@ -152,7 +152,7 @@ function caricaOrdini(stato) {
                     <img src="${lib.foto}" class="book-img" onclick="location.href='dettaglio_prodotto.php?id=${lib.id_prodotto}'" style="cursor:pointer;">
                     <div style="flex-grow:1;">
                         <strong>${lib.nome}</strong><br>
-                        <small style="color:#666;">Quantità: ${lib.quantita} | Totale ordine: €${parseFloat(lib.prezzo_acquisto).toFixed(2)}</small>
+                        <small style="color:#666;">Quantità: ${lib.quantita} | Prezzo: €${parseFloat(lib.prezzo_acquisto).toFixed(2)}</small>
                     </div>
                     <div>
                         ${lib.gia_recensito

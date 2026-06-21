@@ -1,6 +1,6 @@
 <?php
-// Restituisce i pacchetti abbonamento disponibili (6 e 12 mesi)
-// in base ai tipi di prodotto presenti nel carrello del cliente.
+// Restituisce i pacchetti abbonamento filtrati per testata,
+// basandosi sui prodotti periodici nel carrello del cliente.
 session_start();
 require_once('../db_connect.php');
 header('Content-Type: application/json');
@@ -12,47 +12,51 @@ if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
 
 $username = $_SESSION['IdUtente'];
 
-// Trova i tipi di prodotto periodici nel carrello corrente
-$sql = "SELECT DISTINCT p.tipo_prodotto
+// Recupera testata e tipo dei prodotti periodici nel carrello
+$sql = "SELECT DISTINCT p.testata
         FROM carrello c
         JOIN prodotto p ON c.id_prodotto = p.id_prodotto
         WHERE c.username = ?
-          AND p.tipo_prodotto IN ('rivista','magazine','periodico','fumetto')";
+          AND p.tipo_prodotto IN ('rivista','magazine','periodico','fumetto')
+          AND p.testata IS NOT NULL";
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $username);
 $stmt->execute();
 $res = $stmt->get_result();
-$tipi = [];
+$testate = [];
 while ($row = $res->fetch_assoc()) {
-    $tipi[] = $row['tipo_prodotto'];
+    $testate[] = $row['testata'];
 }
 $res->free();
 $stmt->close();
 
-if (empty($tipi)) {
+if (empty($testate)) {
     echo json_encode(['status' => 'ok', 'abbonamenti' => []]);
     exit;
 }
 
-// Restituisce i pacchetti abbonamento disponibili
-$abbonamenti = [];
-$stmtPac = $conn->prepare(
-    "SELECT id_pacchetto, nome, descrizione, sconto_tutti, periodicita
-     FROM pacchetto
+// Recupera i pacchetti abbonamento per le testate trovate
+$placeholders = implode(',', array_fill(0, count($testate), '?'));
+$stmtAbb = $conn->prepare(
+    "SELECT id_pacchetto, nome, descrizione, sconto_tutti, periodicita, testata
+     FROM PACCHETTO
      WHERE tipo_pacchetto = 'abbonamento' AND attivo = 1
-     ORDER BY id_pacchetto"
+       AND testata IN ($placeholders)
+     ORDER BY testata, id_pacchetto"
 );
-$stmtPac->execute();
-$resPac = $stmtPac->get_result();
-while ($row = $resPac->fetch_assoc()) {
-    $abbonamenti[] = $row;
+$types = str_repeat('s', count($testate));
+$stmtAbb->bind_param($types, ...$testate);
+$stmtAbb->execute();
+$resAbb = $stmtAbb->get_result();
+$abbonamenti = [];
+while ($a = $resAbb->fetch_assoc()) {
+    $abbonamenti[] = $a;
 }
-$resPac->free();
-$stmtPac->close();
+$resAbb->free();
+$stmtAbb->close();
 
 echo json_encode([
     'status'      => 'ok',
-    'tipi'        => $tipi,
     'abbonamenti' => $abbonamenti
 ]);

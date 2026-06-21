@@ -64,7 +64,7 @@ if (!$utentePublico && !isset($_SESSION['IdUtente'])) { header("Location: login.
                     <input type="text" id="edit-username" placeholder="Username" class="edit-input">
                     <p id="err-username" style="display:none; color:#e74c3c; font-size:0.85em; margin:-8px 0 10px;">Username non disponibile o non valido.</p>
                     <input type="email" id="edit-email" placeholder="Email" class="edit-input">
-                    <input type="tel" id="edit-telefono" placeholder="Telefono" class="edit-input" <?php echo ($_SESSION['tipoUtente'] === 'venditore') ? 'style="display:none"' : ''; ?>>
+                    <input type="tel" id="edit-telefono" placeholder="Telefono" class="edit-input">
                     <input type="password" id="edit-password" placeholder="Nuova Password (lascia vuoto per non cambiarla)" class="edit-input">
                     <button class="btn-recensisci" style="width:100%;" onclick="salvaDati()">Salva Modifiche</button>
                     <p class="msg-success" id="msg-ok">Dati aggiornati con successo!</p>
@@ -93,7 +93,6 @@ if (!$utentePublico && !isset($_SESSION['IdUtente'])) { header("Location: login.
             </div>
             <p><strong>Ragione Sociale:</strong> <span id="p-ragione-sociale">—</span></p>
             <p><strong>Partita IVA:</strong> <span id="p-partita-iva">—</span></p>
-            <p><strong>Telefono:</strong> <span id="p-telefono-venditore">—</span></p>
 
             <div id="form-modifica-venditore" class="form-modifica-section">
                 <p style="font-weight:600; margin-bottom:12px;">Modifica dati aziendali:</p>
