@@ -17,7 +17,7 @@ switch ($action) {
         $idProd = intval($_POST['idProdotto'] ?? 0);
         $qty    = 1;
 
-        $checkStock = $conn->prepare("SELECT quantita_disponibile FROM PRODOTTO WHERE id_prodotto = ?");
+        $checkStock = $conn->prepare("SELECT quantita_disponibile FROM PRODOTTO WHERE id_prodotto = ? AND attivo = 1");
         $checkStock->bind_param("i", $idProd);
         $checkStock->execute();
         $stock = $checkStock->get_result()->fetch_assoc();
@@ -61,7 +61,14 @@ switch ($action) {
                 FROM CARRELLO c
                 JOIN PRODOTTO p ON c.id_prodotto = p.id_prodotto
                 LEFT JOIN PACCHETTO pk ON p.id_pacchetto = pk.id_pacchetto AND pk.attivo = 1
-                WHERE c.username = ?";
+                WHERE c.username = ? AND p.attivo = 1";
+
+        // Rimuovi dal carrello eventuali prodotti disattivati (venditore cancellato)
+        $stmtClean = $conn->prepare("DELETE FROM CARRELLO WHERE username = ? AND id_prodotto NOT IN (SELECT id_prodotto FROM PRODOTTO WHERE attivo = 1)");
+        $stmtClean->bind_param("s", $idUtente);
+        $stmtClean->execute();
+        $rimossi = $stmtClean->affected_rows;
+        $stmtClean->close();
 
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("s", $idUtente);
@@ -197,9 +204,10 @@ switch ($action) {
         }
 
         echo json_encode([
-            'status'     => 'ok',
-            'prodotti'   => $prodotti,
-            'totaleCart' => round($totaleCart, 2)
+            'status'          => 'ok',
+            'prodotti'        => $prodotti,
+            'totaleCart'      => round($totaleCart, 2),
+            'prodottiRimossi' => $rimossi ?? 0
         ]);
         break;
 

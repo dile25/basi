@@ -106,6 +106,7 @@ body { font-family: 'Segoe UI', sans-serif; color: var(--text-dark); background:
 .stato-lavorazione { background: #fff3cd; color: #856404; }
 .stato-spedito { background: #cce5ff; color: #004085; }
 .stato-consegnato { background: #d1ecf1; color: #0c5460; }
+.stato-annullato  { background: #f8d7da; color: #721c24; }
 .filtro-btn { padding: 7px 16px; border-radius: 20px; border: 1px solid var(--border-color); background: white; cursor: pointer; font-size: 0.85em; margin-right: 6px; margin-bottom: 8px; transition: 0.2s; font-family: inherit; }
 .filtro-btn.active { background: var(--dark-green); color: white; border-color: var(--dark-green); }
 .btn-recensisci-colorato {

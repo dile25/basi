@@ -30,7 +30,8 @@ if ($tipo !== '') {
     $types   .= 's';
 }
 
-$whereClause = count($where) ? 'WHERE ' . implode(' AND ', $where) : '';
+$where[] = 'p.attivo = 1';
+$whereClause = 'WHERE ' . implode(' AND ', $where);
 
 // sconto_pacchetto: usa pac.sconto SOLO se valorizzato (> 0).
 // Per saghe e promo autore pac.sconto e' NULL, quindi

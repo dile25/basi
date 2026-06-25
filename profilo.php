@@ -190,7 +190,53 @@ if (!$utentePublico && !isset($_SESSION['IdUtente'])) { header("Location: login.
         </section>
         <?php endif; ?>
 
+    <!-- ELIMINA ACCOUNT -->
+    <section class="info-card" style="border:1.5px solid #e74c3c; margin-top:10px;">
+        <div class="card-header" style="background:#fff5f5;">
+            <h3 style="color:#e74c3c; display:flex; align-items:center; gap:8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                Elimina il tuo account
+            </h3>
+        </div>
+        <div style="padding:16px 20px;">
+            <?php if($_SESSION['tipoUtente'] === 'cliente'): ?>
+            <p style="color:#666; font-size:0.92em; margin:0 0 14px;">
+                Eliminando l'account il tuo carrello e i tuoi preferiti verranno svuotati. I tuoi ordini resteranno visibili ai venditori e le tue recensioni resteranno pubbliche.
+            </p>
+            <?php elseif($_SESSION['tipoUtente'] === 'venditore'): ?>
+            <p style="color:#666; font-size:0.92em; margin:0 0 14px;">
+                Eliminando l'account tutti i tuoi prodotti verranno rimossi dal catalogo. Gli ordini ancora in lavorazione verranno annullati; quelli già spediti o consegnati restano invariati.
+            </p>
+            <?php endif; ?>
+            <button onclick="apriModalElimina()" style="background:#e74c3c; color:#fff; border:none; border-radius:8px; padding:10px 20px; font-weight:600; cursor:pointer; font-size:0.95em;">
+                Elimina il mio account
+            </button>
+        </div>
+    </section>
+
     </main>
+
+    <!-- MODAL ELIMINA ACCOUNT -->
+    <div id="modalElimina" class="modal-overlay" style="display:none;">
+        <div style="background:#fff; border-radius:16px; padding:32px; width:100%; max-width:420px; position:relative; box-shadow:0 8px 30px rgba(0,0,0,0.15);">
+            <button onclick="chiudiModalElimina()" style="position:absolute;top:14px;right:16px;background:none;border:none;cursor:pointer;color:#999;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:22px;height:22px;display:block;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+            <h3 style="color:#e74c3c; margin:0 0 8px;">Sei sicuro di voler eliminare l'account?</h3>
+            <?php if($_SESSION['tipoUtente'] === 'cliente'): ?>
+            <p style="color:#666; font-size:0.9em; margin:0 0 6px;">Questa operazione è <strong>irreversibile</strong>: carrello e preferiti verranno eliminati.</p>
+            <?php elseif($_SESSION['tipoUtente'] === 'venditore'): ?>
+            <p style="color:#666; font-size:0.9em; margin:0 0 6px;">Questa operazione è <strong>irreversibile</strong>: i tuoi prodotti verranno rimossi e gli ordini pendenti annullati.</p>
+            <?php endif; ?>
+            <p style="color:#666; font-size:0.9em; margin:0 0 20px;">Per confermare, digita il tuo username:</p>
+            <input type="text" id="conferma-username" placeholder="Il tuo username" autocomplete="off"
+                style="width:100%; border:1.5px solid #ddd; border-radius:8px; padding:10px 12px; font-size:0.95em; box-sizing:border-box; margin-bottom:16px;">
+            <p id="msg-elimina-err" style="display:none; color:#e74c3c; font-size:0.88em; margin:0 0 12px;"></p>
+            <button onclick="confermaElimina()" style="width:100%; background:#e74c3c; color:#fff; border:none; border-radius:8px; padding:13px; font-weight:700; font-size:1em; cursor:pointer;">
+                Sì, elimina definitivamente
+            </button>
+        </div>
+    </div>
 
     <script>
     let datiProfilo = {};
@@ -301,7 +347,7 @@ if (!$utentePublico && !isset($_SESSION['IdUtente'])) { header("Location: login.
                 data.metodi.forEach(m => {
                     html += `<div class="metodo-item">
                         <span>${iconaMetodo(m.metodo)} <strong>${m.metodo}</strong> — ${m.dati}</span>
-                        <button class="btn-elimina-metodo" onclick="eliminaMetodo(${m.id_pagamento})">🗑️ Elimina</button>
+                        <button class="btn-elimina-metodo" onclick="eliminaMetodo(${m.id_pagamento})">Elimina</button>
                     </div>`;
                 });
                 cont.innerHTML = html;
@@ -553,6 +599,39 @@ if (!$utentePublico && !isset($_SESSION['IdUtente'])) { header("Location: login.
             } else {
                 document.getElementById('msg-err').innerText = (data.msg || 'Errore.');
                 document.getElementById('msg-err').style.display = 'block';
+            }
+        });
+    }
+
+    function apriModalElimina() {
+        document.getElementById('conferma-username').value = '';
+        document.getElementById('msg-elimina-err').style.display = 'none';
+        document.getElementById('modalElimina').style.display = 'flex';
+    }
+
+    function chiudiModalElimina() {
+        document.getElementById('modalElimina').style.display = 'none';
+    }
+
+    function confermaElimina() {
+        const input = document.getElementById('conferma-username').value.trim();
+        const errEl = document.getElementById('msg-elimina-err');
+        if (!input) {
+            errEl.innerText = 'Inserisci il tuo username.';
+            errEl.style.display = 'block';
+            return;
+        }
+        fetch('api/ba_elimina_account.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ conferma: input })
+        }).then(r => r.json()).then(data => {
+            if (data.status === 'ok') {
+                alert('Account eliminato. Verrai reindirizzato alla home.');
+                window.location.href = 'index.php';
+            } else {
+                errEl.innerText = data.msg || 'Errore.';
+                errEl.style.display = 'block';
             }
         });
     }

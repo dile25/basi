@@ -12,7 +12,7 @@ $idUtente    = $_SESSION['IdUtente'];
 $filtroStato = $_GET['stato'] ?? '';
 
 $sql = "SELECT o.id_ordine, o.data, o.totale, o.stato,
-               p.id_prodotto, p.nome, ii.quantita_prodotto as quantita,
+               p.id_prodotto, p.nome, p.username as venditore, ii.quantita_prodotto as quantita,
                ii.prezzo_unitario,
                (SELECT url FROM IMMAGINE_PRODOTTO WHERE id_prodotto = p.id_prodotto LIMIT 1) as foto_url,
                r.valutazione as mioVoto
@@ -57,7 +57,8 @@ while ($row = $res->fetch_assoc()) {
         'prezzo_acquisto'=> $row['prezzo_unitario'],
         'foto'           => $row['foto_url'] ?? 'img/default.jpg',
         'gia_recensito'  => !is_null($row['mioVoto']),
-        'voto_utente'    => $row['mioVoto']
+        'voto_utente'    => $row['mioVoto'],
+        'venditore'      => $row['venditore']
     ];
 }
 

@@ -15,7 +15,7 @@ $sql = "SELECT p.id_prodotto, p.nome, p.autore, p.descrizione, p.prezzo,
                pk.periodicita as Periodicita
         FROM PRODOTTO p
         LEFT JOIN PACCHETTO pk ON p.id_pacchetto = pk.id_pacchetto AND pk.attivo = 1
-        WHERE p.id_prodotto = ?";
+        WHERE p.id_prodotto = ? AND p.attivo = 1";
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $id);

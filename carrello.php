@@ -21,6 +21,10 @@ if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
 
     <div id="cart-wrapper" class="cart-container">
         <div>
+            <div id="avviso-rimossi" style="display:none; background:#fff3cd; border:1px solid #ffc107; border-radius:10px; padding:12px 16px; margin-bottom:14px; color:#856404; font-size:0.92em; align-items:center; gap:8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;flex-shrink:0;"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+                <span id="testo-rimossi"></span>
+            </div>
             <div id="cart-items-list"><p>Caricamento...</p></div>
             <!-- BOX ABBONAMENTO: appare se nel carrello c'è almeno una rivista/magazine/fumetto/periodico -->
             <div id="box-abbonamento" style="display:none; margin-top:20px; background:#f5eef8; border:2px solid #9b59b6; border-radius:14px; padding:22px;">
@@ -62,11 +66,22 @@ $(document).ready(function() {
 
 function caricaCarrello() {
     $.get('api/ba_carrello.php', { action: 'list' }, function(resp) {
+        // Mostra avviso prodotti rimossi (venditore cancellato)
+        if (resp.prodottiRimossi && resp.prodottiRimossi > 0) {
+            const n = resp.prodottiRimossi;
+            $('#testo-rimossi').text(n + (n === 1 ? ' prodotto è stato rimosso' : ' prodotti sono stati rimossi') + ' dal carrello perché non più disponibili (il venditore ha chiuso il suo account).');
+            $('#avviso-rimossi').css('display', 'flex');
+        }
         if (!resp.prodotti || resp.prodotti.length === 0) {
+            // Se ci sono rimossi mostra avviso sopra al messaggio carrello vuoto
+            const avviso = $('#avviso-rimossi').prop('outerHTML');
             $("#cart-wrapper").html(`
-                <div style='text-align:center; padding:80px; grid-column:1/-1;'>
-                    <h3>Il carrello è vuoto.</h3>
-                    <a href='index.php' class='btn-primary' style='padding:12px 25px; text-decoration:none; border-radius:8px; display:inline-block; margin-top:10px;'>Esplora i Prodotti</a>
+                <div style='grid-column:1/-1;'>
+                    ${resp.prodottiRimossi > 0 ? avviso : ''}
+                    <div style='text-align:center; padding:80px;'>
+                        <h3>Il carrello è vuoto.</h3>
+                        <a href='index.php' class='btn-primary' style='padding:12px 25px; text-decoration:none; border-radius:8px; display:inline-block; margin-top:10px;'>Esplora i Prodotti</a>
+                    </div>
                 </div>`);
             return;
         }

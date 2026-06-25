@@ -7,7 +7,7 @@ $user = $_POST['username'] ?? '';
 $pass = $_POST['password'] ?? '';
 
 // 1. Cerchiamo l'utente (colonne aggiornate al tuo nuovo SQL)
-$stmt = $conn->prepare("SELECT username, password_hash FROM UTENTE WHERE username = ?");
+$stmt = $conn->prepare("SELECT username, password_hash, attivo FROM UTENTE WHERE username = ?");
 $stmt->bind_param("s", $user);
 $stmt->execute();
 $res = $stmt->get_result();
@@ -15,6 +15,10 @@ $res = $stmt->get_result();
 if($row = $res->fetch_assoc()) {
     // 2. Verifica password
     if(password_verify($pass, $row['password_hash'])) {
+        if ((int)($row['attivo'] ?? 1) === 0) {
+            echo json_encode(['status' => 'error', 'msg' => 'Account disattivato. Contatta il supporto.']);
+            exit;
+        }
         
         // 3. Controllo RUOLO (Se è in VENDITORE è un venditore, altrimenti assumiamo cliente)
         $tipoUtente = 'cliente';

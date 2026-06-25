@@ -12,6 +12,12 @@ $user = $_SESSION['IdUtente'];
 $id   = intval($_POST['id_prodotto'] ?? 0);
 
 try {
+    // Rimuovi il prodotto dai carrelli di tutti i clienti prima di eliminarlo
+    $stmtCarr = $conn->prepare("DELETE FROM CARRELLO WHERE id_prodotto = ?");
+    $stmtCarr->bind_param("i", $id);
+    $stmtCarr->execute();
+    $stmtCarr->close();
+
     $stmt = $conn->prepare("DELETE FROM PRODOTTO WHERE id_prodotto=? AND username=?");
     $stmt->bind_param("is", $id, $user);
     $stmt->execute();

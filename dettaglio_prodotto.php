@@ -84,6 +84,16 @@ session_start();
                     <button id="btnCarrello" class="btn-carrello" onclick="toggleCarrello()">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:19px;height:19px;"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zM7.17 14.75l.03-.12.9-1.63H17c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 21.44 4H5.21L4.54 2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5 16.28 5 17h14v-2H7.42a.25.25 0 0 1-.25-.25z"/></svg>Aggiungi al Carrello
                     </button>
+                    <div id="zona-quantita" style="display:none; align-items:center; gap:10px;">
+                        <label style="font-size:0.92em; color:#555; font-weight:600;">Quantità nel carrello:</label>
+                        <div style="display:flex; align-items:center; border:1.5px solid #ddd; border-radius:8px; overflow:hidden;">
+                            <button type="button" onclick="cambiaQuantita(-1)" style="background:#f5f5f5; border:none; padding:6px 12px; font-size:1.1em; cursor:pointer; line-height:1;">−</button>
+                            <input type="number" id="inputQuantita" value="1" min="1" max="99"
+                                style="width:46px; border:none; text-align:center; font-size:0.97em; font-weight:600; padding:6px 0; -moz-appearance:textfield;" readonly>
+                            <button type="button" onclick="cambiaQuantita(1)" style="background:#f5f5f5; border:none; padding:6px 12px; font-size:1.1em; cursor:pointer; line-height:1;">+</button>
+                        </div>
+                        <span id="subtotale-dettaglio" style="font-size:0.92em; color:var(--dark-green); font-weight:700;"></span>
+                    </div>
                     <div style="display:flex; gap:10px;">
                         <button id="btnFav" class="btn-fav" onclick="togglePreferito()">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:17px;height:17px;flex-shrink:0;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
@@ -194,6 +204,7 @@ $(document).ready(function() {
         // Stock
         if (p.QuantitaDisp > 0) {
             $("#stockHtml").html(`<span style="color:var(--dark-green);display:flex;align-items:center;gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg> ${p.QuantitaDisp} copie disponibili</span>`);
+            $('#inputQuantita').attr('max', p.QuantitaDisp);
         } else {
             $("#stockHtml").html(`<span style="color:#e74c3c;display:flex;align-items:center;gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> Momentaneamente esaurito</span>`);
             $("#btnCarrello").prop("disabled", true).text("Non disponibile").css("opacity", "0.5");
@@ -318,6 +329,15 @@ function verificaStatoCarrello(idProdotto) {
             idCarrelloSet = new Set(resp.prodotti.map(p => parseInt(p.IdProdotto || p.id_prodotto)));
             nelCarrello = idCarrelloSet.has(parseInt(idProdotto));
             aggiornaBottoneCarrello();
+            if (nelCarrello) {
+                // Leggi la quantità attuale dal carrello
+                const prodCart = resp.prodotti.find(p => parseInt(p.IdProdotto || p.id_prodotto) === parseInt(idProdotto));
+                const qtaCart = prodCart ? parseInt(prodCart.quantita) : 1;
+                $('#inputQuantita').val(qtaCart);
+                $('#zona-quantita').css('display', 'flex');
+                aggiornaSubtotaleDettaglio(qtaCart);
+            }
+            if (nelCarrello) $('#zona-quantita').hide();
         }
     }, 'json');
 }
@@ -331,6 +351,30 @@ function verificaStatoPreferiti(idProdotto) {
         }
     }, 'json');
     <?php endif; ?>
+}
+
+function cambiaQuantita(delta) {
+    const input = document.getElementById('inputQuantita');
+    const max   = parseInt(input.max) || 99;
+    let val = (parseInt(input.value) || 1) + delta;
+    val = Math.max(1, Math.min(val, max));
+    input.value = val;
+    // Aggiorna carrello in tempo reale
+    if (prodottoCorrente) {
+        $.post('api/ba_carrello.php', { action: 'update', idProdotto: prodottoCorrente.IdProdotto, qty: val }, function(resp) {
+            if (resp.status === 'ok') {
+                aggiornaSubtotaleDettaglio(val);
+                if (typeof updateCartBadge === 'function') updateCartBadge();
+            }
+        }, 'json');
+    }
+}
+
+function aggiornaSubtotaleDettaglio(qty) {
+    if (!prodottoCorrente) return;
+    const prezzo = parseFloat(prodottoCorrente.prezzo) || 0;
+    const subtotale = (prezzo * qty).toFixed(2);
+    $('#subtotale-dettaglio').text('Subtotale: €' + subtotale);
 }
 
 function aggiornaBottoneCarrello() {
@@ -364,14 +408,21 @@ function toggleCarrello() {
             if(resp.status === 'ok') {
                 nelCarrello = false;
                 aggiornaBottoneCarrello();
+                $('#inputQuantita').val(1);
+                $('#subtotale-dettaglio').text('');
+                $('#zona-quantita').hide();
                 if(typeof updateCartBadge === "function") updateCartBadge();
             }
         }, 'json');
     } else {
-        $.post('api/ba_carrello.php', { action: 'add', idProdotto: prodottoCorrente.IdProdotto }, function(resp) {
+        const qty = Math.max(1, parseInt($('#inputQuantita').val()) || 1);
+        $.post('api/ba_carrello.php', { action: 'add', idProdotto: prodottoCorrente.IdProdotto, quantita: qty }, function(resp) {
             if(resp.status === 'ok') {
                 nelCarrello = true;
                 aggiornaBottoneCarrello();
+                $('#inputQuantita').val(qty);
+                $('#zona-quantita').css('display', 'flex');
+                aggiornaSubtotaleDettaglio(qty);
                 if(typeof updateCartBadge === "function") updateCartBadge();
                 if (prodottoCorrente.libriPacchetto && prodottoCorrente.libriPacchetto.length > 0) {
                     mostraRiquadroPacchetto();

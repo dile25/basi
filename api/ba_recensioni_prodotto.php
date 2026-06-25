@@ -10,7 +10,8 @@ if (!$id) {
 }
 
 $sql = "SELECT r.id_recensione, r.username, r.valutazione, r.testo, r.data,
-               (SELECT url FROM IMMAGINE_RECENSIONE WHERE id_recensione = r.id_recensione LIMIT 1) AS foto
+               (SELECT url FROM IMMAGINE_RECENSIONE WHERE id_recensione = r.id_recensione LIMIT 1) AS foto,
+               (SELECT attivo FROM UTENTE WHERE username = r.username) AS utente_attivo
         FROM RECENSIONE r
         WHERE r.id_prodotto = ?
         ORDER BY r.data DESC, r.id_recensione DESC";
@@ -23,6 +24,10 @@ $res = $stmt->get_result();
 $recensioni = [];
 while ($row = $res->fetch_assoc()) {
     $row['data'] = date("d/m/Y", strtotime($row['data']));
+    if ((int)($row['utente_attivo'] ?? 1) === 0) {
+        $row['username'] = 'utente eliminato';
+    }
+    unset($row['utente_attivo']);
     $recensioni[] = $row;
 }
 

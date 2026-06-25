@@ -106,7 +106,8 @@ function caricaOrdini(stato) {
 
             const badgeClass = {
                 'Pagato':'stato-pagato','In lavorazione':'stato-lavorazione',
-                'Spedito':'stato-spedito','Consegnato':'stato-consegnato'
+                'Spedito':'stato-spedito','Consegnato':'stato-consegnato',
+                'Annullato':'stato-annullato'
             }[stato] || 'stato-pagato';
 
             const icone = [
@@ -138,31 +139,56 @@ function caricaOrdini(stato) {
                     </div>
                 </div>
 
-                <div class="tracker">
+                ${ord.stato !== 'Annullato' ? `<div class="tracker">
                     <div class="tracker-steps">
                         <div class="tracker-line-bg"></div>
                         <div class="tracker-line-fill" style="width:${fillPerc};"></div>
                         ${stepsHtml}
                     </div>
-                </div>
+                </div>` : ''}
 
-                <div class="order-body">`;
+                <div class="order-body">
+                ${ord.stato === 'Annullato' ? `<div style="background:#fff3f3; border:1px solid #e74c3c; border-radius:8px; padding:12px 16px; margin-bottom:12px; color:#c0392b; font-size:0.92em; display:flex; align-items:center; gap:8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;flex-shrink:0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                    Questo ordine è stato annullato. Se hai già pagato, contatta il supporto per il rimborso.
+                </div>` : ''}`;
 
+            // Raggruppa libri per venditore
+            const perVenditore = {};
             ord.libri.forEach(lib => {
-                h += `
-                <div class="book-item">
-                    <img src="${lib.foto}" class="book-img" onclick="location.href='dettaglio_prodotto.php?id=${lib.id_prodotto}'" style="cursor:pointer;">
-                    <div style="flex-grow:1;">
-                        <strong>${lib.nome}</strong><br>
-                        <small style="color:#666;">Quantità: ${lib.quantita} | Prezzo: €${parseFloat(lib.prezzo_acquisto).toFixed(2)}</small>
-                    </div>
-                    <div>
-                        ${lib.gia_recensito
-                            ? `<span style="color:#f1c40f;font-size:1.1em;">${'★'.repeat(lib.voto_utente)}</span>`
-                            : `<button class="btn-recensisci-colorato" onclick="apriModal(${lib.id_prodotto},'${lib.nome.replace(/'/g,"\\'")}')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width:14px;height:14px;"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg> Recensisci</button>`
-                        }
-                    </div>
-                </div>`;
+                const v = lib.venditore || 'Venditore';
+                if (!perVenditore[v]) perVenditore[v] = [];
+                perVenditore[v].push(lib);
+            });
+
+            const venditori = Object.keys(perVenditore);
+            venditori.forEach(venditore => {
+                if (venditori.length > 1) {
+                    const totV = perVenditore[venditore].reduce((s, l) => s + parseFloat(l.prezzo_acquisto || 0), 0);
+                    h += `<div style="margin:10px 0 6px; padding:8px 12px; background:#f8f8f8; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:0.85em; color:#555; display:flex; align-items:center; gap:6px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+                            Venduto da <strong style="margin-left:4px;">${venditore}</strong>
+                        </span>
+                        <span style="font-size:0.85em; color:var(--dark-green); font-weight:700;">€${totV.toFixed(2)}</span>
+                    </div>`;
+                }
+                perVenditore[venditore].forEach(lib => {
+                    h += `
+                    <div class="book-item">
+                        <img src="${lib.foto}" class="book-img" onclick="location.href='dettaglio_prodotto.php?id=${lib.id_prodotto}'" style="cursor:pointer;">
+                        <div style="flex-grow:1;">
+                            <strong>${lib.nome}</strong><br>
+                            <small style="color:#666;">Quantità: ${lib.quantita} | Prezzo: €${parseFloat(lib.prezzo_acquisto).toFixed(2)}</small>
+                        </div>
+                        <div>
+                            ${lib.gia_recensito
+                                ? `<span style="color:#f1c40f;font-size:1.1em;">${'★'.repeat(lib.voto_utente)}</span>`
+                                : `<button class="btn-recensisci-colorato" onclick="apriModal(${lib.id_prodotto},'${lib.nome.replace(/'/g,"\'")}')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width:14px;height:14px;"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg> Recensisci</button>`
+                            }
+                        </div>
+                    </div>`;
+                });
             });
 
             h += `</div></div>`;

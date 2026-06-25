@@ -219,10 +219,22 @@ function caricaOrdini(stato) {
 
             let html = '';
             resp.ordini.forEach(o => {
+                // o.Stato = stato del venditore (per azioni), o.StatoOrdine = stato aggregato (visibile al cliente)
+                const statoV = o.Stato || 'Pagato';
+                const statoO = o.StatoOrdine || statoV;
                 const badgeClass = {
                     'Pagato':'stato-pagato','In lavorazione':'stato-lavorazione',
+                    'Spedito':'stato-spedito','Consegnato':'stato-consegnato',
+                    'Annullato':'stato-annullato'
+                }[statoV] || 'stato-pagato';
+                const badgeClassOrdine = {
+                    'Pagato':'stato-pagato','In lavorazione':'stato-lavorazione',
                     'Spedito':'stato-spedito','Consegnato':'stato-consegnato'
-                }[o.Stato] || 'stato-pagato';
+                }[statoO] || 'stato-pagato';
+                // Mostra badge ordine cliente solo se diverso dallo stato venditore
+                const badgeOrdineHtml = statoV !== statoO
+                    ? `<span class="badge-stato ${badgeClassOrdine}" style="opacity:0.7;" title="Stato visibile al cliente">${statoO} (cliente)</span>`
+                    : '';
 
                 let libriHtml = '';
                 o.libri.forEach(l => {
@@ -237,11 +249,16 @@ function caricaOrdini(stato) {
                 });
 
                 let azioniHtml = '';
-                if(o.Stato === 'Pagato') {
+                if (statoO === 'Annullato') {
+                    azioniHtml = `<div style="margin-top:10px; padding:10px 14px; background:#fff3f3; border:1px solid #e74c3c; border-radius:8px; color:#c0392b; font-size:0.88em; display:flex; align-items:center; gap:8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;flex-shrink:0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                        Ordine annullato — rimborso da effettuare al cliente <strong>${o.Cliente}</strong>.
+                    </div>`;
+                } else if(statoV === 'Pagato') {
                     azioniHtml = `<button class="btn-primary" style="padding:7px 14px;font-size:0.85em;margin-top:10px;" onclick="aggiornaStato(${o.IdOrdine},'In lavorazione')">Conferma ordine</button>`;
-                } else if(o.Stato === 'In lavorazione') {
+                } else if(statoV === 'In lavorazione') {
                     azioniHtml = `<button class="btn-primary" style="padding:7px 14px;font-size:0.85em;margin-top:10px;" onclick="aggiornaStato(${o.IdOrdine},'Spedito')">Segna come Spedito</button>`;
-                } else if(o.Stato === 'Spedito') {
+                } else if(statoV === 'Spedito') {
                     azioniHtml = `<button class="btn-primary" style="padding:7px 14px;font-size:0.85em;margin-top:10px;" onclick="aggiornaStato(${o.IdOrdine},'Consegnato')">Segna come Consegnato</button>`;
                 }
 
@@ -254,8 +271,9 @@ function caricaOrdini(stato) {
                             <span style="color:var(--text-sec);margin-left:10px;font-size:0.85em;">${o.Cliente}</span>
                         </div>
                         <div style="display:flex;align-items:center;gap:10px;">
-                            <span class="badge-stato ${badgeClass}">${o.Stato}</span>
-                            <strong style="color:var(--dark-green);">€${parseFloat(o.Totale).toFixed(2)}</strong>
+                            <span class="badge-stato ${badgeClass}">${statoV}</span>
+                            ${badgeOrdineHtml}
+                            <strong style="color:var(--dark-green);" title="Il tuo guadagno su questo ordine">€${parseFloat(o.TotaleVenditore || 0).toFixed(2)}</strong>
                             <span style="color:var(--text-sec);">&#9660;</span>
                         </div>
                     </div>

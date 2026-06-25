@@ -22,60 +22,94 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome = $_POST['nome'] ?? '';
     $cogn = $_POST['cognome'] ?? '';
     $mail = $_POST['email'] ?? '';
-    $pass = password_hash($_POST['password'], PASSWORD_DEFAULT);
     $tipo = $_POST['tipoUtente'] ?? 'cliente';
 
-    if (empty($user) || empty($nome) || empty($cogn) || empty($mail) || empty($_POST['password'])) {
+    $errori = [];
+
+    // Username: 3-30 caratteri alfanumerici + _ -
+    if (empty($user) || !preg_match('/^[a-zA-Z0-9_\-]{3,30}$/', $user))
+        $errori[] = "Username non valido (3-30 caratteri: lettere, numeri, _ o -).";
+
+    // Nome: min 2 lettere
+    if (empty($nome) || strlen($nome) < 2 || !preg_match('/^[\pL\s\'\-]+$/u', $nome))
+        $errori[] = "Nome non valido.";
+
+    // Cognome: min 2 lettere
+    if (empty($cogn) || strlen($cogn) < 2 || !preg_match('/^[\pL\s\'\-]+$/u', $cogn))
+        $errori[] = "Cognome non valido.";
+
+    // Email
+    if (empty($mail) || !filter_var($mail, FILTER_VALIDATE_EMAIL))
+        $errori[] = "Email non valida.";
+
+    // Password: min 8 car, 1 maiuscola, 1 numero, 1 simbolo
+    $pw = $_POST['password'] ?? '';
+    $pwValida = strlen($pw) >= 8
+        && preg_match('/[A-Z]/', $pw)
+        && preg_match('/[0-9]/', $pw)
+        && preg_match('/[^a-zA-Z0-9]/', $pw);
+    if (!$pw || !$pwValida)
+        $errori[] = "Password non valida (min 8 caratteri, 1 maiuscola, 1 numero, 1 simbolo).";
+
+    // Validazioni per ruolo
+    if ($tipo === 'cliente') {
+        $tel = trim($_POST['telefono'] ?? '');
+        $ind = trim($_POST['indirizzo'] ?? '');
+        if (empty($tel) || !preg_match('/^(\+39\s?)?3\d{2}[\s\-]?\d{6,7}$/', $tel))
+            $errori[] = "Telefono non valido (es. 3201234567).";
+        if (empty($ind) || strlen($ind) < 5)
+            $errori[] = "Indirizzo obbligatorio (min 5 caratteri).";
+    } else {
+        $piva   = trim($_POST['partita_iva'] ?? '');
+        $ragSoc = trim($_POST['ragione_sociale'] ?? '');
+        if (empty($piva) || !preg_match('/^\d{11}$/', $piva))
+            $errori[] = "Partita IVA non valida (11 cifre numeriche).";
+        if (empty($ragSoc) || strlen($ragSoc) < 2)
+            $errori[] = "Ragione Sociale obbligatoria.";
+    }
+
+    if (!empty($errori)) {
         ob_clean();
-        echo json_encode(["status" => "error", "msg" => "Tutti i campi obbligatori devono essere compilati."]);
+        echo json_encode(["status" => "error", "msg" => implode(' ', $errori)]);
         exit;
     }
+
+    $pass = password_hash($pw, PASSWORD_DEFAULT);
 
     try {
         $conn->begin_transaction();
 
-        // 1. Inserimento nella tabella UTENTE
-        $sqlU = "INSERT INTO UTENTE (username, nome, cognome, email, password_hash, data_registrazione) 
+        $sqlU = "INSERT INTO UTENTE (username, nome, cognome, email, password_hash, data_registrazione)
                  VALUES (?, ?, ?, ?, ?, CURRENT_DATE)";
         $stmtU = $conn->prepare($sqlU);
         $stmtU->bind_param("sssss", $user, $nome, $cogn, $mail, $pass);
         $stmtU->execute();
 
-        // 2. Inserimento nelle tabelle specifiche (VENDITORE o CLIENTE)
         if ($tipo === 'venditore') {
-            $piva    = $_POST['partita_iva'] ?? '';
-            $ragSoc  = $_POST['ragione_sociale'] ?? '';
-            $sqlV = "INSERT INTO VENDITORE (username, partita_iva, ragione_sociale) VALUES (?, ?, ?)";
-            $stmtV = $conn->prepare($sqlV);
+            $piva   = $_POST['partita_iva'] ?? '';
+            $ragSoc = $_POST['ragione_sociale'] ?? '';
+            $stmtV = $conn->prepare("INSERT INTO VENDITORE (username, partita_iva, ragione_sociale) VALUES (?, ?, ?)");
             $stmtV->bind_param("sss", $user, $piva, $ragSoc);
             $stmtV->execute();
         } else {
             $tel = $_POST['telefono'] ?? '';
             $ind = $_POST['indirizzo'] ?? '';
-            $sqlC = "INSERT INTO CLIENTE (username, telefono, indirizzo_predefinito) VALUES (?, ?, ?)";
-            $stmtC = $conn->prepare($sqlC);
+            $stmtC = $conn->prepare("INSERT INTO CLIENTE (username, telefono, indirizzo_predefinito) VALUES (?, ?, ?)");
             $stmtC->bind_param("sss", $user, $tel, $ind);
             $stmtC->execute();
         }
 
         $conn->commit();
 
-        // MODIFICA PRINCIPALE: Avviamo la sessione e logghiamo l'utente automaticamente
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        // Salviamo le variabili di sessione usando lo username appena creato
-        $_SESSION['IdUtente'] = $user;
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $_SESSION['IdUtente']  = $user;
         $_SESSION['tipoUtente'] = $tipo;
 
         ob_clean();
-        // Restituiamo una risposta di successo indicando al frontend che l'autenticazione è automatica
         echo json_encode(["status" => "ok", "msg" => "Registrazione e login effettuati con successo!"]);
 
     } catch (Exception $e) {
-        if (isset($conn)) {
-            $conn->rollback();
-        }
+        if (isset($conn)) $conn->rollback();
         ob_clean();
         if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
             echo json_encode(["status" => "error", "msg" => "Username o Email già utilizzati da un altro utente."]);
@@ -84,4 +118,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
-?>

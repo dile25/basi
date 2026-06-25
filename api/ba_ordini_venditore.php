@@ -18,10 +18,11 @@ if ($action === 'list') {
                    ii.id_prodotto AS IdProdotto,
                    ii.quantita_prodotto AS Quantita,
                    ii.prezzo_unitario AS PrezzoUnitario,
+                   ii.stato_venditore AS StatoVenditore,
                    o.data AS DataOrdine,
-                   o.stato AS Stato,
+                   o.stato AS StatoOrdine,
                    o.username AS Cliente,
-                   o.totale AS Totale,
+                   o.totale AS TotaleOrdine,
                    p.nome AS Titolo,
                    p.prezzo AS PrezzoAttuale,
                    (SELECT url FROM IMMAGINE_PRODOTTO WHERE id_prodotto = p.id_prodotto LIMIT 1) AS Foto
@@ -54,12 +55,14 @@ if ($action === 'list') {
 
         if (!isset($ordini[$id])) {
             $ordini[$id] = [
-                'IdOrdine'   => $id,
-                'DataOrdine' => date("d/m/Y", strtotime($row['DataOrdine'])),
-                'Stato'      => $row['Stato'],
-                'Cliente'    => $row['Cliente'],
-                'Totale'     => $row['Totale'],
-                'libri'      => []
+                'IdOrdine'        => $id,
+                'DataOrdine'      => date("d/m/Y", strtotime($row['DataOrdine'])),
+                'Stato'           => $row['StatoVenditore'], // stato del venditore (per gestione)
+                'StatoOrdine'     => $row['StatoOrdine'],    // stato aggregato (visibile al cliente)
+                'Cliente'         => $row['Cliente'],
+                'TotaleOrdine'    => $row['TotaleOrdine'],
+                'TotaleVenditore' => 0,
+                'libri'           => []
             ];
         }
         $ordini[$id]['libri'][] = [
@@ -69,6 +72,10 @@ if ($action === 'list') {
             'Prezzo'     => $prezzoEffettivo,
             'Foto'       => $row['Foto'] ?? 'img/default.jpg'
         ];
+        // Accumula guadagno venditore su questo ordine
+        $ordini[$id]['TotaleVenditore'] = round(
+            ($ordini[$id]['TotaleVenditore'] ?? 0) + $prezzoEffettivo * $row['Quantita'], 2
+        );
     }
 
     // Guadagno DISPONIBILE: somma solo le righe di INCLUSO_IN con stato
@@ -80,8 +87,7 @@ if ($action === 'list') {
                     ) as guadagno
                     FROM INCLUSO_IN ii
                     JOIN PRODOTTO p ON ii.id_prodotto = p.id_prodotto
-                    JOIN ORDINE o ON ii.id_ordine = o.id_ordine
-                    WHERE p.username = ? AND o.stato IN ('Spedito','Consegnato') AND ii.trasferito = 0";
+                    WHERE p.username = ? AND ii.stato_venditore IN ('Spedito','Consegnato') AND ii.trasferito = 0";
 
     $stmtG = $conn->prepare($sqlGuadagno);
     $stmtG->bind_param("s", $idVenditore);
@@ -95,32 +101,101 @@ if ($action === 'list') {
     ]);
 
 } elseif ($action === 'update_status') {
-    $idOrdine    = intval($_POST['idOrdine'] ?? 0);
-    $nuovoStato  = $_POST['stato'] ?? '';
+    $idOrdine   = intval($_POST['idOrdine'] ?? 0);
+    $nuovoStato = $_POST['stato'] ?? '';
 
     if (!$idOrdine || !$nuovoStato) {
         echo json_encode(['status' => 'error', 'msg' => 'Dati mancanti']);
         exit;
     }
 
-    $check = $conn->prepare("SELECT COUNT(*) as cnt FROM INCLUSO_IN ii
-                             JOIN PRODOTTO p ON ii.id_prodotto = p.id_prodotto
-                             WHERE ii.id_ordine = ? AND p.username = ?");
+    $scalaStati = ['Pagato' => 0, 'In lavorazione' => 1, 'Spedito' => 2, 'Consegnato' => 3];
+    if (!isset($scalaStati[$nuovoStato])) {
+        echo json_encode(['status' => 'error', 'msg' => 'Stato non valido']);
+        exit;
+    }
+
+    // Verifica che questo venditore abbia prodotti nell'ordine
+    $check = $conn->prepare(
+        "SELECT COUNT(*) as cnt FROM INCLUSO_IN ii
+         JOIN PRODOTTO p ON ii.id_prodotto = p.id_prodotto
+         WHERE ii.id_ordine = ? AND p.username = ?"
+    );
     $check->bind_param("is", $idOrdine, $idVenditore);
     $check->execute();
-    $cnt = $check->get_result()->fetch_assoc()['cnt'];
-
-    if ($cnt === 0) {
+    $resCheck = $check->get_result()->fetch_assoc();
+    $check->close();
+    if ((int)$resCheck['cnt'] === 0) {
         echo json_encode(['status' => 'error', 'msg' => 'Ordine non autorizzato']);
         exit;
     }
 
-    $stmt = $conn->prepare("UPDATE ORDINE SET stato = ? WHERE id_ordine = ?");
-    $stmt->bind_param("si", $nuovoStato, $idOrdine);
-
-    if ($stmt->execute()) {
-        echo json_encode(['status' => 'ok']);
-    } else {
-        echo json_encode(['status' => 'error', 'msg' => 'Errore database']);
+    // Blocca se l'ordine è già annullato
+    $stmtAnn = $conn->prepare("SELECT stato FROM ORDINE WHERE id_ordine = ?");
+    $stmtAnn->bind_param("i", $idOrdine);
+    $stmtAnn->execute();
+    $statoOrdine = $stmtAnn->get_result()->fetch_assoc()['stato'] ?? '';
+    $stmtAnn->close();
+    if ($statoOrdine === 'Annullato') {
+        echo json_encode(['status' => 'error', 'msg' => 'Questo ordine è stato annullato e non può essere aggiornato.']);
+        exit;
     }
+
+    // Leggi stato_venditore attuale di questo venditore su questo ordine
+    $stmtCurr = $conn->prepare(
+        "SELECT ii.stato_venditore FROM INCLUSO_IN ii
+         JOIN PRODOTTO p ON ii.id_prodotto = p.id_prodotto
+         WHERE ii.id_ordine = ? AND p.username = ? LIMIT 1"
+    );
+    $stmtCurr->bind_param("is", $idOrdine, $idVenditore);
+    $stmtCurr->execute();
+    $statoCorrente = $stmtCurr->get_result()->fetch_assoc()['stato_venditore'] ?? 'Pagato';
+    $stmtCurr->close();
+
+    // Non permettere di retrocedere
+    if ($scalaStati[$nuovoStato] < ($scalaStati[$statoCorrente] ?? 0)) {
+        echo json_encode(['status' => 'error', 'msg' => 'Non puoi retrocedere lo stato.']);
+        exit;
+    }
+
+    // 1. Aggiorna stato_venditore sulle righe di questo venditore per questo ordine
+    $stmtUpd = $conn->prepare(
+        "UPDATE INCLUSO_IN ii
+         JOIN PRODOTTO p ON ii.id_prodotto = p.id_prodotto
+         SET ii.stato_venditore = ?
+         WHERE ii.id_ordine = ? AND p.username = ?"
+    );
+    $stmtUpd->bind_param("sis", $nuovoStato, $idOrdine, $idVenditore);
+    $stmtUpd->execute();
+    $stmtUpd->close();
+
+    // 2. Calcola il minimo stato tra tutti i venditori dell'ordine
+    //    = lo stato "peggiore" (più basso nella scala)
+    $stmtMin = $conn->prepare(
+        "SELECT ii.stato_venditore FROM INCLUSO_IN ii
+         JOIN PRODOTTO p ON ii.id_prodotto = p.id_prodotto
+         WHERE ii.id_ordine = ?
+         GROUP BY p.username"
+    );
+    $stmtMin->bind_param("i", $idOrdine);
+    $stmtMin->execute();
+    $resMin = $stmtMin->get_result();
+    $stmtMin->close();
+
+    $statoMinimo = 'Consegnato'; // parte dal massimo, scende
+    while ($r = $resMin->fetch_assoc()) {
+        $sv = $r['stato_venditore'] ?? 'Pagato';
+        if (($scalaStati[$sv] ?? 0) < ($scalaStati[$statoMinimo] ?? 3)) {
+            $statoMinimo = $sv;
+        }
+    }
+    $resMin->free();
+
+    // 3. Aggiorna ORDINE.stato con il minimo calcolato
+    $stmtOrd = $conn->prepare("UPDATE ORDINE SET stato = ? WHERE id_ordine = ?");
+    $stmtOrd->bind_param("si", $statoMinimo, $idOrdine);
+    $stmtOrd->execute();
+    $stmtOrd->close();
+
+    echo json_encode(['status' => 'ok', 'statoVenditore' => $nuovoStato, 'statoOrdine' => $statoMinimo]);
 }
