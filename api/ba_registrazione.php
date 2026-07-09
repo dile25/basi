@@ -1,7 +1,4 @@
 <?php
-ob_start();
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
@@ -69,7 +66,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!empty($errori)) {
-        ob_clean();
         echo json_encode(["status" => "error", "msg" => implode(' ', $errori)]);
         exit;
     }
@@ -105,12 +101,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['IdUtente']  = $user;
         $_SESSION['tipoUtente'] = $tipo;
 
-        ob_clean();
         echo json_encode(["status" => "ok", "msg" => "Registrazione e login effettuati con successo!"]);
 
     } catch (Exception $e) {
         if (isset($conn)) $conn->rollback();
-        ob_clean();
         if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
             echo json_encode(["status" => "error", "msg" => "Username o Email già utilizzati da un altro utente."]);
         } else {

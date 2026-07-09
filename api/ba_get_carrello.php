@@ -28,7 +28,7 @@ $sql = "SELECT c.id_prodotto,
         JOIN PRODOTTO p ON c.id_prodotto = p.id_prodotto
         LEFT JOIN IMMAGINE_PRODOTTO img ON p.id_prodotto = img.id_prodotto
         LEFT JOIN PACCHETTO pk ON p.id_pacchetto = pk.id_pacchetto AND pk.attivo = 1
-        WHERE c.username = ?";
+        WHERE c.username = ? AND p.attivo = 1";
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $idUtente);

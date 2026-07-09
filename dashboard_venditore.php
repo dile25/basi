@@ -12,38 +12,7 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
     <title>Dashboard Venditore | The (E-)Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        .manage-book-card { display:flex; align-items:center; gap:12px; padding:12px; border:1px solid var(--border-color); border-radius:10px; margin-bottom:12px; background:white; }
-        .manage-book-img { width:55px; height:75px; object-fit:cover; border-radius:6px; }
-        .btn-elimina { padding:5px 10px; font-size:0.8em; background:white; color:#e74c3c; border:1px solid #e74c3c; border-radius:6px; cursor:pointer; }
-        .btn-elimina:hover { background:#e74c3c; color:white; }
-        .btn-modifica-libro { padding:5px 10px; font-size:0.8em; background:white; color:var(--dark-green); border:1px solid var(--dark-green); border-radius:6px; cursor:pointer; }
-        .btn-modifica-libro:hover { background:var(--dark-green); color:white; }
-        .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:1000; }
-        .modal-box { background:white; padding:30px; border-radius:15px; width:90%; overflow-y:auto; max-height:90vh; }
-        .ordine-card { background:white; border:1px solid var(--border-color); border-radius:12px; margin-bottom:15px; overflow:hidden; }
-        .ordine-header { background:#f8f9fa; padding:12px 18px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; cursor:pointer; }
-        .ordine-body { padding:15px 18px; display:none; }
-        .ordine-libro { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid #f0f0f0; }
-        .ordine-libro:last-child { border-bottom:none; }
-        .badge-stato { padding:4px 12px; border-radius:20px; font-size:0.78em; font-weight:bold; }
-        .stato-pagato { background:#d4edda; color:#155724; }
-        .stato-lavorazione { background:#fff3cd; color:#856404; }
-        .stato-spedito { background:#cce5ff; color:#004085; }
-        .stato-consegnato { background:#d1ecf1; color:#0c5460; }
-        .filtro-btn { padding:7px 16px; border-radius:20px; border:1px solid var(--border-color); background:white; cursor:pointer; font-size:0.85em; transition:0.2s; }
-        .filtro-btn.active { background:var(--dark-green); color:white; border-color:var(--dark-green); }
-        .form-control { margin-bottom:12px; width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); font-family:inherit; background:#fff; box-sizing:border-box; }
-        .stat-box-guadagno { cursor:pointer; transition:0.2s; }
-        .stat-box-guadagno:hover { transform:translateY(-3px); box-shadow:0 6px 15px rgba(0,0,0,0.1); }
-        .btn-trasferisci { background:var(--dark-green); color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.9em; margin-top:8px; width:100%; transition:0.2s; }
-        .btn-trasferisci:hover { background:#4d6649; }
-        .badge-tipo { display:inline-block; padding:2px 8px; border-radius:10px; font-size:0.72em; font-weight:700; }
-        .tipo-libro { background:#e3f2fd; color:#1565c0; }
-        .tipo-rivista { background:#fce4ec; color:#c62828; }
-        .tipo-periodico { background:#f3e5f5; color:#6a1b9a; }
-        .tipo-magazine { background:#fff3e0; color:#e65100; }
-    </style>
+
 </head>
 <body>
 <?php include("header.php"); ?>
@@ -106,6 +75,43 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
     </div>
 </div>
 
+<!-- SEZIONE PACCHETTI E ABBONAMENTI -->
+<div class="container" style="max-width:1200px; margin:0 auto; padding:0 20px 30px;">
+    <h3 style="color:var(--dark-green); margin-bottom:15px; display:flex; align-items:center; gap:8px;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:22px;height:22px;"><path d="M20 6h-2.18c.07-.44.18-.87.18-1.33C18 2.54 15.96.5 13.46.5c-1.29 0-2.4.51-3.19 1.33L9 3.1 7.73 1.83C6.94 1.01 5.83.5 4.54.5 2.04.5 0 2.54 0 4.67c0 .46.11.89.18 1.33H0v2h20v-2z"/></svg>
+        I miei Pacchetti e Abbonamenti
+    </h3>
+    <div id="lista-pacchetti-venditore"><p style="color:var(--text-sec);">Caricamento...</p></div>
+</div>
+
+<!-- MODAL MODIFICA PACCHETTO -->
+<div id="modalModificaPacchetto" class="modal-overlay" style="display:none; justify-content:center; align-items:center;">
+    <div class="modal-box" style="max-width:480px; position:relative;">
+        <button onclick="$('#modalModificaPacchetto').hide()" style="position:absolute;top:14px;right:16px;background:none;border:none;cursor:pointer;color:#999;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:22px;height:22px;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+        <h3 style="color:var(--dark-green); margin:0 0 16px;">Modifica Pacchetto</h3>
+        <input type="hidden" id="mod-pack-id">
+        <input type="hidden" id="mod-pack-tipo">
+        <label style="font-size:0.9em; font-weight:600; display:block; margin-bottom:4px;">Nome</label>
+        <input type="text" id="mod-pack-nome" class="form-control" placeholder="Nome pacchetto">
+        <div id="mod-pack-sconti-libro">
+            <label style="font-size:0.9em; font-weight:600; display:block; margin-bottom:4px;">Sconto 2 prodotti (%)</label>
+            <input type="number" id="mod-pack-s2" class="form-control" min="0" max="99">
+            <label style="font-size:0.9em; font-weight:600; display:block; margin-bottom:4px;">Sconto 3 prodotti (%)</label>
+            <input type="number" id="mod-pack-s3" class="form-control" min="0" max="99">
+            <label style="font-size:0.9em; font-weight:600; display:block; margin-bottom:4px;">Sconto collezione completa (%)</label>
+            <input type="number" id="mod-pack-st" class="form-control" min="0" max="99">
+        </div>
+        <div id="mod-pack-sconti-abb" style="display:none;">
+            <label style="font-size:0.9em; font-weight:600; display:block; margin-bottom:4px;">Sconto abbonamento (%)</label>
+            <input type="number" id="mod-pack-sa" class="form-control" min="0" max="99">
+        </div>
+        <p id="mod-pack-err" style="color:#e74c3c; font-size:0.88em; display:none; margin-top:8px;"></p>
+        <button onclick="salvaPacchetto()" class="btn-primary" style="width:100%; padding:12px; margin-top:12px;">Salva modifiche</button>
+    </div>
+</div>
+
 <!-- MODAL MODIFICA -->
 <div id="modalModifica" class="modal-overlay">
     <div class="modal-box" style="max-width:520px;">
@@ -162,6 +168,7 @@ let filtroCorrente = '';
 $(document).ready(function() {
     caricaLibri();
     caricaOrdini('');
+    caricaPacchetti();
 });
 
 function caricaLibri() {
@@ -306,6 +313,119 @@ function trasferisciGuadagno() {
 function toggleOrdine(header) { $(header).next('.ordine-body').slideToggle(200); }
 function filtraOrdini(stato, btn) { $('.filtro-btn').removeClass('active'); $(btn).addClass('active'); caricaOrdini(stato); }
 function scrollToOrdini() { $('html,body').animate({ scrollTop: $('#sezione-ordini').offset().top - 20 }, 400); }
+
+// ===== GESTIONE PACCHETTI E ABBONAMENTI =====
+
+function caricaPacchetti() {
+    // Carica sia pacchetti libro che abbonamenti
+    $.when(
+        $.get('api/ba_pacchetti_venditore.php'),
+        $.get('api/ba_abbonamenti_venditore.php')
+    ).done(function(rPack, rAbb) {
+        const pacchetti = rPack[0].status === 'ok' ? rPack[0].pacchetti : [];
+        const abbonamenti = rAbb[0].status === 'ok' ? rAbb[0].abbonamenti : [];
+
+        if (pacchetti.length === 0 && abbonamenti.length === 0) {
+            $('#lista-pacchetti-venditore').html("<p style='color:var(--text-sec);'>Nessun pacchetto o abbonamento creato. Aggiungili durante l'inserimento di un prodotto.</p>");
+            return;
+        }
+
+        let html = '<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px;">';
+        pacchetti.forEach(p => {
+            html += `<div style="background:white; border:1px solid var(--border-color); border-radius:10px; padding:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <strong style="font-size:0.95em; color:var(--dark-green);">${p.nome}</strong>
+                    <span style="font-size:0.75em; background:#e3f2fd; color:#1565c0; padding:2px 8px; border-radius:10px; font-weight:700;">SAGA/PROMO</span>
+                </div>
+                <small style="color:var(--text-sec);">
+                    Sconto: ${p.sconto_2}% (2), ${p.sconto_3}% (3), ${p.sconto_tutti}% (tutti) — ${p.tot_prodotti} prodotti
+                </small>
+                <div style="display:flex; gap:8px; margin-top:10px;">
+                    <button onclick="apriModificaPacchetto(${p.id_pacchetto},encodeURIComponent(p.nome),'libro',${p.sconto_2},${p.sconto_3},${p.sconto_tutti},0)"
+                        style="flex:1; padding:5px; font-size:0.82em; background:white; color:var(--dark-green); border:1px solid var(--dark-green); border-radius:6px; cursor:pointer;">Modifica</button>
+                    <button onclick="eliminaPacchetto(${p.id_pacchetto},encodeURIComponent(p.nome))"
+                        style="flex:1; padding:5px; font-size:0.82em; background:white; color:#e74c3c; border:1px solid #e74c3c; border-radius:6px; cursor:pointer;">Elimina</button>
+                </div>
+            </div>`;
+        });
+        abbonamenti.forEach(a => {
+            html += `<div style="background:white; border:1px solid #d2b4de; border-radius:10px; padding:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <strong style="font-size:0.95em; color:#6c3483;">${a.nome}</strong>
+                    <span style="font-size:0.75em; background:#f3e5f5; color:#6a1b9a; padding:2px 8px; border-radius:10px; font-weight:700;">ABBONAMENTO</span>
+                </div>
+                <small style="color:var(--text-sec);">
+                    Sconto: ${a.sconto_tutti}% — ${a.periodicita || ''} — ${a.tot_prodotti} numeri
+                </small>
+                <div style="display:flex; gap:8px; margin-top:10px;">
+                    <button onclick="apriModificaPacchetto(${a.id_pacchetto},encodeURIComponent(a.nome),'abbonamento',0,0,${a.sconto_tutti},${a.sconto_tutti})"
+                        style="flex:1; padding:5px; font-size:0.82em; background:white; color:#6c3483; border:1px solid #6c3483; border-radius:6px; cursor:pointer;">Modifica</button>
+                    <button onclick="eliminaPacchetto(${a.id_pacchetto},encodeURIComponent(a.nome))"
+                        style="flex:1; padding:5px; font-size:0.82em; background:white; color:#e74c3c; border:1px solid #e74c3c; border-radius:6px; cursor:pointer;">Elimina</button>
+                </div>
+            </div>`;
+        });
+        html += '</div>';
+        $('#lista-pacchetti-venditore').html(html);
+    });
+}
+
+function apriModificaPacchetto(id, nomeEnc, tipo, s2, s3, st, sa) {
+    const nome = decodeURIComponent(nomeEnc);
+    $('#mod-pack-id').val(id);
+    $('#mod-pack-tipo').val(tipo);
+    $('#mod-pack-nome').val(nome);
+    $('#mod-pack-err').hide();
+    if (tipo === 'abbonamento') {
+        $('#mod-pack-sconti-libro').hide();
+        $('#mod-pack-sconti-abb').show();
+        $('#mod-pack-sa').val(sa);
+    } else {
+        $('#mod-pack-sconti-abb').hide();
+        $('#mod-pack-sconti-libro').show();
+        $('#mod-pack-s2').val(s2);
+        $('#mod-pack-s3').val(s3);
+        $('#mod-pack-st').val(st);
+    }
+    $('#modalModificaPacchetto').css('display','flex');
+}
+
+function salvaPacchetto() {
+    const id   = $('#mod-pack-id').val();
+    const tipo = $('#mod-pack-tipo').val();
+    const nome = $('#mod-pack-nome').val().trim();
+    if (!nome) { $('#mod-pack-err').text('Il nome è obbligatorio.').show(); return; }
+
+    const data = { id_pacchetto: id, nome: nome, tipo_pacchetto: tipo };
+    if (tipo === 'abbonamento') {
+        data.sconto_tutti = $('#mod-pack-sa').val();
+    } else {
+        data.sconto_2    = $('#mod-pack-s2').val();
+        data.sconto_3    = $('#mod-pack-s3').val();
+        data.sconto_tutti = $('#mod-pack-st').val();
+    }
+
+    $.post('api/ba_modifica_pacchetto.php', data, function(resp) {
+        if (resp.status === 'ok') {
+            $('#modalModificaPacchetto').hide();
+            caricaPacchetti();
+        } else {
+            $('#mod-pack-err').text(resp.msg || 'Errore.').show();
+        }
+    }, 'json');
+}
+
+function eliminaPacchetto(id, nomeEnc) {
+    const nome = decodeURIComponent(nomeEnc);
+    if (!confirm('Eliminare il pacchetto "' + nome + '"?\nI prodotti collegati perderanno l\'associazione ma non verranno eliminati.')) return;
+    $.post('api/ba_elimina_pacchetto.php', { id_pacchetto: id }, function(resp) {
+        if (resp.status === 'ok') {
+            caricaPacchetti();
+        } else {
+            alert(resp.msg || 'Errore eliminazione.');
+        }
+    }, 'json');
+}
 function aggiornaStato(idOrdine, stato) {
     $.post('api/ba_ordini_venditore.php?action=update_status', { idOrdine: idOrdine, stato: stato }, function(resp) {
         if(resp.status === 'ok') caricaOrdini(filtroCorrente);

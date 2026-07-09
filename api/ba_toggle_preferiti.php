@@ -9,7 +9,8 @@ if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
 }
 
 $idUtente = $_SESSION['IdUtente'];
-$idProdotto = $_POST['idProdotto'] ?? 0;
+$idProdotto = intval($_POST['idProdotto'] ?? 0);
+if (!$idProdotto) { echo json_encode(['status' => 'error', 'msg' => 'Prodotto non valido']); exit; }
 
 // 1. Controlliamo se esiste già
 $check = $conn->prepare("SELECT id_preferiti FROM PREFERITI WHERE username = ? AND id_prodotto = ?");

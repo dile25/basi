@@ -20,6 +20,26 @@ $nuovoUsername  = trim($input['username']       ?? '');
 $ragioneSociale = trim($input['ragione_sociale']?? '');
 $partitaIva     = trim($input['partita_iva']    ?? '');
 
+// Validazioni sui campi forniti
+if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    echo json_encode(['status' => 'error', 'msg' => 'Indirizzo email non valido.']);
+    exit;
+}
+if (!empty($password)) {
+    $pwValida = strlen($password) >= 8
+        && preg_match('/[A-Z]/', $password)
+        && preg_match('/[0-9]/', $password)
+        && preg_match('/[^a-zA-Z0-9]/', $password);
+    if (!$pwValida) {
+        echo json_encode(['status' => 'error', 'msg' => 'Password non valida (min 8 caratteri, 1 maiuscola, 1 numero, 1 simbolo).']);
+        exit;
+    }
+}
+if (!empty($partitaIva) && !preg_match('/^\d{11}$/', $partitaIva)) {
+    echo json_encode(['status' => 'error', 'msg' => 'Partita IVA non valida (11 cifre numeriche).']);
+    exit;
+}
+
 $conn->begin_transaction();
 
 try {

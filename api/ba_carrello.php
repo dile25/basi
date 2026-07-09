@@ -14,6 +14,8 @@ $action   = $_REQUEST['action'] ?? '';
 switch ($action) {
 
     case 'add':
+        // Aggiunge un prodotto al carrello (qty=1). Se già presente, incrementa la quantità.
+        // Verifica che il prodotto esista, sia attivo e abbia scorte disponibili.
         $idProd = intval($_POST['idProdotto'] ?? 0);
         $qty    = 1;
 
@@ -212,6 +214,8 @@ switch ($action) {
         break;
 
     case 'update':
+        // Aggiorna la quantità di un prodotto nel carrello.
+        // Se la quantità richiesta supera le scorte, viene cappata al disponibile.
         $idProd = intval($_POST['idProdotto'] ?? 0);
         $qty    = intval($_POST['qty'] ?? 1);
         if ($qty < 1) $qty = 1;
@@ -226,6 +230,7 @@ switch ($action) {
         break;
 
     case 'remove':
+        // Rimuove completamente un prodotto dal carrello.
         $idProd = intval($_POST['idProdotto'] ?? 0);
         $stmt   = $conn->prepare("DELETE FROM CARRELLO WHERE username = ? AND id_prodotto = ?");
         $stmt->bind_param("si", $idUtente, $idProd);

@@ -11,7 +11,7 @@ if (empty($username)) {
 // Info pubbliche venditore
 $stmt = $conn->prepare("SELECT u.nome, u.cognome, u.data_registrazione, v.ragione_sociale
                         FROM UTENTE u JOIN VENDITORE v ON u.username = v.username
-                        WHERE u.username = ?");
+                        WHERE u.username = ? AND u.attivo = 1");
 $stmt->bind_param("s", $username);
 $stmt->execute();
 $venditore = $stmt->get_result()->fetch_assoc();
@@ -30,7 +30,7 @@ $stmtL = $conn->prepare("SELECT p.id_prodotto, p.nome, p.autore, p.prezzo, p.qua
                                  (SELECT url FROM IMMAGINE_PRODOTTO WHERE id_prodotto = p.id_prodotto LIMIT 1) as foto,
                                  (SELECT nome_categoria FROM DESCRIVE WHERE id_prodotto = p.id_prodotto LIMIT 1) as categoria
                           FROM PRODOTTO p
-                          WHERE p.username = ?
+                          WHERE p.username = ? AND p.attivo = 1
                           ORDER BY p.id_prodotto DESC");
 $stmtL->bind_param("s", $username);
 $stmtL->execute();

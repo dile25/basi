@@ -1,11 +1,9 @@
 <?php
-ob_start();
 session_start();
 header('Content-Type: application/json');
 require_once('../db_connect.php');
 
 if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
-    ob_clean();
     echo json_encode(['status' => 'error', 'msg' => 'Accesso negato']);
     exit;
 }
@@ -18,7 +16,7 @@ $sql = "SELECT p.id_prodotto, p.nome, p.autore, p.descrizione, p.prezzo,
                (SELECT nome_categoria FROM DESCRIVE WHERE id_prodotto = p.id_prodotto LIMIT 1) as categoria
         FROM PRODOTTO p
         LEFT JOIN IMMAGINE_PRODOTTO i ON p.id_prodotto = i.id_prodotto
-        WHERE p.username = ?
+        WHERE p.username = ? AND p.attivo = 1
         ORDER BY p.id_prodotto DESC";
 
 $stmt = $conn->prepare($sql);
@@ -31,5 +29,4 @@ while ($row = $res->fetch_assoc()) {
     $libri[] = $row;
 }
 
-ob_clean();
 echo json_encode(['status' => 'ok', 'libri' => $libri]);

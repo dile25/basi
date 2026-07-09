@@ -17,7 +17,7 @@ $sql = "SELECT p.id_prodotto, p.nome, p.prezzo, p.quantita_disponibile,
         JOIN PRODOTTO p ON pref.id_prodotto = p.id_prodotto
         LEFT JOIN IMMAGINE_PRODOTTO img ON p.id_prodotto = img.id_prodotto
         LEFT JOIN PACCHETTO pk ON p.id_pacchetto = pk.id_pacchetto AND pk.attivo = 1
-        WHERE pref.username = ?
+        WHERE pref.username = ? AND p.attivo = 1
         ORDER BY pref.data_aggiunta DESC";
 
 $stmt = $conn->prepare($sql);

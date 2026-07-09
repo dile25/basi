@@ -12,7 +12,7 @@ $search = "%".$q."%";
 // invece di tagliare a caso in base a quando sono stati inseriti.
 $stmt = $conn->prepare(
     "SELECT id_prodotto, nome, autore FROM PRODOTTO
-     WHERE LOWER(CONVERT(nome USING utf8mb4)) LIKE LOWER(CONVERT(? USING utf8mb4))
+     WHERE attivo = 1 AND LOWER(CONVERT(nome USING utf8mb4)) LIKE LOWER(CONVERT(? USING utf8mb4))
         OR LOWER(CONVERT(autore USING utf8mb4)) LIKE LOWER(CONVERT(? USING utf8mb4))
      ORDER BY nome ASC
      LIMIT 15"

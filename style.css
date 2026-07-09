@@ -7,7 +7,6 @@
     --border-color: #e3dcd8;
     --text-dark: #3a3a3a;
     --text-sec: #8a8580;
-    --white: #ffffff;
     --violet: #8e44ad;
     --violet-light: #f5eef8;
 }
@@ -17,12 +16,12 @@
 body { font-family: 'Segoe UI', sans-serif; color: var(--text-dark); background: #faf8f6; margin: 0; padding: 0; }
 
 /* --- BUTTONS --- */
-.btn-primary { background: var(--dark-green); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s; font-family: inherit; }
-.btn-primary:hover { background: #4d6649; }
+.btn-primary,
+.btn-recensisci { background: var(--dark-green); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s; font-family: inherit; }
+.btn-primary:hover,
+.btn-recensisci:hover { background: #4d6649; }
 .btn-secondary { background: white; color: var(--dark-green); border: 2px solid var(--primary-green); border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; }
 .btn-secondary:hover { background: var(--light-green); }
-.btn-recensisci { background: var(--dark-green); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: background 0.2s; font-family: inherit; }
-.btn-recensisci:hover { background: #4d6649; }
 
 /* --- MODAL --- */
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
@@ -231,7 +230,39 @@ body { font-family: 'Segoe UI', sans-serif; color: var(--text-dark); background:
 .venditore-avatar { width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .venditore-info h1 { margin: 0 0 5px; font-size: 1.6em; }
 .venditore-info p { margin: 0; opacity: 0.85; font-size: 0.95em; }
-.book-card-info { padding: 14px; flex-grow: 1; display: flex; flex-direction: column; gap: 6px; }
-.book-card-title { font-weight: 700; font-size: 0.95em; color: var(--dark-green); margin: 0; }
-.book-card-author { font-size: 0.82em; color: var(--text-sec); }
-.book-card-price { font-size: 1.15em; font-weight: 800; color: var(--dark-green); }
+
+/* --- DASHBOARD VENDITORE --- */
+.manage-book-card { display:flex; align-items:center; gap:12px; padding:12px; border:1px solid var(--border-color); border-radius:10px; margin-bottom:12px; background:white; }
+.manage-book-img { width:55px; height:75px; object-fit:cover; border-radius:6px; }
+.btn-elimina { padding:5px 10px; font-size:0.8em; background:white; color:#e74c3c; border:1px solid #e74c3c; border-radius:6px; cursor:pointer; font-family:inherit; }
+.btn-elimina:hover { background:#e74c3c; color:white; }
+.btn-modifica-libro { padding:5px 10px; font-size:0.8em; background:white; color:var(--dark-green); border:1px solid var(--dark-green); border-radius:6px; cursor:pointer; font-family:inherit; }
+.btn-modifica-libro:hover { background:var(--dark-green); color:white; }
+.ordine-card { background:white; border:1px solid var(--border-color); border-radius:12px; margin-bottom:15px; overflow:hidden; }
+.ordine-header { background:#f8f9fa; padding:12px 18px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; cursor:pointer; }
+.ordine-body { padding:15px 18px; display:none; }
+.ordine-libro { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid #f0f0f0; }
+.ordine-libro:last-child { border-bottom:none; }
+.badge-stato { padding:4px 12px; border-radius:20px; font-size:0.78em; font-weight:bold; }
+.stato-annullato { background:#f8d7da; color:#721c24; }
+.badge-tipo { display:inline-block; padding:2px 8px; border-radius:10px; font-size:0.72em; font-weight:700; }
+.tipo-libro { background:#e3f2fd; color:#1565c0; }
+.tipo-rivista { background:#fce4ec; color:#c62828; }
+.tipo-periodico { background:#f3e5f5; color:#6a1b9a; }
+.tipo-magazine { background:#fff3e0; color:#e65100; }
+.tipo-fumetto { background:#e8f5e9; color:#2e7d32; }
+.btn-trasferisci { background:var(--dark-green); color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.9em; margin-top:8px; width:100%; transition:0.2s; font-family:inherit; }
+.btn-trasferisci:hover { background:#4d6649; }
+.stat-box-guadagno { cursor:pointer; transition:0.2s; }
+.stat-box-guadagno:hover { transform:translateY(-3px); box-shadow:0 6px 15px rgba(0,0,0,0.1); }
+
+/* --- FORM / VALIDAZIONE --- */
+.field-error { color:#e74c3c; font-size:0.78em; display:block; margin:-10px 0 10px 2px; min-height:14px; }
+.auth-input.invalid { border-color:#e74c3c; }
+.auth-input.valid { border-color:var(--primary-green); }
+
+/* --- AUTH (login/registrazione) --- */
+.auth-container { max-width:400px; margin:80px auto; padding:30px; background:white; border-radius:15px; box-shadow:0 10px 25px rgba(0,0,0,0.1); border-top:5px solid var(--primary-green); }
+.role-selector { display:flex; gap:10px; margin-bottom:20px; }
+.role-option { flex:1; text-align:center; padding:10px; border:1px solid var(--border-color); border-radius:8px; cursor:pointer; transition:0.3s; }
+.role-option.active { background:var(--dark-green); color:white; border-color:var(--dark-green); }

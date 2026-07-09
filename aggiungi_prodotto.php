@@ -104,32 +104,7 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
                 <option value="">Nessuna</option>
             </select>
 
-            <!-- CREA NUOVA CATEGORIA -->
-            <div style="margin-bottom:14px; margin-top:6px;">
-                <a href="#" onclick="toggleNuovaCat(); return false;" style="font-size:0.85em; color:var(--dark-green);">
-                    + Crea nuova categoria o sottocategoria
-                </a>
-                <div id="nuova-cat-box" style="display:none; margin-top:10px; background:#f9fbf9; border:1px solid var(--border-color); border-radius:8px; padding:14px;">
-                    <p style="margin:0 0 10px; font-size:0.88em; color:var(--text-sec);">
-                        Puoi creare una <strong>categoria padre</strong> (es. "Narrativa") e/o una <strong>sottocategoria</strong> figlia (es. "Romanzi").
-                        Appariranno subito nel menu a tendina e nella barra scorribile in home.
-                    </p>
 
-                    <label class="field-label" style="font-size:0.9em;">Nuova categoria padre <span style="font-weight:400;">(lascia vuoto se non necessaria)</span></label>
-                    <input type="text" name="nuova_categoria_padre" id="campo-nuova-cat-padre"
-                           placeholder="Es. Narrativa, Saggistica, Arte..." class="form-control">
-
-                    <label class="field-label" style="font-size:0.9em; margin-top:6px;">Nuova sottocategoria <span style="font-weight:400;">(lascia vuoto se non necessaria)</span></label>
-                    <input type="text" name="nuova_categoria" id="campo-nuova-cat"
-                           placeholder="Es. Romanzi, Horror, Cucina..." class="form-control" style="margin-bottom:6px;">
-
-                    <label class="field-label" style="font-size:0.9em;">Categoria padre della sottocategoria</label>
-                    <select name="padre_sottocategoria" id="select-padre-sottocategoria" class="form-control">
-                        <option value="">-- Usa la nuova categoria padre sopra (se compilata) --</option>
-                    </select>
-                    <span class="help-text">Se hai compilato "Nuova categoria padre", la sottocategoria verrà automaticamente collegata a quella. Altrimenti seleziona una categoria esistente dall'elenco.</span>
-                </div>
-            </div>
 
             <label class="field-label">Descrizione</label>
             <textarea name="descrizione" placeholder="Descrizione o trama..." class="form-control" rows="3"></textarea>
@@ -360,9 +335,7 @@ function cambiaTestata(val) {
     }
 }
 
-function toggleNuovaCat() {
-    $('#nuova-cat-box').toggle();
-}
+
 
 function toggleScontoBox() {
     const checked = $('#abilita-sconto').is(':checked');

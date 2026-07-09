@@ -22,8 +22,9 @@ if ($action === 'list') {
     echo json_encode(['status' => 'ok', 'metodi' => $metodi]);
 
 } elseif ($action === 'add') {
-    $metodo = $_POST['metodo'] ?? '';
-    $dati   = 'salvato:' . ($_POST['dati'] ?? '');
+    $metodo = trim($_POST['metodo'] ?? '');
+    $dati   = 'salvato:' . trim($_POST['dati'] ?? '');
+    if (empty($metodo)) { echo json_encode(['status' => 'error', 'msg' => 'Metodo obbligatorio']); exit; }
     $stmt = $conn->prepare("INSERT INTO PAGAMENTO (username, metodo, stato) VALUES (?, ?, ?)");
     $stmt->bind_param("sss", $idUtente, $metodo, $dati);
     echo json_encode(['status' => $stmt->execute() ? 'ok' : 'error']);

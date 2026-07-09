@@ -1,18 +1,16 @@
 <?php
-include '../db_connect.php';
+session_start();
+require_once('../db_connect.php');
 header('Content-Type: application/json');
 
-$sql = "SELECT nome_categoria, nome_categoria_padre FROM categoria";
-
-$result = $conn->query($sql);
+$stmt = $conn->prepare("SELECT nome_categoria, nome_categoria_padre FROM CATEGORIA ORDER BY nome_categoria_padre ASC, nome_categoria ASC");
+$stmt->execute();
+$res = $stmt->get_result();
 
 $categorie = [];
-if ($result->num_rows > 0) {
-    while($row = $result->fetch_assoc()) {
-        $categorie[] = $row;
-    }
-    echo json_encode(["status" => "ok", "categorie" => $categorie]);
-} else {
-    echo json_encode(["status" => "error", "msg" => "Nessuna categoria trovata"]);
+while ($row = $res->fetch_assoc()) {
+    $categorie[] = $row;
 }
-?>
+$stmt->close();
+
+echo json_encode(['status' => 'ok', 'categorie' => $categorie]);

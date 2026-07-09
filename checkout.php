@@ -11,30 +11,6 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
     <title>Checkout | The (E-)Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        .checkout-box { max-width:650px; margin:40px auto; background:white; padding:35px; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.08); }
-        .checkout-label { display:block; font-weight:600; margin-bottom:8px; color:var(--dark-green); }
-        .checkout-input { width:100%; padding:12px; border:1px solid var(--border-color); border-radius:8px; font-size:0.95em; box-sizing:border-box; margin-bottom:18px; font-family:inherit; }
-        .checkout-input:focus { outline:none; border-color:var(--primary-green); box-shadow:0 0 0 3px rgba(95,122,92,0.12); }
-        .checkout-input.error { border-color:#e74c3c; }
-        .riepilogo { background:var(--light-green); padding:20px; border-radius:10px; margin-bottom:25px; border:1px solid var(--border-color); }
-        .riepilogo-riga { display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.95em; }
-        .totale-finale { font-size:1.2em; font-weight:800; color:var(--dark-green); border-top:1px solid var(--border-color); padding-top:12px; margin-top:8px; }
-        .metodo-card { border:2px solid var(--border-color); border-radius:10px; padding:15px 20px; margin-bottom:12px; cursor:pointer; transition:0.2s; display:flex; align-items:center; gap:12px; }
-        .metodo-card:hover { border-color:var(--primary-green); background:var(--light-green); }
-        .metodo-card.selected { border-color:var(--primary-green); background:var(--light-green); }
-        .metodo-card input[type=radio] { accent-color:var(--primary-green); width:18px; height:18px; }
-        .metodo-saved { font-size:0.85em; color:var(--text-sec); margin-top:3px; }
-        .card-fields { background:#f8f9fa; padding:20px; border-radius:10px; margin-top:5px; margin-bottom:18px; display:none; }
-        .input-row { display:flex; gap:15px; }
-        .input-row > div { flex:1; }
-        .err-msg { color:#e74c3c; font-size:0.82em; margin-top:-14px; margin-bottom:10px; display:none; }
-        .step-title { color:var(--dark-green); margin-bottom:5px; }
-        .step-sub { color:var(--text-sec); font-size:0.9em; margin-bottom:25px; }
-        #step-pagamento { display:none; }
-        .recap-box { background:var(--light-green); border:1px solid var(--border-color); border-radius:10px; padding:20px; margin-bottom:25px; }
-        .recap-row { display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.95em; }
-    </style>
 </head>
 <body>
 <?php include("header.php"); ?>

@@ -5,16 +5,6 @@
     <title>Unisciti a The (E-)Shop Around the Corner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        .auth-container { max-width: 400px; margin: 80px auto; padding: 30px; background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 5px solid var(--primary-green); }
-        .auth-input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; }
-        .role-selector { display: flex; gap: 10px; margin-bottom: 20px; }
-        .role-option { flex: 1; text-align: center; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: 0.3s; }
-        .role-option.active { background: var(--dark-green); color: white; border-color: var(--dark-green); }
-        .field-error { color: #e74c3c; font-size: 0.78em; display: block; margin: -10px 0 10px 2px; min-height: 14px; }
-        .auth-input.invalid { border-color: #e74c3c; }
-        .auth-input.valid { border-color: var(--primary-green); }
-    </style>
 </head>
 <body style="background: var(--light-green);">
 

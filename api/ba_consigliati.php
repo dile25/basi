@@ -44,6 +44,7 @@ if ($idUtente) {
             JOIN DESCRIVE d ON p.id_prodotto = d.id_prodotto
             WHERE d.nome_categoria IN ($placeholders)
               AND p.quantita_disponibile > 0
+              AND p.attivo = 1
               AND p.id_prodotto NOT IN (
                   SELECT id_prodotto FROM CARRELLO WHERE username = ?
               )
@@ -77,7 +78,7 @@ if (empty($consigliati)) {
         SELECT p.id_prodotto, p.nome, p.autore, p.prezzo,
                (SELECT url FROM IMMAGINE_PRODOTTO WHERE id_prodotto = p.id_prodotto LIMIT 1) as Foto
         FROM PRODOTTO p
-        WHERE p.quantita_disponibile > 0
+        WHERE p.quantita_disponibile > 0 AND p.attivo = 1
         ORDER BY p.id_prodotto DESC
         LIMIT 6
     ";

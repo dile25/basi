@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Creato il: Giu 23, 2026 alle 14:25
+-- Creato il: Lug 09, 2026 alle 10:47
 -- Versione del server: 10.4.28-MariaDB
 -- Versione PHP: 8.2.4
 
@@ -41,7 +41,7 @@ CREATE TABLE `carrello` (
 --
 
 INSERT INTO `carrello` (`id_carrello`, `username`, `id_prodotto`, `data_creazione`, `quantita_prodotto`, `prezzo_totale`) VALUES
-(142, 'primoutente', 58, '2026-06-23', 1, 0.00);
+(156, 'primoutente', 27, '2026-06-24', 1, 0.00);
 
 -- --------------------------------------------------------
 
@@ -115,7 +115,7 @@ CREATE TABLE `cliente` (
 --
 
 INSERT INTO `cliente` (`username`, `telefono`, `indirizzo_predefinito`) VALUES
-('primoutente', '', 'ivwpodv, whooeqè, 34626, MI'),
+('primoutente', '', 'Via Roma, Milano, 17471, MI'),
 ('profilocliente', '', 'via grande 1, città, 50111, provincia');
 
 -- --------------------------------------------------------
@@ -168,7 +168,6 @@ INSERT INTO `descrive` (`id_prodotto`, `nome_categoria`) VALUES
 (29, 'Romanzi'),
 (30, 'Fantascienza'),
 (31, 'Romanzi'),
-(32, 'Romanzi'),
 (33, 'Horror'),
 (34, 'Fantascienza'),
 (35, 'Noir'),
@@ -188,7 +187,9 @@ INSERT INTO `descrive` (`id_prodotto`, `nome_categoria`) VALUES
 (51, '0-6 anni'),
 (52, '7-12 anni'),
 (53, 'Arte'),
-(54, 'Arte');
+(54, 'Arte'),
+(64, 'Architettura'),
+(65, 'Altro');
 
 -- --------------------------------------------------------
 
@@ -235,8 +236,12 @@ INSERT INTO `immagine_prodotto` (`id_immagine_prodotto`, `id_prodotto`, `url`, `
 (32, 29, 'img/kafkaspiaggia.jpg', NULL),
 (33, 30, 'img/1q84.jpg', NULL),
 (34, 31, 'img/nomerosa.jpg', NULL),
-(35, 32, 'img/polvere.jpg', NULL),
-(36, 33, 'img/shining.jpg', NULL);
+(35, NULL, 'img/polvere.jpg', NULL),
+(36, 33, 'img/shining.jpg', NULL),
+(37, 60, 'img/1782288560_6a3b90b0366ee.jpg', 'Copertina Topolino - N.3681'),
+(42, 31, 'img/nomerosa.jpg', NULL),
+(43, 33, 'img/shining.jpg', NULL),
+(44, 60, 'img/topolino.jpg', NULL);
 
 -- --------------------------------------------------------
 
@@ -262,32 +267,39 @@ CREATE TABLE `incluso_in` (
   `id_ordine` int(11) NOT NULL,
   `quantita_prodotto` int(11) NOT NULL DEFAULT 1,
   `prezzo_unitario` decimal(10,2) DEFAULT NULL,
-  `trasferito` tinyint(1) NOT NULL DEFAULT 0
+  `trasferito` tinyint(1) NOT NULL DEFAULT 0,
+  `stato_venditore` varchar(20) NOT NULL DEFAULT 'Pagato'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dump dei dati per la tabella `incluso_in`
 --
 
-INSERT INTO `incluso_in` (`id_prodotto`, `id_ordine`, `quantita_prodotto`, `prezzo_unitario`, `trasferito`) VALUES
-(1, 8, 1, 10.32, 1),
-(2, 8, 1, 10.32, 1),
-(3, 1, 1, 10.32, 1),
-(3, 8, 1, 10.32, 1),
-(4, 8, 1, 11.12, 1),
-(6, 1, 1, 11.92, 1),
-(7, 1, 1, 13.60, 1),
-(25, 8, 1, 14.40, 1),
-(26, 8, 1, 14.85, 1),
-(27, 1, 1, 18.90, 1),
-(55, 1, 1, 7.50, 1),
-(55, 2, 1, 7.50, 0),
-(55, 8, 1, 67.50, 1),
-(59, 4, 1, 4.50, 0),
-(59, 5, 1, 4.50, 0),
-(59, 6, 1, 4.50, 0),
-(59, 7, 1, 99.45, 0),
-(60, 3, 1, 3.50, 0);
+INSERT INTO `incluso_in` (`id_prodotto`, `id_ordine`, `quantita_prodotto`, `prezzo_unitario`, `trasferito`, `stato_venditore`) VALUES
+(1, 8, 1, 10.32, 1, 'Consegnato'),
+(2, 8, 1, 10.32, 1, 'Consegnato'),
+(3, 1, 1, 10.32, 1, 'Pagato'),
+(3, 8, 1, 10.32, 1, 'Consegnato'),
+(4, 8, 1, 11.12, 1, 'Consegnato'),
+(6, 1, 1, 11.92, 1, 'Pagato'),
+(7, 1, 1, 13.60, 1, 'Pagato'),
+(17, 9, 1, 13.00, 0, 'Pagato'),
+(25, 8, 1, 14.40, 1, 'Consegnato'),
+(26, 8, 1, 14.85, 1, 'Consegnato'),
+(27, 1, 1, 18.90, 1, 'Pagato'),
+(27, 9, 8, 18.90, 0, 'Pagato'),
+(27, 10, 1, 18.90, 1, 'Consegnato'),
+(55, 1, 1, 7.50, 1, 'Pagato'),
+(55, 2, 1, 7.50, 0, 'In lavorazione'),
+(55, 8, 1, 67.50, 1, 'Consegnato'),
+(59, 4, 1, 4.50, 0, 'In lavorazione'),
+(59, 5, 1, 4.50, 0, 'In lavorazione'),
+(59, 6, 1, 4.50, 0, 'In lavorazione'),
+(59, 7, 1, 99.45, 0, 'In lavorazione'),
+(60, 3, 1, 3.50, 0, 'In lavorazione'),
+(60, 9, 1, 3.50, 0, 'Pagato'),
+(64, 9, 1, 15.00, 0, 'Consegnato'),
+(64, 10, 1, 15.00, 0, 'Consegnato');
 
 -- --------------------------------------------------------
 
@@ -310,13 +322,15 @@ CREATE TABLE `ordine` (
 
 INSERT INTO `ordine` (`id_ordine`, `username`, `id_pagamento`, `data`, `stato`, `totale`) VALUES
 (1, 'primoutente', 21, '2026-06-20', 'Consegnato', 62.24),
-(2, 'primoutente', 22, '2026-06-20', 'Pagato', 7.50),
-(3, 'primoutente', 23, '2026-06-21', 'Pagato', 31.85),
-(4, 'primoutente', 24, '2026-06-21', 'Pagato', 4.50),
-(5, 'primoutente', 25, '2026-06-21', 'Pagato', 4.50),
-(6, 'primoutente', 26, '2026-06-21', 'Pagato', 4.50),
-(7, 'primoutente', 27, '2026-06-21', 'Pagato', 99.45),
-(8, 'primoutente', 28, '2026-06-23', 'Spedito', 138.83);
+(2, 'primoutente', 22, '2026-06-20', 'In lavorazione', 7.50),
+(3, 'primoutente', 23, '2026-06-21', 'In lavorazione', 31.85),
+(4, 'primoutente', 24, '2026-06-21', 'In lavorazione', 4.50),
+(5, 'primoutente', 25, '2026-06-21', 'In lavorazione', 4.50),
+(6, 'primoutente', 26, '2026-06-21', 'In lavorazione', 4.50),
+(7, 'primoutente', 27, '2026-06-21', 'In lavorazione', 99.45),
+(8, 'primoutente', 28, '2026-06-23', 'Consegnato', 138.83),
+(9, 'primoutente', 31, '2026-06-24', 'Annullato', 182.70),
+(10, 'primoutente', 32, '2026-06-24', 'Consegnato', 33.90);
 
 -- --------------------------------------------------------
 
@@ -368,7 +382,8 @@ INSERT INTO `pacchetto` (`id_pacchetto`, `nome`, `descrizione`, `sconto`, `scont
 (23, 'Abbonamento Tex - 6 mesi', NULL, NULL, 0.00, 0.00, 15.00, 1, 'abbonamento', 0, 'mensile', 'Tex'),
 (24, 'Abbonamento Tex - 12 mesi', NULL, NULL, 0.00, 0.00, 25.00, 1, 'abbonamento', 0, 'mensile', 'Tex'),
 (25, 'Abbonamento Ciak Club - 6 mesi', NULL, NULL, 0.00, 0.00, 15.00, 1, 'abbonamento', 0, 'mensile', 'Ciak Club'),
-(26, 'Abbonamento Ciak Club - 12 mesi', NULL, NULL, 0.00, 0.00, 25.00, 1, 'abbonamento', 0, 'mensile', 'Ciak Club');
+(26, 'Abbonamento Ciak Club - 12 mesi', NULL, NULL, 0.00, 0.00, 25.00, 1, 'abbonamento', 0, 'mensile', 'Ciak Club'),
+(27, 'Saga prova', NULL, 10.00, 10.00, 20.00, 30.00, 1, 'libro', 0, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -392,7 +407,6 @@ INSERT INTO `pagamento` (`id_pagamento`, `username`, `metodo`, `stato`) VALUES
 (2, 'primoutente', 'Carta', 'Carta che termina con 7590'),
 (3, 'primoutente', 'Carta', 'Completato'),
 (5, 'primoutente', 'Carta', 'Completato'),
-(6, 'primoutente', 'PayPal', 'salvato:ciao@gmail.com'),
 (7, 'profilocliente', 'PayPal', 'salvato:email@paypal.com'),
 (8, 'profilocliente', 'PayPal', 'Completato'),
 (10, 'primoutente', 'PayPal', 'Completato'),
@@ -410,7 +424,11 @@ INSERT INTO `pagamento` (`id_pagamento`, `username`, `metodo`, `stato`) VALUES
 (25, 'primoutente', 'Carta', 'Completato'),
 (26, 'primoutente', 'Carta', 'Completato'),
 (27, 'primoutente', 'Carta', 'Completato'),
-(28, 'primoutente', 'Carta', 'Completato');
+(28, 'primoutente', 'Carta', 'Completato'),
+(29, 'primoutente', 'PayPal', 'salvato:primoutente@gmail.com'),
+(30, 'primoutente', 'Carta', 'salvato:Carta che termina con 2855'),
+(31, 'primoutente', 'Carta', 'Completato'),
+(32, 'primoutente', 'Carta', 'Completato');
 
 -- --------------------------------------------------------
 
@@ -442,70 +460,72 @@ CREATE TABLE `prodotto` (
   `quantita_disponibile` int(11) NOT NULL,
   `tipo_prodotto` varchar(50) DEFAULT 'libro',
   `data_inserimento` date DEFAULT curdate(),
-  `testata` varchar(100) DEFAULT NULL
+  `testata` varchar(100) DEFAULT NULL,
+  `attivo` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dump dei dati per la tabella `prodotto`
 --
 
-INSERT INTO `prodotto` (`id_prodotto`, `username`, `id_pacchetto`, `nome`, `autore`, `descrizione`, `prezzo`, `quantita_disponibile`, `tipo_prodotto`, `data_inserimento`, `testata`) VALUES
-(1, 'utentevenditore', 1, 'Harry Potter e la Pietra Filosofale', 'J.K. Rowling', 'Il primo anno di Harry Potter a Hogwarts. L\'inizio di un\'avventura leggendaria.', 12.90, 17, 'libro', '2024-02-01', NULL),
-(2, 'utentevenditore', 1, 'Harry Potter e la Camera dei Segreti', 'J.K. Rowling', 'Il secondo anno. Una forza misteriosa sta pietrificando gli studenti.', 12.90, 14, 'libro', '2024-02-01', NULL),
-(3, 'utentevenditore', 1, 'Harry Potter e il Prigioniero di Azkaban', 'J.K. Rowling', 'Il terzo anno. Un pericoloso fuggitivo da Azkaban si avvicina a Hogwarts.', 12.90, 12, 'libro', '2024-02-01', NULL),
-(4, 'utentevenditore', 1, 'Harry Potter e il Calice di Fuoco', 'J.K. Rowling', 'Il quarto anno. Harry è inspiegabilmente iscritto a un pericoloso torneo magico.', 13.90, 11, 'libro', '2024-02-01', NULL),
-(5, 'utentevenditore', 1, 'Harry Potter e l\'Ordine della Fenice', 'J.K. Rowling', 'Il quinto anno. Voldemort è tornato e il Ministero della Magia nega la verità.', 14.90, 10, 'libro', '2024-02-01', NULL),
-(6, 'utentevenditore', 1, 'Harry Potter e il Principe Mezzosangue', 'J.K. Rowling', 'Il sesto anno. Harry scopre segreti cruciali sul passato di Voldemort.', 14.90, 8, 'libro', '2024-02-01', NULL),
-(7, 'utentevenditore', 1, 'Harry Potter e i Doni della Morte', 'J.K. Rowling', 'Il finale. Harry, Ron e Hermione cercano gli Horcrux per sconfiggere Voldemort.', 17.00, 7, 'libro', '2024-02-01', NULL),
-(8, 'utentevenditore', 2, 'La Compagnia dell\'Anello', 'J.R.R. Tolkien', 'Frodo e i suoi compagni partono per distruggere l\'Unico Anello.', 14.90, 12, 'libro', '2024-01-10', NULL),
-(9, 'utentevenditore', 2, 'Le Due Torri', 'J.R.R. Tolkien', 'La Compagnia si separa mentre la guerra si diffonde nella Terra di Mezzo.', 14.90, 10, 'libro', '2024-01-10', NULL),
-(10, 'utentevenditore', 2, 'Il Ritorno del Re', 'J.R.R. Tolkien', 'La battaglia finale per la Terra di Mezzo. Frodo raggiunge il Monte Fato.', 14.90, 9, 'libro', '2024-01-10', NULL),
-(11, 'utentevenditore', 3, 'Dune', 'Frank Herbert', 'Paul Atreides eredita il controllo del pianeta deserto Arrakis e della spezia.', 16.50, 10, 'libro', '2024-04-01', NULL),
-(12, 'utentevenditore', 3, 'Il Messia di Dune', 'Frank Herbert', 'Dodici anni dopo. Paul è imperatore, ma il potere ha un prezzo altissimo.', 16.50, 7, 'libro', '2024-04-01', NULL),
-(13, 'utentevenditore', 3, 'I Figli di Dune', 'Frank Herbert', 'I gemelli di Paul affrontano intrighi e profezie nel deserto di Arrakis.', 16.50, 6, 'libro', '2024-04-01', NULL),
-(17, 'utentevenditore', 5, 'Hunger Games', 'Suzanne Collins', 'Katniss Everdeen viene selezionata per i Giochi della Fame al posto della sorella.', 13.00, 14, 'libro', '2024-05-01', NULL),
-(18, 'utentevenditore', 5, 'La ragazza di fuoco', 'Suzanne Collins', 'Katniss diventa suo malgrado il simbolo della ribellione contro Capitol City.', 13.00, 11, 'libro', '2024-05-01', NULL),
-(19, 'utentevenditore', 5, 'Il canto della rivolta', 'Suzanne Collins', 'La rivoluzione è esplosa. Katniss è il Ghiandaia Imitatrice della resistenza.', 13.00, 9, 'libro', '2024-05-01', NULL),
-(20, 'utentevenditore', 6, 'L\'amica geniale', 'Elena Ferrante', 'Elena e Lila crescono nel dopoguerra a Napoli. Un\'amicizia intensa e competitiva.', 15.00, 10, 'libro', '2024-03-15', NULL),
-(21, 'utentevenditore', 6, 'Storia del nuovo cognome', 'Elena Ferrante', 'Lila sposa Stefano. Elena parte per Pisa. Le due amiche prendono strade diverse.', 15.00, 8, 'libro', '2024-03-15', NULL),
-(22, 'utentevenditore', 6, 'Storia di chi fugge e di chi resta', 'Elena Ferrante', 'Gli anni Settanta. Le vite di Elena e Lila si separano sempre di più.', 15.00, 7, 'libro', '2024-03-15', NULL),
-(23, 'utentevenditore', 6, 'Storia della bambina perduta', 'Elena Ferrante', 'Il finale della tetralogia. I segreti di una vita intera vengono a galla.', 15.00, 6, 'libro', '2024-03-15', NULL),
-(25, 'utentevenditore', 7, 'Persone Normali', 'Sally Rooney', 'Connell e Marianne: una storia d\'amore complicata attraverso gli anni universitari.', 16.00, 10, 'libro', '2024-02-20', NULL),
-(26, 'utentevenditore', 7, 'Dove sei, mondo bello', 'Sally Rooney', 'Quattro amici irlandesi navigano tra amore, lavoro e senso della vita adulta.', 16.50, 8, 'libro', '2024-09-01', NULL),
-(27, 'utentevenditore', 7, 'Intermezzo', 'Sally Rooney', 'Due fratelli molto diversi affrontano il lutto e l\'amore nella Dublino contemporanea.', 18.90, 11, 'libro', '2026-06-13', NULL),
-(28, 'utentevenditore', 8, 'Norwegian Wood', 'Haruki Murakami', 'Toru ricorda il suo amore giovanile per Naoko in un Giappone in trasformazione.', 12.50, 10, 'libro', '2024-04-10', NULL),
-(29, 'utentevenditore', 8, 'Kafka sulla spiaggia', 'Haruki Murakami', 'Un ragazzo in fuga e un vecchio capace di parlare con i gatti. Realismo magico.', 14.00, 8, 'libro', '2024-04-10', NULL),
-(30, 'utentevenditore', 8, '1Q84 - Libro 1', 'Haruki Murakami', 'Aomame scopre che il mondo è leggermente diverso da come lo ricordava.', 16.00, 5, 'libro', '2024-04-10', NULL),
-(31, 'utentevenditore', NULL, 'Il nome della rosa', 'Umberto Eco', 'Un monaco indaga su morti misteriose in un\'abbazia medievale.', 14.00, 9, 'libro', '2024-01-05', NULL),
-(32, 'utentevenditore', NULL, 'Chiedi alla polvere', 'John Fante', 'Los Angeles anni Trenta. Arturo Bandini sogna di diventare uno scrittore.', 12.00, 15, 'libro', '2024-01-10', NULL),
-(33, 'utentevenditore', NULL, 'Shining', 'Stephen King', 'Una famiglia isolata in un hotel infestato durante l\'inverno.', 13.50, 8, 'libro', '2024-02-05', NULL),
-(34, 'utentevenditore', NULL, 'Neuromante', 'William Gibson', 'Il manifesto del cyberpunk. Un hacker e una killer cyborg contro una IA.', 13.00, 6, 'libro', '2024-03-10', NULL),
-(35, 'utentevenditore', NULL, 'Il grande sonno', 'Raymond Chandler', 'Philip Marlowe indaga in un Los Angeles degli anni Trenta.', 11.00, 10, 'libro', '2024-01-15', NULL),
-(36, 'utentevenditore', NULL, 'La ragazza del treno', 'Paula Hawkins', 'Rachel osserva ogni giorno la stessa coppia dal treno. Un giorno la donna sparisce.', 13.90, 0, 'libro', '2024-02-15', NULL),
-(37, 'utentevenditore', NULL, 'La talpa', 'John le Carré', 'Una spy story della Guerra Fredda. Un agente doppio nel cuore dell\'MI6.', 13.00, 7, 'libro', '2024-04-20', NULL),
-(38, 'utentevenditore', NULL, 'I pilastri della terra', 'Ken Follett', 'La costruzione di una cattedrale nell\'Inghilterra medievale tra intrighi e fede.', 17.00, 8, 'libro', '2024-02-01', NULL),
-(39, 'utentevenditore', NULL, 'Persuasione', 'Jane Austen', 'Anne Elliot incontra di nuovo l\'ufficiale che aveva rifiutato anni prima.', 9.90, 12, 'libro', '2024-01-20', NULL),
-(40, 'utentevenditore', NULL, 'Sapiens', 'Yuval Noah Harari', 'Una breve storia dell\'umanità. Come l\'Homo sapiens ha dominato il pianeta.', 16.00, 14, 'libro', '2024-02-10', NULL),
-(41, 'utentevenditore', NULL, 'Il mondo di ieri', 'Stefan Zweig', 'Memorie di un europeo. La Vienna imperiale tra due guerre mondiali.', 13.00, 7, 'libro', '2024-01-20', NULL),
-(43, 'utentevenditore', NULL, 'Cosi\' parlò Zarathustra', 'Friedrich Nietzsche', 'L\'opera filosofica sul superuomo e la volontà di potenza.', 9.00, 14, 'libro', '2024-01-01', NULL),
-(45, 'utentevenditore', NULL, 'In Patagonia', 'Bruce Chatwin', 'Il capolavoro del genere viaggio. Un\'esplorazione leggendaria.', 11.50, 10, 'libro', '2024-01-01', NULL),
-(46, 'utentevenditore', NULL, 'Una breve storia del tempo', 'Stephen Hawking', 'I misteri dell\'universo spiegati in modo accessibile a tutti.', 15.00, 11, 'libro', '2024-01-01', NULL),
-(47, 'utentevenditore', NULL, '1984', 'George Orwell', 'Un classico distopico sul totalitarismo e il controllo assoluto del pensiero.', 12.50, 22, 'libro', '2024-01-01', NULL),
-(48, 'utentevenditore', NULL, 'Storia dell\'arte', 'Ernst Gombrich', 'Il manuale di storia dell\'arte più letto al mondo. Accessibile e completo.', 32.00, 8, 'libro', '2024-01-01', NULL),
-(49, 'utentevenditore', NULL, 'Il cinema secondo Hitchcock', 'François Truffaut', 'Lunga intervista al maestro del thriller cinematografico.', 19.00, 6, 'libro', '2024-01-01', NULL),
-(50, 'utentevenditore', NULL, 'Open', 'Andre Agassi', 'L\'autobiografia di uno dei più grandi tennisti di tutti i tempi.', 16.00, 9, 'libro', '2024-01-01', NULL),
-(51, 'utentevenditore', NULL, 'Indovina quanto ti amo', 'Sam McBratney', 'Una tenera storia illustrata sull\'amore tra un coniglietto e suo padre.', 9.90, 20, 'libro', '2024-01-01', NULL),
-(52, 'utentevenditore', NULL, 'Matilde', 'Roald Dahl', 'Una bambina geniale con poteri straordinari affronta adulti crudeli.', 11.90, 16, 'libro', '2024-01-01', NULL),
-(53, 'utentevenditore', NULL, 'Corto Maltese', 'Hugo Pratt', 'Il classico intramontabile del fumetto europeo. Un marinaio avventuriero.', 18.00, 8, 'fumetto', '2024-03-01', NULL),
-(54, 'utentevenditore', NULL, 'Maus', 'Art Spiegelman', 'Pulitzer 1992. La Shoah raccontata attraverso topi e gatti. Capolavoro assoluto.', 22.00, 6, 'fumetto', '2024-03-01', NULL),
-(55, 'utentevenditore', NULL, 'Vogue Italia - Giugno 2026', 'Condé Nast', 'Numero di giugno: speciale moda estate e tendenze beachwear.', 7.50, 22, 'magazine', '2026-06-01', 'Vogue Italia'),
-(56, 'utentevenditore', NULL, 'Wired Italia - Giugno 2026', 'Condé Nast', 'Tecnologia e futuro. Speciale intelligenza artificiale e robotica.', 5.90, 20, 'magazine', '2026-06-01', 'Wired Italia'),
-(57, 'utentevenditore', NULL, 'National Geographic - Giugno 2026', 'National Geographic Society', 'Speciale biodiversità marina e cambiamento climatico.', 6.90, 18, 'rivista', '2026-06-01', 'National Geographic'),
-(58, 'utentevenditore', NULL, 'Focus Storia - Giugno 2026', 'Gruner+Jahr', 'Speciale: la caduta dell\'Impero Romano d\'Occidente.', 4.90, 14, 'rivista', '2026-06-01', 'Focus Storia'),
-(59, 'utentevenditore', NULL, 'Internazionale - N.1550', 'Internazionale', 'Rassegna stampa internazionale. Le notizie più importanti della settimana.', 4.50, 18, 'periodico', '2026-06-16', 'Internazionale'),
-(60, 'utentevenditore', NULL, 'Topolino - N.3625', 'Disney', 'Storie a fumetti con Topolino, Paperino e tutta la banda Disney.', 3.50, 29, 'fumetto', '2026-06-16', 'Topolino'),
-(61, 'utentevenditore', NULL, 'Dylan Dog - Luglio 2026', 'Sergio Bonelli Editore', 'L\'indagatore dell\'incubo affronta una nuova minaccia soprannaturale.', 4.90, 18, 'fumetto', '2026-06-01', 'Dylan Dog'),
-(62, 'utentevenditore', NULL, 'Tex - Luglio 2026', 'Sergio Bonelli Editore', 'Il ranger del Texas in una nuova avventura nel selvaggio West.', 4.50, 16, 'fumetto', '2026-06-01', 'Tex');
+INSERT INTO `prodotto` (`id_prodotto`, `username`, `id_pacchetto`, `nome`, `autore`, `descrizione`, `prezzo`, `quantita_disponibile`, `tipo_prodotto`, `data_inserimento`, `testata`, `attivo`) VALUES
+(1, 'utentevenditore', 1, 'Harry Potter e la Pietra Filosofale', 'J.K. Rowling', 'Il primo anno di Harry Potter a Hogwarts. L\'inizio di un\'avventura leggendaria.', 12.90, 17, 'libro', '2024-02-01', NULL, 1),
+(2, 'utentevenditore', 1, 'Harry Potter e la Camera dei Segreti', 'J.K. Rowling', 'Il secondo anno. Una forza misteriosa sta pietrificando gli studenti.', 12.90, 14, 'libro', '2024-02-01', NULL, 1),
+(3, 'utentevenditore', 1, 'Harry Potter e il Prigioniero di Azkaban', 'J.K. Rowling', 'Il terzo anno. Un pericoloso fuggitivo da Azkaban si avvicina a Hogwarts.', 12.90, 12, 'libro', '2024-02-01', NULL, 1),
+(4, 'utentevenditore', 1, 'Harry Potter e il Calice di Fuoco', 'J.K. Rowling', 'Il quarto anno. Harry è inspiegabilmente iscritto a un pericoloso torneo magico.', 13.90, 11, 'libro', '2024-02-01', NULL, 1),
+(5, 'utentevenditore', 1, 'Harry Potter e l\'Ordine della Fenice', 'J.K. Rowling', 'Il quinto anno. Voldemort è tornato e il Ministero della Magia nega la verità.', 14.90, 10, 'libro', '2024-02-01', NULL, 1),
+(6, 'utentevenditore', 1, 'Harry Potter e il Principe Mezzosangue', 'J.K. Rowling', 'Il sesto anno. Harry scopre segreti cruciali sul passato di Voldemort.', 14.90, 8, 'libro', '2024-02-01', NULL, 1),
+(7, 'utentevenditore', 1, 'Harry Potter e i Doni della Morte', 'J.K. Rowling', 'Il finale. Harry, Ron e Hermione cercano gli Horcrux per sconfiggere Voldemort.', 17.00, 7, 'libro', '2024-02-01', NULL, 1),
+(8, 'utentevenditore', 2, 'La Compagnia dell\'Anello', 'J.R.R. Tolkien', 'Frodo e i suoi compagni partono per distruggere l\'Unico Anello.', 14.90, 12, 'libro', '2024-01-10', NULL, 1),
+(9, 'utentevenditore', 2, 'Le Due Torri', 'J.R.R. Tolkien', 'La Compagnia si separa mentre la guerra si diffonde nella Terra di Mezzo.', 14.90, 10, 'libro', '2024-01-10', NULL, 1),
+(10, 'utentevenditore', 2, 'Il Ritorno del Re', 'J.R.R. Tolkien', 'La battaglia finale per la Terra di Mezzo. Frodo raggiunge il Monte Fato.', 14.90, 9, 'libro', '2024-01-10', NULL, 1),
+(11, 'utentevenditore', 3, 'Dune', 'Frank Herbert', 'Paul Atreides eredita il controllo del pianeta deserto Arrakis e della spezia.', 16.50, 10, 'libro', '2024-04-01', NULL, 1),
+(12, 'utentevenditore', 3, 'Il Messia di Dune', 'Frank Herbert', 'Dodici anni dopo. Paul è imperatore, ma il potere ha un prezzo altissimo.', 16.50, 7, 'libro', '2024-04-01', NULL, 1),
+(13, 'utentevenditore', 3, 'I Figli di Dune', 'Frank Herbert', 'I gemelli di Paul affrontano intrighi e profezie nel deserto di Arrakis.', 16.50, 6, 'libro', '2024-04-01', NULL, 1),
+(17, 'utentevenditore', 5, 'Hunger Games', 'Suzanne Collins', 'Katniss Everdeen viene selezionata per i Giochi della Fame al posto della sorella.', 13.00, 13, 'libro', '2024-05-01', NULL, 1),
+(18, 'utentevenditore', 5, 'La ragazza di fuoco', 'Suzanne Collins', 'Katniss diventa suo malgrado il simbolo della ribellione contro Capitol City.', 13.00, 11, 'libro', '2024-05-01', NULL, 1),
+(19, 'utentevenditore', 5, 'Il canto della rivolta', 'Suzanne Collins', 'La rivoluzione è esplosa. Katniss è il Ghiandaia Imitatrice della resistenza.', 13.00, 9, 'libro', '2024-05-01', NULL, 1),
+(20, 'utentevenditore', 6, 'L\'amica geniale', 'Elena Ferrante', 'Elena e Lila crescono nel dopoguerra a Napoli. Un\'amicizia intensa e competitiva.', 15.00, 10, 'libro', '2024-03-15', NULL, 1),
+(21, 'utentevenditore', 6, 'Storia del nuovo cognome', 'Elena Ferrante', 'Lila sposa Stefano. Elena parte per Pisa. Le due amiche prendono strade diverse.', 15.00, 8, 'libro', '2024-03-15', NULL, 1),
+(22, 'utentevenditore', 6, 'Storia di chi fugge e di chi resta', 'Elena Ferrante', 'Gli anni Settanta. Le vite di Elena e Lila si separano sempre di più.', 15.00, 7, 'libro', '2024-03-15', NULL, 1),
+(23, 'utentevenditore', 6, 'Storia della bambina perduta', 'Elena Ferrante', 'Il finale della tetralogia. I segreti di una vita intera vengono a galla.', 15.00, 6, 'libro', '2024-03-15', NULL, 1),
+(25, 'utentevenditore', 7, 'Persone Normali', 'Sally Rooney', 'Connell e Marianne: una storia d\'amore complicata attraverso gli anni universitari.', 16.00, 10, 'libro', '2024-02-20', NULL, 1),
+(26, 'utentevenditore', 7, 'Dove sei, mondo bello', 'Sally Rooney', 'Quattro amici irlandesi navigano tra amore, lavoro e senso della vita adulta.', 16.50, 8, 'libro', '2024-09-01', NULL, 1),
+(27, 'utentevenditore', 7, 'Intermezzo', 'Sally Rooney', 'Due fratelli molto diversi affrontano il lutto e l\'amore nella Dublino contemporanea.', 18.90, 2, 'libro', '2026-06-13', NULL, 1),
+(28, 'utentevenditore', 8, 'Norwegian Wood', 'Haruki Murakami', 'Toru ricorda il suo amore giovanile per Naoko in un Giappone in trasformazione.', 12.50, 10, 'libro', '2024-04-10', NULL, 1),
+(29, 'utentevenditore', 8, 'Kafka sulla spiaggia', 'Haruki Murakami', 'Un ragazzo in fuga e un vecchio capace di parlare con i gatti. Realismo magico.', 14.00, 8, 'libro', '2024-04-10', NULL, 1),
+(30, 'utentevenditore', 8, '1Q84 - Libro 1', 'Haruki Murakami', 'Aomame scopre che il mondo è leggermente diverso da come lo ricordava.', 16.00, 5, 'libro', '2024-04-10', NULL, 1),
+(31, 'utentevenditore', NULL, 'Il nome della rosa', 'Umberto Eco', 'Un monaco indaga su morti misteriose in un\'abbazia medievale.', 14.00, 9, 'libro', '2024-01-05', NULL, 1),
+(33, 'utentevenditore', NULL, 'Shining', 'Stephen King', 'Una famiglia isolata in un hotel infestato durante l\'inverno.', 13.50, 8, 'libro', '2024-02-05', NULL, 1),
+(34, 'utentevenditore', NULL, 'Neuromante', 'William Gibson', 'Il manifesto del cyberpunk. Un hacker e una killer cyborg contro una IA.', 13.00, 6, 'libro', '2024-03-10', NULL, 1),
+(35, 'utentevenditore', NULL, 'Il grande sonno', 'Raymond Chandler', 'Philip Marlowe indaga in un Los Angeles degli anni Trenta.', 11.00, 10, 'libro', '2024-01-15', NULL, 1),
+(36, 'utentevenditore', NULL, 'La ragazza del treno', 'Paula Hawkins', 'Rachel osserva ogni giorno la stessa coppia dal treno. Un giorno la donna sparisce.', 13.90, 0, 'libro', '2024-02-15', NULL, 1),
+(37, 'utentevenditore', NULL, 'La talpa', 'John le Carré', 'Una spy story della Guerra Fredda. Un agente doppio nel cuore dell\'MI6.', 13.00, 7, 'libro', '2024-04-20', NULL, 1),
+(38, 'utentevenditore', NULL, 'I pilastri della terra', 'Ken Follett', 'La costruzione di una cattedrale nell\'Inghilterra medievale tra intrighi e fede.', 17.00, 8, 'libro', '2024-02-01', NULL, 1),
+(39, 'utentevenditore', NULL, 'Persuasione', 'Jane Austen', 'Anne Elliot incontra di nuovo l\'ufficiale che aveva rifiutato anni prima.', 9.90, 12, 'libro', '2024-01-20', NULL, 1),
+(40, 'utentevenditore', NULL, 'Sapiens', 'Yuval Noah Harari', 'Una breve storia dell\'umanità. Come l\'Homo sapiens ha dominato il pianeta.', 16.00, 14, 'libro', '2024-02-10', NULL, 1),
+(41, 'utentevenditore', NULL, 'Il mondo di ieri', 'Stefan Zweig', 'Memorie di un europeo. La Vienna imperiale tra due guerre mondiali.', 13.00, 7, 'libro', '2024-01-20', NULL, 1),
+(43, 'utentevenditore', NULL, 'Cosi\' parlò Zarathustra', 'Friedrich Nietzsche', 'L\'opera filosofica sul superuomo e la volontà di potenza.', 9.00, 14, 'libro', '2024-01-01', NULL, 1),
+(45, 'utentevenditore', NULL, 'In Patagonia', 'Bruce Chatwin', 'Il capolavoro del genere viaggio. Un\'esplorazione leggendaria.', 11.50, 10, 'libro', '2024-01-01', NULL, 1),
+(46, 'utentevenditore', NULL, 'Una breve storia del tempo', 'Stephen Hawking', 'I misteri dell\'universo spiegati in modo accessibile a tutti.', 15.00, 11, 'libro', '2024-01-01', NULL, 1),
+(47, 'utentevenditore', NULL, '1984', 'George Orwell', 'Un classico distopico sul totalitarismo e il controllo assoluto del pensiero.', 12.50, 22, 'libro', '2024-01-01', NULL, 1),
+(48, 'utentevenditore', NULL, 'Storia dell\'arte', 'Ernst Gombrich', 'Il manuale di storia dell\'arte più letto al mondo. Accessibile e completo.', 32.00, 8, 'libro', '2024-01-01', NULL, 1),
+(49, 'utentevenditore', NULL, 'Il cinema secondo Hitchcock', 'François Truffaut', 'Lunga intervista al maestro del thriller cinematografico.', 19.00, 6, 'libro', '2024-01-01', NULL, 1),
+(50, 'utentevenditore', NULL, 'Open', 'Andre Agassi', 'L\'autobiografia di uno dei più grandi tennisti di tutti i tempi.', 16.00, 9, 'libro', '2024-01-01', NULL, 1),
+(51, 'utentevenditore', NULL, 'Indovina quanto ti amo', 'Sam McBratney', 'Una tenera storia illustrata sull\'amore tra un coniglietto e suo padre.', 9.90, 20, 'libro', '2024-01-01', NULL, 1),
+(52, 'utentevenditore', NULL, 'Matilde', 'Roald Dahl', 'Una bambina geniale con poteri straordinari affronta adulti crudeli.', 11.90, 16, 'libro', '2024-01-01', NULL, 1),
+(53, 'utentevenditore', NULL, 'Corto Maltese', 'Hugo Pratt', 'Il classico intramontabile del fumetto europeo. Un marinaio avventuriero.', 18.00, 8, 'fumetto', '2024-03-01', NULL, 1),
+(54, 'utentevenditore', NULL, 'Maus', 'Art Spiegelman', 'Pulitzer 1992. La Shoah raccontata attraverso topi e gatti. Capolavoro assoluto.', 22.00, 6, 'fumetto', '2024-03-01', NULL, 1),
+(55, 'utentevenditore', NULL, 'Vogue Italia - Giugno 2026', 'Condé Nast', 'Numero di giugno: speciale moda estate e tendenze beachwear.', 7.50, 22, 'magazine', '2026-06-01', 'Vogue Italia', 1),
+(56, 'utentevenditore', NULL, 'Wired Italia - Giugno 2026', 'Condé Nast', 'Tecnologia e futuro. Speciale intelligenza artificiale e robotica.', 5.90, 20, 'magazine', '2026-06-01', 'Wired Italia', 1),
+(57, 'utentevenditore', NULL, 'National Geographic - Giugno 2026', 'National Geographic Society', 'Speciale biodiversità marina e cambiamento climatico.', 6.90, 18, 'rivista', '2026-06-01', 'National Geographic', 1),
+(58, 'utentevenditore', NULL, 'Focus Storia - Giugno 2026', 'Gruner+Jahr', 'Speciale: la caduta dell\'Impero Romano d\'Occidente.', 4.90, 14, 'rivista', '2026-06-01', 'Focus Storia', 1),
+(59, 'utentevenditore', NULL, 'Internazionale - N.1550', 'Internazionale', 'Rassegna stampa internazionale. Le notizie più importanti della settimana.', 4.50, 18, 'periodico', '2026-06-16', 'Internazionale', 1),
+(60, 'utentevenditore', NULL, 'Topolino - N.3681', 'Disney', 'Storie a fumetti con Topolino, Paperino e tutta la banda Disney.', 3.50, 28, 'fumetto', '2026-06-16', 'Topolino', 1),
+(61, 'utentevenditore', NULL, 'Dylan Dog - Luglio 2026', 'Sergio Bonelli Editore', 'L\'indagatore dell\'incubo affronta una nuova minaccia soprannaturale.', 4.90, 18, 'fumetto', '2026-06-01', 'Dylan Dog', 1),
+(62, 'utentevenditore', NULL, 'Tex - Luglio 2026', 'Sergio Bonelli Editore', 'Il ranger del Texas in una nuova avventura nel selvaggio West.', 4.50, 16, 'fumetto', '2026-06-01', 'Tex', 1),
+(64, 'venditoreprova', 27, 'Libro', 'Autore', '', 15.00, 10, 'libro', '2026-06-24', NULL, 0),
+(65, 'Prova', NULL, 'libro', 'libro', '', 12.00, 12, 'libro', '2026-06-24', NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -522,6 +542,13 @@ CREATE TABLE `recensione` (
   `data` date NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dump dei dati per la tabella `recensione`
+--
+
+INSERT INTO `recensione` (`id_recensione`, `username`, `id_prodotto`, `testo`, `valutazione`, `data`) VALUES
+(1, 'primoutente', 17, 'Bel libro', 5, '2026-06-24');
+
 -- --------------------------------------------------------
 
 --
@@ -534,18 +561,21 @@ CREATE TABLE `utente` (
   `cognome` varchar(100) NOT NULL,
   `email` varchar(100) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
-  `data_registrazione` date NOT NULL
+  `data_registrazione` date NOT NULL,
+  `attivo` tinyint(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dump dei dati per la tabella `utente`
 --
 
-INSERT INTO `utente` (`username`, `nome`, `cognome`, `email`, `password_hash`, `data_registrazione`) VALUES
-('eodwpq', 'qwjdpw', 'wuouud', 'wpwqippf@gmail.com', '$2y$10$WkGfH2ZX.lOShrgsn4QUauZkHl6MEPbHfVPhFdfuPJCfDv5QBGJqi', '2026-06-19'),
-('primoutente', 'Primo', 'Utente', 'primoutente@gmail.com', '$2y$10$aJe2CLwBFK6uBFq4eP.K7OlZDWtYXbz/IztD/zJfBvehpc/EmIYvq', '2026-04-29'),
-('profilocliente', 'cliente', 'profilo', 'cliente@profilo.com', '$2y$10$9gJ9cGFprHdCz2nRZjc7qeKXSJUc68rmFqDM4FouKOtFNmuTMzpvi', '2026-05-26'),
-('utentevenditore', 'venditore', 'utente', 'venditore@utente.com', '$2y$10$JBzerbT7UAi2fCeDvjfNkOwMZXMspLajvjzc4jIty4baraenGqM8a', '2026-04-29');
+INSERT INTO `utente` (`username`, `nome`, `cognome`, `email`, `password_hash`, `data_registrazione`, `attivo`) VALUES
+('eodwpq', 'qwjdpw', 'wuouud', 'wpwqippf@gmail.com', '$2y$10$WkGfH2ZX.lOShrgsn4QUauZkHl6MEPbHfVPhFdfuPJCfDv5QBGJqi', '2026-06-19', 1),
+('primoutente', 'Primo', 'Utente', 'primoutente@gmail.com', '$2y$10$aJe2CLwBFK6uBFq4eP.K7OlZDWtYXbz/IztD/zJfBvehpc/EmIYvq', '2026-04-29', 1),
+('profilocliente', 'cliente', 'profilo', 'cliente@profilo.com', '$2y$10$9gJ9cGFprHdCz2nRZjc7qeKXSJUc68rmFqDM4FouKOtFNmuTMzpvi', '2026-05-26', 1),
+('Prova', 'Prova', 'Uno', 'prova@gmail.com', '$2y$10$EyOe.3nav2gf3ky1VWvne.oMSaCV.UM74drqgO/sjNIusxIMrNyvW', '2026-06-24', 0),
+('utentevenditore', 'venditore', 'utente', 'venditore@utente.com', '$2y$10$JBzerbT7UAi2fCeDvjfNkOwMZXMspLajvjzc4jIty4baraenGqM8a', '2026-04-29', 1),
+('venditoreprova', 'venditore', 'prova', 'prova@prova.it', '$2y$10$0wEWuaCSU4mB8gUd5jFCgOvLqkCztG3WGLb6IKXhblcYhm92OaHAm', '2026-06-24', 0);
 
 -- --------------------------------------------------------
 
@@ -565,8 +595,9 @@ CREATE TABLE `venditore` (
 --
 
 INSERT INTO `venditore` (`username`, `partita_iva`, `ragione_sociale`, `ultimo_trasferimento`) VALUES
-('eodwpq', 'iòeipqèfqèo', 'wqpiièwdwoè+', NULL),
-('utentevenditore', 'bella', 'bella', '2026-06-23 14:12:55');
+('Prova', '11111111111', 'prova', NULL),
+('utentevenditore', 'bella', 'bella', '2026-06-24 16:43:35'),
+('venditoreprova', '94911123411', 'prova', NULL);
 
 --
 -- Indici per le tabelle scaricate
@@ -687,13 +718,13 @@ ALTER TABLE `venditore`
 -- AUTO_INCREMENT per la tabella `carrello`
 --
 ALTER TABLE `carrello`
-  MODIFY `id_carrello` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=143;
+  MODIFY `id_carrello` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=158;
 
 --
 -- AUTO_INCREMENT per la tabella `immagine_prodotto`
 --
 ALTER TABLE `immagine_prodotto`
-  MODIFY `id_immagine_prodotto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `id_immagine_prodotto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
 
 --
 -- AUTO_INCREMENT per la tabella `immagine_recensione`
@@ -705,37 +736,37 @@ ALTER TABLE `immagine_recensione`
 -- AUTO_INCREMENT per la tabella `ordine`
 --
 ALTER TABLE `ordine`
-  MODIFY `id_ordine` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id_ordine` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT per la tabella `pacchetto`
 --
 ALTER TABLE `pacchetto`
-  MODIFY `id_pacchetto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id_pacchetto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT per la tabella `pagamento`
 --
 ALTER TABLE `pagamento`
-  MODIFY `id_pagamento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `id_pagamento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT per la tabella `preferiti`
 --
 ALTER TABLE `preferiti`
-  MODIFY `id_preferiti` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id_preferiti` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT per la tabella `prodotto`
 --
 ALTER TABLE `prodotto`
-  MODIFY `id_prodotto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=64;
+  MODIFY `id_prodotto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=66;
 
 --
 -- AUTO_INCREMENT per la tabella `recensione`
 --
 ALTER TABLE `recensione`
-  MODIFY `id_recensione` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_recensione` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Limiti per le tabelle scaricate
