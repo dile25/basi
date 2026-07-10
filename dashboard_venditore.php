@@ -341,9 +341,9 @@ function caricaPacchetti() {
                     Sconto: ${p.sconto_2}% (2), ${p.sconto_3}% (3), ${p.sconto_tutti}% (tutti) — ${p.tot_prodotti} prodotti
                 </small>
                 <div style="display:flex; gap:8px; margin-top:10px;">
-                    <button onclick="apriModificaPacchetto(${p.id_pacchetto},encodeURIComponent(p.nome),'libro',${p.sconto_2},${p.sconto_3},${p.sconto_tutti},0)"
+                    <button onclick="apriModificaPacchetto(${p.id_pacchetto},'${encodeURIComponent(p.nome)}','libro',${p.sconto_2},${p.sconto_3},${p.sconto_tutti},0)"
                         style="flex:1; padding:5px; font-size:0.82em; background:white; color:var(--dark-green); border:1px solid var(--dark-green); border-radius:6px; cursor:pointer;">Modifica</button>
-                    <button onclick="eliminaPacchetto(${p.id_pacchetto},encodeURIComponent(p.nome))"
+                    <button onclick="eliminaPacchetto(${p.id_pacchetto},'${encodeURIComponent(p.nome)}')"
                         style="flex:1; padding:5px; font-size:0.82em; background:white; color:#e74c3c; border:1px solid #e74c3c; border-radius:6px; cursor:pointer;">Elimina</button>
                 </div>
             </div>`;
@@ -358,9 +358,9 @@ function caricaPacchetti() {
                     Sconto: ${a.sconto_tutti}% — ${a.periodicita || ''} — ${a.tot_prodotti} numeri
                 </small>
                 <div style="display:flex; gap:8px; margin-top:10px;">
-                    <button onclick="apriModificaPacchetto(${a.id_pacchetto},encodeURIComponent(a.nome),'abbonamento',0,0,${a.sconto_tutti},${a.sconto_tutti})"
+                    <button onclick="apriModificaPacchetto(${a.id_pacchetto},'${encodeURIComponent(a.nome)}','abbonamento',0,0,${a.sconto_tutti},${a.sconto_tutti})"
                         style="flex:1; padding:5px; font-size:0.82em; background:white; color:#6c3483; border:1px solid #6c3483; border-radius:6px; cursor:pointer;">Modifica</button>
-                    <button onclick="eliminaPacchetto(${a.id_pacchetto},encodeURIComponent(a.nome))"
+                    <button onclick="eliminaPacchetto(${a.id_pacchetto},'${encodeURIComponent(a.nome)}')"
                         style="flex:1; padding:5px; font-size:0.82em; background:white; color:#e74c3c; border:1px solid #e74c3c; border-radius:6px; cursor:pointer;">Elimina</button>
                 </div>
             </div>`;

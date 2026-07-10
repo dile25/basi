@@ -613,6 +613,8 @@ function modificaRecensione(idRec, voto, testo) {
 function apriModalRecensione() {
     <?php if(!isset($_SESSION['IdUtente'])): ?>
         window.location.href = 'login.php'; return;
+    <?php elseif(isset($_SESSION['tipoUtente']) && $_SESSION['tipoUtente'] === 'venditore'): ?>
+        alert('Devi accedere come cliente per lasciare una recensione.'); return;
     <?php endif; ?>
     $("#rev-id-recensione").val(0);
     $("#rev-voto-val").val(5);
