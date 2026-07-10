@@ -53,26 +53,6 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
                 <option value="fumetto">Fumetto</option>
             </select>
 
-            <!-- CAMPO TESTATA (solo per periodici/fumetti) -->
-            <div id="box-testata" style="display:none; margin-bottom:14px;">
-                <label class="field-label">Testata *
-                    <span class="help-text" style="display:inline; font-weight:400;">Collega questo numero alla sua testata per abilitare gli abbonamenti automatici.</span>
-                </label>
-                <select id="select-testata" class="form-control" onchange="cambiaTestata(this.value)">
-                    <option value="">Caricamento testate...</option>
-                </select>
-                <div id="box-nuova-testata" style="display:none; margin-top:8px;">
-                    <input type="text" name="nuova_testata" id="campo-nuova-testata" placeholder="Nome testata (es. Dylan Dog)" class="form-control" style="margin-bottom:6px;">
-                    <label class="field-label" style="font-size:0.9em;">Periodicità</label>
-                    <select name="nuova_testata_periodicita" id="campo-nuova-testata-periodicita" class="form-control">
-                        <option value="mensile">Mensile</option>
-                        <option value="settimanale">Settimanale</option>
-                    </select>
-                    <span class="help-text">Verranno creati automaticamente i pacchetti abbonamento da 6 e 12 mesi per questa testata.</span>
-                </div>
-                <input type="hidden" name="testata" id="campo-testata">
-            </div>
-
             <label class="field-label">Titolo *</label>
             <input type="text" name="nome" placeholder="Titolo" class="form-control" required>
 
@@ -175,33 +155,27 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
                         </div>
                     </div>
 
-                    <!-- ===== ABBONAMENTO PERIODICO (riviste/periodici/magazine) ===== -->
+                    <!-- ===== ABBONAMENTO PERIODICO ===== -->
                     <div id="box-tipo-abbonamento" style="display:none;">
                         <label class="field-label" style="font-size:0.9em;">Vuoi aggiungerlo a un abbonamento già esistente?</label>
                         <select id="scelta-abbonamento-esistente" class="form-control" onchange="cambiaSceltaAbbonamento(this.value)">
-                            <option value="">Caricamento abbonamenti...</option>
+                            <option value="">Caricamento...</option>
                         </select>
-
                         <div id="box-abbonamento-esistente" style="display:none; margin-top:10px;">
-                            <p class="help-text" style="margin:0 0 10px;">
-                                Il numero verrà aggiunto a questo abbonamento. Lo sconto scatta solo se il cliente acquista tutti i numeri del periodo.
-                            </p>
+                            <p class="help-text">Il numero verrà aggiunto a questo abbonamento esistente.</p>
                             <input type="hidden" name="id_abbonamento_esistente" id="id-abbonamento-esistente">
                         </div>
-
                         <div id="box-abbonamento-nuovo" style="margin-top:10px;">
                             <label class="field-label" style="font-size:0.9em;">Nome dell'abbonamento</label>
-                            <input type="text" name="nome_abbonamento" id="campo-nome-abbonamento" placeholder="Es. Vogue Italia - Maggio 2026" class="form-control">
-
-                            <label class="field-label" style="font-size:0.9em;">Periodicità della testata</label>
+                            <input type="text" name="nome_abbonamento" id="campo-nome-abbonamento" placeholder="Es. Vogue Italia — Abbonamento annuale" class="form-control">
+                            <label class="field-label" style="font-size:0.9em;">Periodicità</label>
                             <select name="periodicita" id="campo-periodicita" class="form-control">
-                                <option value="settimanale">Settimanale (sconto su tutti i numeri del mese)</option>
-                                <option value="mensile">Mensile (sconto su tutti i numeri dell'anno)</option>
+                                <option value="mensile">Mensile</option>
+                                <option value="settimanale">Settimanale</option>
                             </select>
-
-                            <label class="field-label" style="font-size:0.9em;">Sconto abbonamento completo (%)</label>
+                            <label class="field-label" style="font-size:0.9em;">Sconto abbonamento (%)</label>
                             <input type="number" name="sconto_abbonamento" min="1" max="90" value="25" class="form-control">
-                            <span class="help-text">Lo sconto si applica solo quando il cliente ha nel carrello TUTTI i numeri del periodo (mese o anno). Comprando un numero singolo, o solo alcuni, non c'è alcuno sconto.</span>
+                            <span class="help-text">Lo sconto si applica quando il cliente acquista tutti i numeri insieme.</span>
                         </div>
                     </div>
 
@@ -222,17 +196,6 @@ $(document).ready(function() {
 
     $("#formNuovoLibro").on("submit", function(e) {
         e.preventDefault();
-
-        // Validazione: nuova sottocategoria deve avere un padre
-        const nuovaSottocat = $('#campo-nuova-cat').val().trim();
-        const nuovaPadre    = $('#campo-nuova-cat-padre').val().trim();
-        const padreSel      = $('#select-padre-sottocategoria').val();
-        const catSel        = $('#modal-categoria').val();
-
-        if (nuovaSottocat && !nuovaPadre && !padreSel && !catSel) {
-            alert('La nuova sottocategoria "' + nuovaSottocat + '" deve essere associata a una categoria padre.\nCompila il campo "Nuova categoria padre" oppure seleziona una categoria esistente.');
-            return;
-        }
 
         const formData = new FormData(this);
         $.ajax({
@@ -288,51 +251,14 @@ function aggiornaCampiTipo(tipo) {
     if (tipo === 'rivista' || tipo === 'magazine' || tipo === 'periodico') {
         labelAutore.text('Editore');
         campoAutore.attr('placeholder', 'Es. Condé Nast, RCS Media');
-        $('#tab-abbonamento').show();
     } else if (tipo === 'fumetto') {
         labelAutore.text('Autore / Casa editrice');
         campoAutore.attr('placeholder', 'Es. Walt Disney, Marvel');
-        $('#tab-abbonamento').show();
     } else {
         labelAutore.text('Autore *');
         campoAutore.attr('placeholder', 'Es. Elena Ferrante');
-        $('#tab-abbonamento').hide();
-        if ($('.tab-btn[data-tipo="abbonamento"]').hasClass('active')) selezionaTabPromo('libro');
     }
 
-    if (isPeriodico) {
-        $('#box-testata').show();
-        caricaTestate();
-    } else {
-        $('#box-testata').hide();
-        $('#campo-testata').val('');
-    }
-}
-
-function caricaTestate() {
-    $.get('api/ba_testate.php', function(resp) {
-        const sel = $('#select-testata');
-        sel.html('<option value="">-- Seleziona testata --</option>');
-        if (resp.testate && resp.testate.length > 0) {
-            resp.testate.forEach(t => {
-                sel.append(`<option value="${t}">${t}</option>`);
-            });
-        }
-        sel.append('<option value="__nuova__">+ Crea nuova testata...</option>');
-    }, 'json').fail(function() {
-        // API non ancora esistente: mostra solo l'opzione nuova
-        $('#select-testata').html('<option value="">-- Seleziona testata --</option><option value="__nuova__">+ Crea nuova testata...</option>');
-    });
-}
-
-function cambiaTestata(val) {
-    if (val === '__nuova__') {
-        $('#box-nuova-testata').show();
-        $('#campo-testata').val('');
-    } else {
-        $('#box-nuova-testata').hide();
-        $('#campo-testata').val(val);
-    }
 }
 
 
@@ -341,6 +267,13 @@ function toggleScontoBox() {
     const checked = $('#abilita-sconto').is(':checked');
     $('#sconto-box').toggle(checked);
     if (checked) {
+        const tipo = $('#tipo-prodotto').val();
+        const isPeriodico = ['rivista', 'magazine', 'periodico', 'fumetto'].includes(tipo);
+        if (isPeriodico) {
+            $('#tab-abbonamento').show();
+        } else {
+            $('#tab-abbonamento').hide();
+        }
         selezionaTabPromo('libro');
         caricaPacchettiEsistenti();
         caricaLibriPacchetto();
@@ -350,14 +283,37 @@ function toggleScontoBox() {
 function selezionaTabPromo(tipo) {
     $('.tab-btn').removeClass('active');
     $(`.tab-btn[data-tipo="${tipo}"]`).addClass('active');
-    if (tipo === 'libro') {
-        $('#box-tipo-libro').show();
-        $('#box-tipo-abbonamento').hide();
-    } else {
+    if (tipo === 'abbonamento') {
         $('#box-tipo-libro').hide();
         $('#box-tipo-abbonamento').show();
         caricaAbbonamentiEsistenti();
-        caricaNumeriAbbonamento();
+    } else {
+        $('#box-tipo-abbonamento').hide();
+        $('#box-tipo-libro').show();
+    }
+}
+
+function caricaAbbonamentiEsistenti() {
+    $.get('api/ba_abbonamenti_venditore.php', function(resp) {
+        const select = $('#scelta-abbonamento-esistente');
+        select.html('<option value="">-- Crea un nuovo abbonamento --</option>');
+        if (resp.status === 'ok' && resp.abbonamenti.length > 0) {
+            resp.abbonamenti.forEach(a => {
+                select.append(`<option value="${a.id_pacchetto}">${a.nome} (${a.tot_prodotti} numeri)</option>`);
+            });
+        }
+    }, 'json');
+}
+
+function cambiaSceltaAbbonamento(id) {
+    if (id) {
+        $('#box-abbonamento-esistente').show();
+        $('#box-abbonamento-nuovo').hide();
+        $('#id-abbonamento-esistente').val(id);
+    } else {
+        $('#box-abbonamento-esistente').hide();
+        $('#box-abbonamento-nuovo').show();
+        $('#id-abbonamento-esistente').val('');
     }
 }
 
@@ -406,52 +362,7 @@ function toggleScontoTutti() {
     $('#box-sconto-tutti').toggle($('#campo-e-saga').is(':checked'));
 }
 
-function caricaAbbonamentiEsistenti() {
-    $.get('api/ba_abbonamenti_venditore.php', function(resp) {
-        const select = $('#scelta-abbonamento-esistente');
-        select.html('<option value="">-- Crea un nuovo abbonamento --</option>');
-        if (resp.status === 'ok' && resp.abbonamenti.length > 0) {
-            resp.abbonamenti.forEach(a => {
-                select.append(`<option value="${a.id_pacchetto}">${a.nome} (${a.tot_prodotti} numeri, ${a.periodicita_label})</option>`);
-            });
-        }
-    }, 'json');
-}
 
-function cambiaSceltaAbbonamento(idAbbonamento) {
-    if (idAbbonamento) {
-        $('#box-abbonamento-esistente').show();
-        $('#box-abbonamento-nuovo').hide();
-        $('#id-abbonamento-esistente').val(idAbbonamento);
-    } else {
-        $('#box-abbonamento-esistente').hide();
-        $('#box-abbonamento-nuovo').show();
-        $('#id-abbonamento-esistente').val('');
-    }
-}
-
-function caricaNumeriAbbonamento() {
-    const tipoCorrente = $('#tipo-prodotto').val();
-    $.get('api/ba_libri_venditore.php', function(resp) {
-        if(resp.status === 'ok' && resp.libri.length > 0) {
-            const numeri = resp.libri.filter(l => l.tipo_prodotto === tipoCorrente);
-            if (numeri.length === 0) {
-                $('#lista-numeri-abbonamento').html('<p style="color:var(--text-sec);font-size:0.85em;">Nessun altro numero pubblicato di questo tipo.</p>');
-                return;
-            }
-            let html = '';
-            numeri.forEach(l => {
-                html += `<label>
-                    <input type="checkbox" name="numeri_abbonamento[]" value="${l.id_prodotto}">
-                    <span>${l.nome} (€${parseFloat(l.prezzo).toFixed(2)})</span>
-                </label>`;
-            });
-            $('#lista-numeri-abbonamento').html(html);
-        } else {
-            $('#lista-numeri-abbonamento').html('<p style="color:var(--text-sec);font-size:0.85em;">Nessun altro numero pubblicato.</p>');
-        }
-    });
-}
 </script>
 </body>
 </html>

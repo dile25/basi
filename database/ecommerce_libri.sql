@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost
--- Creato il: Lug 09, 2026 alle 10:47
--- Versione del server: 10.4.28-MariaDB
--- Versione PHP: 8.2.4
+-- Host: 127.0.0.1
+-- Creato il: Lug 10, 2026 alle 13:44
+-- Versione del server: 10.4.32-MariaDB
+-- Versione PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -383,7 +383,16 @@ INSERT INTO `pacchetto` (`id_pacchetto`, `nome`, `descrizione`, `sconto`, `scont
 (24, 'Abbonamento Tex - 12 mesi', NULL, NULL, 0.00, 0.00, 25.00, 1, 'abbonamento', 0, 'mensile', 'Tex'),
 (25, 'Abbonamento Ciak Club - 6 mesi', NULL, NULL, 0.00, 0.00, 15.00, 1, 'abbonamento', 0, 'mensile', 'Ciak Club'),
 (26, 'Abbonamento Ciak Club - 12 mesi', NULL, NULL, 0.00, 0.00, 25.00, 1, 'abbonamento', 0, 'mensile', 'Ciak Club'),
-(27, 'Saga prova', NULL, 10.00, 10.00, 20.00, 30.00, 1, 'libro', 0, NULL, NULL);
+(27, 'Saga prova', NULL, 10.00, 10.00, 20.00, 30.00, 1, 'libro', 0, NULL, NULL),
+(28, 'Abbonamento periodici', NULL, NULL, 0.00, 0.00, 20.00, 1, 'abbonamento', 0, 'mensile', NULL),
+(29, 'Abbonamento Vogue Italia', NULL, NULL, 0.00, 0.00, 20.00, 1, 'abbonamento', 0, 'mensile', NULL),
+(30, 'Abbonamento Wired Italia', NULL, NULL, 0.00, 0.00, 20.00, 1, 'abbonamento', 0, 'mensile', NULL),
+(31, 'Abbonamento National Geographic', NULL, NULL, 0.00, 0.00, 20.00, 1, 'abbonamento', 0, 'mensile', NULL),
+(32, 'Abbonamento Focus Storia', NULL, NULL, 0.00, 0.00, 20.00, 1, 'abbonamento', 0, 'mensile', NULL),
+(33, 'Abbonamento Internazionale', NULL, NULL, 0.00, 0.00, 20.00, 1, 'abbonamento', 0, 'settimanale', NULL),
+(34, 'Abbonamento Topolino', NULL, NULL, 0.00, 0.00, 15.00, 1, 'abbonamento', 0, 'settimanale', NULL),
+(35, 'Abbonamento Dylan Dog', NULL, NULL, 0.00, 0.00, 15.00, 1, 'abbonamento', 0, 'mensile', NULL),
+(36, 'Abbonamento Tex', NULL, NULL, 0.00, 0.00, 15.00, 1, 'abbonamento', 0, 'mensile', NULL);
 
 -- --------------------------------------------------------
 
@@ -516,14 +525,14 @@ INSERT INTO `prodotto` (`id_prodotto`, `username`, `id_pacchetto`, `nome`, `auto
 (52, 'utentevenditore', NULL, 'Matilde', 'Roald Dahl', 'Una bambina geniale con poteri straordinari affronta adulti crudeli.', 11.90, 16, 'libro', '2024-01-01', NULL, 1),
 (53, 'utentevenditore', NULL, 'Corto Maltese', 'Hugo Pratt', 'Il classico intramontabile del fumetto europeo. Un marinaio avventuriero.', 18.00, 8, 'fumetto', '2024-03-01', NULL, 1),
 (54, 'utentevenditore', NULL, 'Maus', 'Art Spiegelman', 'Pulitzer 1992. La Shoah raccontata attraverso topi e gatti. Capolavoro assoluto.', 22.00, 6, 'fumetto', '2024-03-01', NULL, 1),
-(55, 'utentevenditore', NULL, 'Vogue Italia - Giugno 2026', 'Condé Nast', 'Numero di giugno: speciale moda estate e tendenze beachwear.', 7.50, 22, 'magazine', '2026-06-01', 'Vogue Italia', 1),
-(56, 'utentevenditore', NULL, 'Wired Italia - Giugno 2026', 'Condé Nast', 'Tecnologia e futuro. Speciale intelligenza artificiale e robotica.', 5.90, 20, 'magazine', '2026-06-01', 'Wired Italia', 1),
-(57, 'utentevenditore', NULL, 'National Geographic - Giugno 2026', 'National Geographic Society', 'Speciale biodiversità marina e cambiamento climatico.', 6.90, 18, 'rivista', '2026-06-01', 'National Geographic', 1),
-(58, 'utentevenditore', NULL, 'Focus Storia - Giugno 2026', 'Gruner+Jahr', 'Speciale: la caduta dell\'Impero Romano d\'Occidente.', 4.90, 14, 'rivista', '2026-06-01', 'Focus Storia', 1),
-(59, 'utentevenditore', NULL, 'Internazionale - N.1550', 'Internazionale', 'Rassegna stampa internazionale. Le notizie più importanti della settimana.', 4.50, 18, 'periodico', '2026-06-16', 'Internazionale', 1),
-(60, 'utentevenditore', NULL, 'Topolino - N.3681', 'Disney', 'Storie a fumetti con Topolino, Paperino e tutta la banda Disney.', 3.50, 28, 'fumetto', '2026-06-16', 'Topolino', 1),
-(61, 'utentevenditore', NULL, 'Dylan Dog - Luglio 2026', 'Sergio Bonelli Editore', 'L\'indagatore dell\'incubo affronta una nuova minaccia soprannaturale.', 4.90, 18, 'fumetto', '2026-06-01', 'Dylan Dog', 1),
-(62, 'utentevenditore', NULL, 'Tex - Luglio 2026', 'Sergio Bonelli Editore', 'Il ranger del Texas in una nuova avventura nel selvaggio West.', 4.50, 16, 'fumetto', '2026-06-01', 'Tex', 1),
+(55, 'utentevenditore', 29, 'Vogue Italia - Giugno 2026', 'Condé Nast', 'Numero di giugno: speciale moda estate e tendenze beachwear.', 7.50, 22, 'magazine', '2026-06-01', 'Vogue Italia', 1),
+(56, 'utentevenditore', 30, 'Wired Italia - Giugno 2026', 'Condé Nast', 'Tecnologia e futuro. Speciale intelligenza artificiale e robotica.', 5.90, 20, 'magazine', '2026-06-01', 'Wired Italia', 1),
+(57, 'utentevenditore', 31, 'National Geographic - Giugno 2026', 'National Geographic Society', 'Speciale biodiversità marina e cambiamento climatico.', 6.90, 18, 'rivista', '2026-06-01', 'National Geographic', 1),
+(58, 'utentevenditore', 32, 'Focus Storia - Giugno 2026', 'Gruner+Jahr', 'Speciale: la caduta dell\'Impero Romano d\'Occidente.', 4.90, 14, 'rivista', '2026-06-01', 'Focus Storia', 1),
+(59, 'utentevenditore', 33, 'Internazionale - N.1550', 'Internazionale', 'Rassegna stampa internazionale. Le notizie più importanti della settimana.', 4.50, 18, 'periodico', '2026-06-16', 'Internazionale', 1),
+(60, 'utentevenditore', 34, 'Topolino - N.3681', 'Disney', 'Storie a fumetti con Topolino, Paperino e tutta la banda Disney.', 3.50, 28, 'fumetto', '2026-06-16', 'Topolino', 1),
+(61, 'utentevenditore', 35, 'Dylan Dog - Luglio 2026', 'Sergio Bonelli Editore', 'L\'indagatore dell\'incubo affronta una nuova minaccia soprannaturale.', 4.90, 18, 'fumetto', '2026-06-01', 'Dylan Dog', 1),
+(62, 'utentevenditore', 36, 'Tex - Luglio 2026', 'Sergio Bonelli Editore', 'Il ranger del Texas in una nuova avventura nel selvaggio West.', 4.50, 16, 'fumetto', '2026-06-01', 'Tex', 1),
 (64, 'venditoreprova', 27, 'Libro', 'Autore', '', 15.00, 10, 'libro', '2026-06-24', NULL, 0),
 (65, 'Prova', NULL, 'libro', 'libro', '', 12.00, 12, 'libro', '2026-06-24', NULL, 0);
 
@@ -742,7 +751,7 @@ ALTER TABLE `ordine`
 -- AUTO_INCREMENT per la tabella `pacchetto`
 --
 ALTER TABLE `pacchetto`
-  MODIFY `id_pacchetto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id_pacchetto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT per la tabella `pagamento`
@@ -760,7 +769,7 @@ ALTER TABLE `preferiti`
 -- AUTO_INCREMENT per la tabella `prodotto`
 --
 ALTER TABLE `prodotto`
-  MODIFY `id_prodotto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=66;
+  MODIFY `id_prodotto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
 
 --
 -- AUTO_INCREMENT per la tabella `recensione`
