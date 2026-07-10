@@ -219,7 +219,7 @@ function caricaCategorieModal() {
         if(!resp.categorie) return;
         categorieDB = resp.categorie;
         const padri = resp.categorie.filter(c => !c.nome_categoria_padre);
-
+// commento prova
         // Popola select categoria principale
         padri.forEach(c => {
             $('#modal-categoria').append(`<option value="${c.nome_categoria}">${c.nome_categoria}</option>`);
@@ -361,6 +361,7 @@ function caricaLibriPacchetto() {
 function toggleScontoTutti() {
     $('#box-sconto-tutti').toggle($('#campo-e-saga').is(':checked'));
 }
+
 
 
 </script>
