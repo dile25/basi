@@ -7,6 +7,11 @@ if (!isset($_SESSION['IdUtente'])) {
     echo json_encode(['status' => 'error', 'msg' => 'Accedi per lasciare una recensione']);
     exit;
 }
+// I venditori non possono recensire prodotti
+if ($_SESSION['tipoUtente'] === 'venditore') {
+    echo json_encode(['status' => 'error', 'msg' => 'I venditori non possono lasciare recensioni.']);
+    exit;
+}
 
 $idUtente   = $_SESSION['IdUtente'];
 $idProdotto = intval($_POST['idProdotto'] ?? 0);
