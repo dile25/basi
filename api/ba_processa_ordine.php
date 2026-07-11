@@ -133,12 +133,11 @@ try {
         $abbNomeAbb        = $_POST['abb_nomeAbb']      ?? '';
         $abbPeriodicita    = $_POST['abb_periodicita']  ?? '';
 
-        // Trova il prodotto nel carrello che appartiene alla testata dell'abbonamento
+        // Trova il prodotto nel carrello collegato direttamente a questo pacchetto abbonamento
         $stmtAbbProd = $conn->prepare(
             "SELECT p.id_prodotto FROM PRODOTTO p
-             JOIN PACCHETTO pk ON p.testata = pk.testata
              JOIN CARRELLO c ON c.id_prodotto = p.id_prodotto
-             WHERE pk.id_pacchetto = ? AND c.username = ?
+             WHERE p.id_pacchetto = ? AND c.username = ?
              LIMIT 1"
         );
         $stmtAbbProd->bind_param("is", $abbIdPacchetto, $idUtente);

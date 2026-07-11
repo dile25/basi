@@ -191,7 +191,7 @@ $(document).ready(function() {
                 </div>`;
             } else {
                 prezzoHtml += `<div style="margin-top:8px;font-size:0.82em;color:#8e44ad;font-weight:600;">
-                    Pacchetto "${p.NomePacchetto}": 2 libri -${p.sconto_2}% | 3 libri -${p.sconto_3}%${p.sconto_tutti > 0 ? ' | saga completa -' + p.sconto_tutti + '%' : ''}
+                    Pacchetto "${p.NomePacchetto}": 2 libri -${p.sconto_2}% | 3 libri -${p.sconto_3}%${(p.eSaga && p.sconto_tutti > 0) ? ' | saga completa -' + p.sconto_tutti + '%' : ''}
                 </div>`;
             }
         } else if (['rivista','magazine','periodico','fumetto'].indexOf(p.TipoProdotto || '') !== -1) {
@@ -232,11 +232,10 @@ $(document).ready(function() {
         if (p.abbonamenti && p.abbonamenti.length > 0) {
             let abbHtml = '';
             p.abbonamenti.forEach(a => {
-                const durata    = a.nome.toLowerCase().includes('12') ? '12 mesi' :
-                                   a.nome.toLowerCase().includes('6')  ? '6 mesi'  : 'il periodo';
+                // Durata sempre 12 mesi: mensile=12 uscite, settimanale=52 uscite
+                const durata     = '12 mesi';
                 const perioLabel = a.periodicita === 'settimanale' ? 'numeri settimanali' : 'numeri mensili';
-                let mesi = a.nome.toLowerCase().includes('12') ? 12 : 6;
-                const numUscite = a.periodicita === 'settimanale' ? (mesi === 12 ? 52 : 26) : mesi;
+                const numUscite  = a.periodicita === 'settimanale' ? 52 : 12;
                 abbHtml += `
                 <div style="background:white; border:1px solid #d2b4de; border-radius:12px; padding:18px; display:flex; flex-direction:column; gap:10px;">
                     <div style="font-weight:700; color:#6c3483; font-size:0.95em;">${a.nome}</div>
@@ -466,7 +465,7 @@ function mostraRiquadroPacchetto() {
         $('#titolo-pacchetto').text('Pacchetto "' + nomePack + '" — aggiungi altri libri e risparmia!');
         var desc = '2 libri: -' + p.sconto_2 + '%';
         if (tot >= 3) desc += ' | 3 libri: -' + p.sconto_3 + '%';
-        if (tot > 3 && p.sconto_tutti > 0) desc += ' | tutti (' + tot + '): -' + p.sconto_tutti + '%';
+        if (tot > 3 && p.eSaga && p.sconto_tutti > 0) desc += ' | tutti (' + tot + '): -' + p.sconto_tutti + '%';
         $('#desc-pacchetto').text(desc + '. Lo sconto si applica automaticamente nel carrello.');
     }
 
@@ -506,11 +505,11 @@ function avviaAbbonamento(idPacchetto, nomeAbb, sconto, numUscite, periodicita) 
         return;
     <?php endif; ?>
     if (!prodottoCorrente) return;
-    const idProdotto    = prodottoCorrente.IdProdotto;
+    const idProdotto     = prodottoCorrente.IdProdotto;
     const prezzoProdotto = parseFloat(prodottoCorrente.prezzo);
-    const nomeProdotto  = prodottoCorrente.NomeProdotto;
-    const fotoProdotto  = (prodottoCorrente.foto && prodottoCorrente.foto.length > 0)
-                          ? prodottoCorrente.foto[0] : 'img/default.jpg';
+    const nomeProdotto   = prodottoCorrente.NomeProdotto;
+    const fotoProdotto   = (prodottoCorrente.foto && prodottoCorrente.foto.length > 0)
+                           ? prodottoCorrente.foto[0] : 'img/default.jpg';
 
     const procedi = function() {
         sessionStorage.setItem('abbonamento_selezionato', JSON.stringify({
@@ -519,13 +518,26 @@ function avviaAbbonamento(idPacchetto, nomeAbb, sconto, numUscite, periodicita) 
         }));
         window.location.href = 'checkout.php';
     };
-    if (!nelCarrello) {
-        $.post('api/ba_carrello.php', { action: 'add', idProdotto: idProdotto }, function(resp) {
-            if (resp.status === 'ok') { nelCarrello = true; procedi(); }
+
+    // Gli abbonamenti si acquistano da soli: svuota il carrello prima
+    const avvia = function() {
+        $.post('api/ba_carrello.php', { action: 'clear' }, function() {
+            nelCarrello = false;
+            $.post('api/ba_carrello.php', { action: 'add', idProdotto: idProdotto }, function(resp) {
+                if (resp.status === 'ok') { nelCarrello = true; procedi(); }
+                else alert('Errore: ' + resp.msg);
+            }, 'json');
         }, 'json');
-    } else {
-        procedi();
-    }
+    };
+
+    // Se il carrello ha altri prodotti avvisa l'utente
+    $.get('api/ba_carrello.php', { action: 'list' }, function(resp) {
+        const altriProdotti = (resp.prodotti || []).filter(p => parseInt(p.IdProdotto) !== parseInt(idProdotto));
+        if (altriProdotti.length > 0) {
+            if (!confirm('Gli abbonamenti si acquistano separatamente.\nIl carrello verrà svuotato prima di procedere. Continuare?')) return;
+        }
+        avvia();
+    }, 'json');
 }
 
 function aggiungiDaPacchetto(id) {

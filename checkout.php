@@ -235,7 +235,8 @@ $(document).ready(function() {
 
             if (abb) {
                 const sconto         = parseFloat(abb.sconto) || 0;
-                const numUscite      = parseInt(abb.numUscite) || 1;
+                // 12 mesi: mensile=12 uscite, settimanale=52 uscite
+                const numUscite      = abb.periodicita === 'settimanale' ? 52 : 12;
                 const perioLabel     = abb.periodicita === 'settimanale' ? 'numeri settimanali' : 'numeri mensili';
                 const prezzoUnit     = parseFloat(abb.prezzoProdotto) || parseFloat(resp.prodotti[0]?.prezzoOriginale || 0);
                 const nomeProdotto   = abb.nomeProdotto  || resp.prodotti[0]?.nome   || 'Abbonamento';
@@ -523,7 +524,8 @@ function procediAlPagamento() {
     let rpHtml = '';
     if(datiOrdine.abbonamento) {
         const a            = datiOrdine.abbonamento;
-        const numUscite    = datiOrdine.numUscite || parseInt(a.numUscite) || 1;
+        // 12 mesi: mensile=12 uscite, settimanale=52 uscite
+        const numUscite    = (a.periodicita || datiOrdine.abbonamento?.periodicita) === 'settimanale' ? 52 : 12;
         const prezzoUnit   = datiOrdine.prezzoUnit || parseFloat(a.prezzoProdotto) || 0;
         const sconto       = parseFloat(a.sconto) || 0;
         const prezzoSc     = prezzoUnit * (1 - sconto / 100);
@@ -579,7 +581,7 @@ function confermaPagamento() {
         postData.abb_idPacchetto    = a.idPacchetto   || '';
         postData.abb_nomeAbb        = a.nomeAbb        || '';
         postData.abb_sconto         = parseFloat(a.sconto)       || 0;
-        postData.abb_numUscite      = parseInt(datiOrdine.numUscite || a.numUscite) || 1;
+        postData.abb_numUscite      = (a.periodicita === 'settimanale') ? 52 : 12;
         postData.abb_periodicita    = a.periodicita    || '';
         postData.abb_prezzoProdotto = parseFloat(datiOrdine.prezzoUnit || a.prezzoProdotto) || 0;
         postData.abb_nomeProdotto   = datiOrdine.nomeProdotto || a.nomeProdotto || '';

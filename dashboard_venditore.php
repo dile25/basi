@@ -100,12 +100,31 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
             <input type="number" id="mod-pack-s2" class="form-control" min="0" max="99">
             <label style="font-size:0.9em; font-weight:600; display:block; margin-bottom:4px;">Sconto 3 prodotti (%)</label>
             <input type="number" id="mod-pack-s3" class="form-control" min="0" max="99">
-            <label style="font-size:0.9em; font-weight:600; display:block; margin-bottom:4px;">Sconto collezione completa (%)</label>
-            <input type="number" id="mod-pack-st" class="form-control" min="0" max="99">
+            <div style="display:flex; align-items:center; gap:10px; margin:8px 0;">
+                <input type="checkbox" id="mod-pack-esaga" style="width:16px;height:16px;cursor:pointer;">
+                <label for="mod-pack-esaga" style="font-size:0.9em; font-weight:600; cursor:pointer;">Saga completa (numero fisso di volumi)</label>
+            </div>
+            <div id="mod-pack-box-st" style="display:none;">
+                <label style="font-size:0.9em; font-weight:600; display:block; margin-bottom:4px;">Sconto saga completa (%)</label>
+                <input type="number" id="mod-pack-st" class="form-control" min="0" max="99">
+            </div>
+            <label style="font-size:0.9em; font-weight:600; display:block; margin:8px 0 4px;">Prodotti nel pacchetto</label>
+            <div id="mod-pack-prodotti" style="max-height:160px; overflow-y:auto; border:1px solid #eee; border-radius:8px; padding:8px; font-size:0.85em; color:#555;">
+                Caricamento...
+            </div>
+            <label style="font-size:0.9em; font-weight:600; display:block; margin:8px 0 4px;">Aggiungi prodotti disponibili</label>
+            <div id="mod-pack-disponibili" style="max-height:120px; overflow-y:auto; border:1px solid #eee; border-radius:8px; padding:8px; font-size:0.85em; color:#555;">
+                Caricamento...
+            </div>
         </div>
         <div id="mod-pack-sconti-abb" style="display:none;">
             <label style="font-size:0.9em; font-weight:600; display:block; margin-bottom:4px;">Sconto abbonamento (%)</label>
             <input type="number" id="mod-pack-sa" class="form-control" min="0" max="99">
+            <label style="font-size:0.9em; font-weight:600; display:block; margin-bottom:4px;">Periodicità</label>
+            <select id="mod-pack-perio" class="form-control">
+                <option value="mensile">Mensile (12 uscite/anno)</option>
+                <option value="settimanale">Settimanale (52 uscite/anno)</option>
+            </select>
         </div>
         <p id="mod-pack-err" style="color:#e74c3c; font-size:0.88em; display:none; margin-top:8px;"></p>
         <button onclick="salvaPacchetto()" class="btn-primary" style="width:100%; padding:12px; margin-top:12px;">Salva modifiche</button>
@@ -139,23 +158,7 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
         <img id="modifica-preview" src="" style="width:55px;height:75px;object-fit:cover;border-radius:6px;margin-bottom:8px;display:none;">
         <input type="file" id="modifica-foto" accept="image/*" class="form-control">
 
-        <!-- SEZIONE PACCHETTO/ABBONAMENTO -->
-        <div style="border:1px solid var(--border-color); border-radius:10px; padding:15px; margin:10px 0; background:#f9fbf9;">
-            <p style="font-weight:700; color:var(--dark-green); margin:0 0 4px; font-size:0.95em;">Pacchetto sconto</p>
-            <p id="modifica-pacchetto-stato" style="font-size:0.85em; color:var(--text-sec); margin:0 0 10px;">Caricamento stato...</p>
 
-            <div id="modifica-box-libro" style="display:none;">
-                <label style="font-size:0.88em; font-weight:600;">Assegna a un pacchetto sconto esistente, o rimuovi</label>
-                <select id="modifica-scelta-pacchetto" class="form-control"></select>
-            </div>
-
-            <div id="modifica-box-abbonamento" style="display:none;">
-                <label style="font-size:0.88em; font-weight:600;">Assegna a un abbonamento esistente, o rimuovi</label>
-                <select id="modifica-scelta-abbonamento" class="form-control"></select>
-            </div>
-
-            <a href="aggiungi_prodotto.php" style="font-size:0.82em; color:var(--dark-green);">+ Crea un nuovo pacchetto o abbonamento dalla pagina di aggiunta prodotto</a>
-        </div>
 
         <button class="btn-primary" style="width:100%; padding:12px;" onclick="salvaModifica()">Salva Modifiche</button>
         <p id="msg-modifica" style="display:none; font-weight:600; margin-top:8px; text-align:center;"></p>
@@ -186,7 +189,11 @@ function caricaLibri() {
                     ? `<span style="color:var(--dark-green);">${qta} disp.</span>`
                     : `<span style="color:#e74c3c;">Esaurito</span>`;
                 const tipo = lib.tipo_prodotto || 'libro';
-                const badgeTipo = `<span class="badge-tipo tipo-${tipo}">${tipo}</span>`;
+                const tipoLabel = {
+                    'libro': 'Libro', 'fumetto': 'Fumetto', 'rivista': 'Rivista',
+                    'magazine': 'Magazine', 'periodico': 'Periodico'
+                }[tipo] || tipo;
+                const badgeTipo = `<span class="badge-tipo tipo-${tipo}">${tipoLabel}</span>`;
                 html += `
                 <div class="manage-book-card">
                     <img src="${lib.url_foto || 'img/default.jpg'}" class="manage-book-img">
@@ -332,13 +339,19 @@ function caricaPacchetti() {
 
         let html = '<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px;">';
         pacchetti.forEach(p => {
+            const sagaLabel = p.e_saga ? 'SAGA' : 'PROMO';
+            const sagaColor = p.e_saga ? '#1b5e20' : '#1565c0';
+            const sagaBg    = p.e_saga ? '#e8f5e9' : '#e3f2fd';
+            const scontoDesc = p.e_saga
+                ? `${p.sconto_2}% (2), ${p.sconto_3}% (3), ${p.sconto_tutti}% (saga completa)`
+                : `${p.sconto_2}% (2), ${p.sconto_3}% (3)`;
             html += `<div style="background:white; border:1px solid var(--border-color); border-radius:10px; padding:14px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                     <strong style="font-size:0.95em; color:var(--dark-green);">${p.nome}</strong>
-                    <span style="font-size:0.75em; background:#e3f2fd; color:#1565c0; padding:2px 8px; border-radius:10px; font-weight:700;">SAGA/PROMO</span>
+                    <span style="font-size:0.75em; background:${sagaBg}; color:${sagaColor}; padding:2px 8px; border-radius:10px; font-weight:700;">${sagaLabel}</span>
                 </div>
                 <small style="color:var(--text-sec);">
-                    Sconto: ${p.sconto_2}% (2), ${p.sconto_3}% (3), ${p.sconto_tutti}% (tutti) — ${p.tot_prodotti} prodotti
+                    Sconto: ${scontoDesc} — ${p.tot_prodotti} prodotti
                 </small>
                 <div style="display:flex; gap:8px; margin-top:10px;">
                     <button onclick="apriModificaPacchetto(${p.id_pacchetto},'${encodeURIComponent(p.nome)}','libro',${p.sconto_2},${p.sconto_3},${p.sconto_tutti},0)"
@@ -358,7 +371,7 @@ function caricaPacchetti() {
                     Sconto: ${a.sconto_tutti}% — ${a.periodicita || ''} — ${a.tot_prodotti} numeri
                 </small>
                 <div style="display:flex; gap:8px; margin-top:10px;">
-                    <button onclick="apriModificaPacchetto(${a.id_pacchetto},'${encodeURIComponent(a.nome)}','abbonamento',0,0,${a.sconto_tutti},${a.sconto_tutti})"
+                    <button onclick="apriModificaPacchetto(${a.id_pacchetto},'${encodeURIComponent(a.nome)}','abbonamento',0,0,${a.sconto_tutti},${a.sconto_tutti},'${a.periodicita || "mensile"}')"
                         style="flex:1; padding:5px; font-size:0.82em; background:white; color:#6c3483; border:1px solid #6c3483; border-radius:6px; cursor:pointer;">Modifica</button>
                     <button onclick="eliminaPacchetto(${a.id_pacchetto},'${encodeURIComponent(a.nome)}')"
                         style="flex:1; padding:5px; font-size:0.82em; background:white; color:#e74c3c; border:1px solid #e74c3c; border-radius:6px; cursor:pointer;">Elimina</button>
@@ -370,7 +383,7 @@ function caricaPacchetti() {
     });
 }
 
-function apriModificaPacchetto(id, nomeEnc, tipo, s2, s3, st, sa) {
+function apriModificaPacchetto(id, nomeEnc, tipo, s2, s3, st, sa, perio) {
     const nome = decodeURIComponent(nomeEnc);
     $('#mod-pack-id').val(id);
     $('#mod-pack-tipo').val(tipo);
@@ -380,14 +393,87 @@ function apriModificaPacchetto(id, nomeEnc, tipo, s2, s3, st, sa) {
         $('#mod-pack-sconti-libro').hide();
         $('#mod-pack-sconti-abb').show();
         $('#mod-pack-sa').val(sa);
+        $('#mod-pack-perio').val(perio || 'mensile');
     } else {
         $('#mod-pack-sconti-abb').hide();
         $('#mod-pack-sconti-libro').show();
         $('#mod-pack-s2').val(s2);
         $('#mod-pack-s3').val(s3);
+        const isSaga = st > 0;
+        $('#mod-pack-esaga').prop('checked', isSaga);
+        $('#mod-pack-box-st').toggle(isSaga);
         $('#mod-pack-st').val(st);
+        // Carica prodotti del pacchetto e prodotti disponibili
+        aggiornaListeProdottiPacchetto(id);
     }
     $('#modalModificaPacchetto').css('display','flex');
+}
+
+// Toggle sconto saga completa
+$('#mod-pack-esaga').on('change', function() {
+    $('#mod-pack-box-st').toggle($(this).is(':checked'));
+});
+
+function aggiornaListeProdottiPacchetto(idPacchetto) {
+    $.get('api/ba_pacchetti_venditore.php', function(resp) {
+        const pack = (resp.pacchetti || []).find(p => p.id_pacchetto == idPacchetto);
+        const prodottiNelPack = pack ? (pack.prodotti || []) : [];
+        const idNelPack = prodottiNelPack.map(p => p.id_prodotto);
+
+        // Lista prodotti NEL pacchetto (con bottone rimuovi)
+        if (prodottiNelPack.length === 0) {
+            $('#mod-pack-prodotti').html('<em style="color:#999;">Nessun prodotto nel pacchetto</em>');
+        } else {
+            $('#mod-pack-prodotti').html(prodottiNelPack.map(p =>
+                `<div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid #f0f0f0;">
+                    <span>${p.nome}</span>
+                    <button onclick="rimuoviDaPacchetto(${p.id_prodotto},${idPacchetto})"
+                        style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:1.1em;" title="Rimuovi">✕</button>
+                </div>`
+            ).join(''));
+        }
+
+        // Lista prodotti DISPONIBILI (stesso venditore, senza pacchetto o in altro pacchetto)
+        $.get('api/ba_libri_venditore.php', function(rLibri) {
+            const disponibili = (rLibri.libri || []).filter(l =>
+                !idNelPack.includes(l.id_prodotto) &&
+                ['libro', 'fumetto'].includes(l.tipo_prodotto)
+            );
+            if (disponibili.length === 0) {
+                $('#mod-pack-disponibili').html('<em style="color:#999;">Nessun prodotto disponibile da aggiungere</em>');
+            } else {
+                $('#mod-pack-disponibili').html(disponibili.map(l =>
+                    `<div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid #f0f0f0;">
+                        <span>${l.nome}</span>
+                        <button onclick="aggiungiAPacchetto(${l.id_prodotto},${idPacchetto})"
+                            style="background:none; border:none; color:var(--dark-green); cursor:pointer; font-size:1.1em;" title="Aggiungi">✚</button>
+                    </div>`
+                ).join(''));
+            }
+        });
+    });
+}
+
+function rimuoviDaPacchetto(idProdotto, idPacchetto) {
+    $.post('api/ba_modifica_pacchetto.php', {
+        action: 'remove_product', id_pacchetto: idPacchetto, id_prodotto: idProdotto
+    }, function(resp) {
+        if (resp.status === 'ok') {
+            aggiornaListeProdottiPacchetto(idPacchetto);
+            caricaPacchetti();
+        } else alert(resp.msg || 'Errore');
+    }, 'json');
+}
+
+function aggiungiAPacchetto(idProdotto, idPacchetto) {
+    $.post('api/ba_modifica_pacchetto.php', {
+        action: 'add_product', id_pacchetto: idPacchetto, id_prodotto: idProdotto
+    }, function(resp) {
+        if (resp.status === 'ok') {
+            aggiornaListeProdottiPacchetto(idPacchetto);
+            caricaPacchetti();
+        } else alert(resp.msg || 'Errore');
+    }, 'json');
 }
 
 function salvaPacchetto() {
@@ -399,10 +485,12 @@ function salvaPacchetto() {
     const data = { id_pacchetto: id, nome: nome, tipo_pacchetto: tipo };
     if (tipo === 'abbonamento') {
         data.sconto_tutti = $('#mod-pack-sa').val();
+        data.periodicita  = $('#mod-pack-perio').val();
     } else {
-        data.sconto_2    = $('#mod-pack-s2').val();
-        data.sconto_3    = $('#mod-pack-s3').val();
-        data.sconto_tutti = $('#mod-pack-st').val();
+        data.sconto_2     = $('#mod-pack-s2').val();
+        data.sconto_3     = $('#mod-pack-s3').val();
+        data.e_saga       = $('#mod-pack-esaga').is(':checked') ? 1 : 0;
+        data.sconto_tutti = $('#mod-pack-esaga').is(':checked') ? $('#mod-pack-st').val() : 0;
     }
 
     $.post('api/ba_modifica_pacchetto.php', data, function(resp) {

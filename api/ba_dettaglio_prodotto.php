@@ -7,11 +7,12 @@ $id = intval($_GET['id'] ?? 0);
 if (!$id) { echo json_encode(['status' => 'error', 'msg' => 'ID non valido']); exit; }
 
 $sql = "SELECT p.id_prodotto, p.nome, p.autore, p.descrizione, p.prezzo,
-               p.quantita_disponibile, p.id_pacchetto, p.tipo_prodotto, p.testata, p.username as IdVenditore,
+               p.quantita_disponibile, p.id_pacchetto, p.tipo_prodotto, p.username as IdVenditore,
                (SELECT nome_categoria FROM DESCRIVE WHERE id_prodotto = p.id_prodotto LIMIT 1) as NomeCategoria,
                pk.nome as NomePacchetto,
                pk.sconto_2, pk.sconto_3, pk.sconto_tutti,
                pk.tipo_pacchetto as TipoPacchetto,
+               pk.e_saga as eSaga,
                pk.periodicita as Periodicita
         FROM PRODOTTO p
         LEFT JOIN PACCHETTO pk ON p.id_pacchetto = pk.id_pacchetto AND pk.attivo = 1
@@ -59,21 +60,19 @@ if ($prodotto['id_pacchetto']) {
 // Totale prodotti nel pacchetto (incluso questo)
 $totalePacchetto = count($libriPacchetto) + 1;
 
-// Abbonamenti disponibili — collegamento esplicito tramite colonna testata.
-// Funziona solo se PRODOTTO.testata e PACCHETTO.testata sono valorizzate
-// (vedi script aggiungi_testata.sql).
+// Abbonamento collegato direttamente tramite id_pacchetto del prodotto
 $abbonamenti = [];
-$tipoP   = $prodotto['tipo_prodotto'] ?? 'libro';
-$testata = $prodotto['testata']       ?? null;
+$tipoP          = $prodotto['tipo_prodotto'] ?? 'libro';
+$idPacchettoAbb = $prodotto['id_pacchetto']  ?? null;
+$tipoPaccAbb    = $prodotto['tipoPacchetto'] ?? null;
 
-if (in_array($tipoP, ['rivista','magazine','periodico','fumetto']) && !empty($testata)) {
+if (!empty($idPacchettoAbb) && $tipoPaccAbb === 'abbonamento') {
     $stmtAbb = $conn->prepare(
         "SELECT id_pacchetto, nome, descrizione, sconto_tutti, periodicita
          FROM PACCHETTO
-         WHERE tipo_pacchetto = 'abbonamento' AND attivo = 1 AND testata = ?
-         ORDER BY id_pacchetto"
+         WHERE id_pacchetto = ? AND tipo_pacchetto = 'abbonamento' AND attivo = 1"
     );
-    $stmtAbb->bind_param("s", $testata);
+    $stmtAbb->bind_param("i", $idPacchettoAbb);
     $stmtAbb->execute();
     $resAbb = $stmtAbb->get_result();
     while ($a = $resAbb->fetch_assoc()) $abbonamenti[] = $a;
@@ -98,6 +97,7 @@ echo json_encode([
         'sconto_tutti'    => $prodotto['sconto_tutti'] ?? 30,
         'TipoProdotto'    => $prodotto['tipo_prodotto'] ?? 'libro',
         'tipoPacchetto'   => $prodotto['TipoPacchetto'] ?? 'libro',
+        'eSaga'           => (bool)($prodotto['eSaga'] ?? false),
         'periodicita'     => $prodotto['Periodicita'] ?? null,
         'totalePacchetto' => $totalePacchetto,
         'QuantitaDisp'    => $prodotto['quantita_disponibile'],

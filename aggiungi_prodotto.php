@@ -59,6 +59,13 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
             <label class="field-label" id="label-autore">Autore *</label>
             <input type="text" name="autore" id="campo-autore" placeholder="Es. Elena Ferrante" class="form-control">
 
+            <div id="campo-testata-wrapper" style="display:none;">
+                <label class="field-label">Nome rivista/testata
+                    <span style="font-weight:400; color:var(--text-sec); font-size:0.88em;">(opzionale — es. Vogue Italia, Topolino)</span>
+                </label>
+                <input type="text" name="testata" id="campo-testata" placeholder="Es. Vogue Italia" class="form-control">
+            </div>
+
             <div class="row-2">
                 <div>
                     <label class="field-label">Prezzo (€) *</label>
@@ -71,10 +78,9 @@ if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
             </div>
 
             <label class="field-label">Categoria
-                <span style="font-weight:400; color:var(--text-sec); font-size:0.88em;">(opzionale)</span>
             </label>
-            <select name="categoria" id="modal-categoria" class="form-control" onchange="caricaSottocategorie(this.value)">
-                <option value="">Nessuna categoria</option>
+            <select name="categoria" id="modal-categoria" class="form-control" required onchange="caricaSottocategorie(this.value)">
+                <option value="">-- Seleziona una categoria *</option>
             </select>
 
             <label class="field-label" style="margin-top:8px;">Sottocategoria
@@ -196,7 +202,13 @@ $(document).ready(function() {
 
     $("#formNuovoLibro").on("submit", function(e) {
         e.preventDefault();
-
+        // Validazione categoria obbligatoria
+        const cat = $('[name="categoria"]').val();
+        const sottocat = $('[name="sottocategoria"]').val();
+        if (!cat && !sottocat) {
+            alert('Seleziona almeno una categoria per il prodotto.');
+            return;
+        }
         const formData = new FormData(this);
         $.ajax({
             url: 'api/ba_aggiungi_libro.php', type: 'POST', data: formData,
@@ -247,6 +259,7 @@ function aggiornaCampiTipo(tipo) {
     const labelAutore = $('#label-autore');
     const campoAutore = $('#campo-autore');
     const isPeriodico = ['rivista', 'magazine', 'periodico', 'fumetto'].includes(tipo);
+    isPeriodico ? $('#campo-testata-wrapper').show() : $('#campo-testata-wrapper').hide();
 
     if (tipo === 'rivista' || tipo === 'magazine' || tipo === 'periodico') {
         labelAutore.text('Editore');

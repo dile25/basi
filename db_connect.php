@@ -2,7 +2,7 @@
 $host = "localhost";
 $user = "root";
 $password = "";
-$dbname = "ecommerce_libri"; // Il nome del DB
+$dbname = "floris_valenti"; // Il nome del DB
 
 $conn = new mysqli($host, $user, $password, $dbname);
 
