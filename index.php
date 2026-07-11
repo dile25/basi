@@ -214,9 +214,9 @@ function renderizza(libri, selector) {
             badgeSconto = `<span class="badge-sconto" style="font-size:0.7em;">${label}</span><br>`;
         }
 
-        // Badge abbonamento per periodici
+        // Badge abbonamento solo se il prodotto ha effettivamente un abbonamento associato
         let badgeAbb = '';
-        if (eAbbonabile) {
+        if (eAbbonabile && lib.tipo_pacchetto === 'abbonamento') {
             badgeAbb = `<span style="display:inline-block;background:#f5eef8;color:#8e44ad;border:1px solid #d2b4de;border-radius:4px;font-size:0.7em;font-weight:700;padding:2px 7px;margin-bottom:4px;">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#8e44ad" style="width:10px;height:10px;vertical-align:middle;margin-right:2px;"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
                 Abbonamento disponibile

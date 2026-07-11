@@ -194,12 +194,6 @@ $(document).ready(function() {
                     Pacchetto "${p.NomePacchetto}": 2 libri -${p.sconto_2}% | 3 libri -${p.sconto_3}%${(p.eSaga && p.sconto_tutti > 0) ? ' | saga completa -' + p.sconto_tutti + '%' : ''}
                 </div>`;
             }
-        } else if (['rivista','magazine','periodico','fumetto'].indexOf(p.TipoProdotto || '') !== -1) {
-            // Periodico senza pacchetto collegato: suggerisci abbonamento generico
-            prezzoHtml += `<div style="margin-top:8px;font-size:0.85em;color:#8e44ad;font-weight:600;background:#f5eef8;border:1px solid #d2b4de;border-radius:8px;padding:8px 10px;">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#8e44ad" style="width:13px;height:13px;vertical-align:middle;margin-right:3px;"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
-                Abbonamenti disponibili — aggiungilo al carrello per vedere le opzioni di risparmio.
-            </div>`;
         }
         $("#priceHtml").html(prezzoHtml);
 

@@ -64,7 +64,7 @@ $totalePacchetto = count($libriPacchetto) + 1;
 $abbonamenti = [];
 $tipoP          = $prodotto['tipo_prodotto'] ?? 'libro';
 $idPacchettoAbb = $prodotto['id_pacchetto']  ?? null;
-$tipoPaccAbb    = $prodotto['tipoPacchetto'] ?? null;
+$tipoPaccAbb    = $prodotto['TipoPacchetto'] ?? null; // FIX: la query alias la colonna come "TipoPacchetto" (T maiuscola)
 
 if (!empty($idPacchettoAbb) && $tipoPaccAbb === 'abbonamento') {
     $stmtAbb = $conn->prepare(
