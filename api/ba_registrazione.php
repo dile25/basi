@@ -14,7 +14,12 @@ if (file_exists(__DIR__ . '/../db_connect.php')) {
 
 header('Content-Type: application/json');
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode(['status' => 'error', 'msg' => 'Metodo non consentito.']);
+    exit;
+}
+
+if (true) {
     $user = $_POST['username'] ?? '';
     $nome = $_POST['nome'] ?? '';
     $cogn = $_POST['cognome'] ?? '';
