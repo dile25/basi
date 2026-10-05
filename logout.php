@@ -1,6 +1,7 @@
 <?php
 session_start();
-session_destroy(); // Distrugge la sessione attuale
-header("Location: login.php"); // Torna al login
+$_SESSION = [];          // svuota le variabili di sessione
+session_destroy();       // distrugge la sessione sul server
+header("Location: login.php");
 exit;
 ?>

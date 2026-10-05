@@ -1,382 +1,271 @@
 <?php
 session_start();
-if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
-    header("Location: login.php"); exit;
+if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
+    header("Location: login.php");
+    exit;
 }
 ?>
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aggiungi Prodotto | The (E-)Shop Around the Corner</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        .page-wrapper { max-width: 720px; margin: 30px auto 60px; padding: 0 20px; }
-        .back-link { display:inline-flex; align-items:center; gap:6px; color:var(--text-sec); text-decoration:none; font-size:0.9em; margin-bottom:18px; }
-        .back-link:hover { color:var(--dark-green); }
-        .form-card { background:white; border:1px solid var(--border-color); border-radius:14px; padding:30px; box-shadow:0 4px 14px rgba(0,0,0,0.04); }
-        .form-control { margin-bottom:14px; width:100%; padding:10px; border-radius:8px; border:1px solid var(--border-color); font-family:inherit; background:#fff; box-sizing:border-box; }
-        label.field-label { font-weight:600; font-size:0.92em; display:block; margin-bottom:6px; }
-        .section-box { border:1px solid var(--border-color); border-radius:10px; padding:18px; margin-bottom:18px; background:#f9fbf9; }
-        .section-title { font-weight:700; color:var(--dark-green); margin:0 0 12px; font-size:1.02em; }
-        .row-2 { display:flex; gap:12px; }
-        .row-2 > div { flex:1; }
-        .tab-switch { display:flex; gap:8px; margin-bottom:16px; }
-        .tab-btn { flex:1; padding:10px; border-radius:8px; border:1px solid var(--border-color); background:white; cursor:pointer; font-weight:600; font-size:0.9em; color:var(--text-sec); transition:0.2s; text-align:center; }
-        .tab-btn.active { background:var(--dark-green); color:white; border-color:var(--dark-green); }
-        .help-text { color:var(--text-sec); font-size:0.82em; margin-top:4px; display:block; }
-        .btn-submit { width:100%; padding:14px; margin-top:8px; font-size:1.02em; }
-        #msg-nuovo-libro { text-align:center; font-weight:600; margin-top:14px; display:none; }
-        .checklist-box { max-height:170px; overflow-y:auto; border:1px solid #ddd; border-radius:8px; padding:10px; margin-bottom:10px; font-size:0.88em; background:white; }
-        .checklist-box label { display:flex; align-items:center; gap:8px; margin-bottom:8px; cursor:pointer; }
-    </style>
+    <title>Nuovo prodotto | The (E-)Shop Around the Corner</title>
+    <?php include 'head.php'; ?>
 </head>
 <body>
-<?php include("header.php"); ?>
+<?php include 'header.php'; ?>
 
-<div class="page-wrapper">
+<main id="contenuto" class="page page--narrow">
     <a href="dashboard_venditore.php" class="back-link">&#8592; Torna alla dashboard</a>
 
     <div class="form-card">
-        <h2 style="color:var(--dark-green); margin-top:0; margin-bottom:20px;">Nuovo Annuncio</h2>
+        <h1 class="page-title">Nuovo prodotto</h1>
+        <p class="muted">I campi contrassegnati con * sono obbligatori.</p>
 
-        <form id="formNuovoLibro" enctype="multipart/form-data">
+        <form id="formNuovoLibro" enctype="multipart/form-data" novalidate>
+            <div class="form-field">
+                <label for="campo-nome" class="form-label">Titolo *</label>
+                <input type="text" name="nome" id="campo-nome" class="form-control" maxlength="150" required>
+                <small class="field-error" id="err-nome"></small>
+            </div>
 
-            <label class="field-label">Tipo di prodotto *</label>
-            <select name="tipo_prodotto" id="tipo-prodotto" class="form-control" required onchange="aggiornaCampiTipo(this.value)">
-                <option value="libro">Libro</option>
-                <option value="rivista">Rivista</option>
-                <option value="periodico">Periodico</option>
-                <option value="magazine">Magazine</option>
-                <option value="fumetto">Fumetto</option>
-            </select>
+            <div class="form-field">
+                <label for="campo-autore" class="form-label">Autore *</label>
+                <input type="text" name="autore" id="campo-autore" class="form-control" maxlength="100" placeholder="es. Elena Ferrante" required>
+                <small class="field-error" id="err-autore"></small>
+            </div>
 
-            <label class="field-label">Titolo *</label>
-            <input type="text" name="nome" placeholder="Titolo" class="form-control" required>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="campo-prezzo" class="form-label">Prezzo (€) *</label>
+                    <input type="number" name="prezzo" id="campo-prezzo" class="form-control" step="0.01" min="0.01" max="9999.99" required>
+                    <small class="field-error" id="err-prezzo"></small>
+                </div>
+                <div class="form-field">
+                    <label for="campo-quantita" class="form-label">Copie disponibili *</label>
+                    <input type="number" name="quantita" id="campo-quantita" class="form-control" min="0" max="9999" step="1" aria-describedby="help-quantita" required>
+                    <small class="help-text" id="help-quantita">0 = non ancora disponibile.</small>
+                    <small class="field-error" id="err-quantita"></small>
+                </div>
+            </div>
 
-            <label class="field-label" id="label-autore">Autore *</label>
-            <input type="text" name="autore" id="campo-autore" placeholder="Es. Elena Ferrante" class="form-control">
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="campo-categoria" class="form-label">Categoria *</label>
+                    <select name="categoria" id="campo-categoria" class="form-control" required>
+                        <option value="">Seleziona una categoria</option>
+                    </select>
+                    <small class="field-error" id="err-categoria"></small>
+                </div>
+                <div class="form-field">
+                    <label for="campo-sottocategoria" class="form-label">Sottocategoria</label>
+                    <select name="sottocategoria" id="campo-sottocategoria" class="form-control">
+                        <option value="">Nessuna</option>
+                    </select>
+                </div>
+            </div>
 
-            <div id="campo-testata-wrapper" style="display:none;">
-                <label class="field-label">Nome rivista/testata
-                    <span style="font-weight:400; color:var(--text-sec); font-size:0.88em;">(opzionale — es. Vogue Italia, Topolino)</span>
+            <div class="form-field">
+                <label for="campo-descrizione" class="form-label">Descrizione *</label>
+                <textarea name="descrizione" id="campo-descrizione" class="form-control" rows="5" maxlength="2000" required></textarea>
+                <small class="field-error" id="err-descrizione"></small>
+            </div>
+
+            <div class="form-field">
+                <label for="campo-foto" class="form-label">Foto * (da 1 a 5)</label>
+                <input type="file" name="foto[]" id="campo-foto" class="form-control" accept="image/jpeg,image/png,image/webp" multiple required aria-describedby="help-foto">
+                <small class="help-text" id="help-foto">JPG, PNG o WEBP, massimo 2 MB ciascuna. La prima foto sarà la copertina.</small>
+                <small class="field-error" id="err-foto"></small>
+                <div id="anteprima-foto" class="foto-gestione"></div>
+            </div>
+
+            <!-- PACCHETTO -->
+            <fieldset class="section-box">
+                <legend class="visually-hidden">Pacchetto</legend>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="abilita_pacchetto" id="abilita-pacchetto" value="1">
+                    Inserisci il prodotto in un pacchetto con sconto
                 </label>
-                <input type="text" name="testata" id="campo-testata" placeholder="Es. Vogue Italia" class="form-control">
-            </div>
 
-            <div class="row-2">
-                <div>
-                    <label class="field-label">Prezzo (€) *</label>
-                    <input type="number" name="prezzo" step="0.01" min="0.01" placeholder="0.00" class="form-control" required>
-                </div>
-                <div>
-                    <label class="field-label">Quantità *</label>
-                    <input type="number" name="quantita" placeholder="0 = non disponibile" class="form-control" min="0" required>
-                </div>
-            </div>
-
-            <label class="field-label">Categoria
-            </label>
-            <select name="categoria" id="modal-categoria" class="form-control" required onchange="caricaSottocategorie(this.value)">
-                <option value="">-- Seleziona una categoria *</option>
-            </select>
-
-            <label class="field-label" style="margin-top:8px;">Sottocategoria
-                <span style="font-weight:400; color:var(--text-sec); font-size:0.88em;">(opzionale)</span>
-            </label>
-            <select name="sottocategoria" id="modal-sottocategoria" class="form-control">
-                <option value="">Nessuna</option>
-            </select>
-
-
-
-            <label class="field-label">Descrizione</label>
-            <textarea name="descrizione" placeholder="Descrizione o trama..." class="form-control" rows="3"></textarea>
-
-            <label class="field-label">Immagine copertina</label>
-            <input type="file" name="fotoLibro" accept="image/*" class="form-control">
-
-            <!-- SEZIONE PROMOZIONI -->
-            <div class="section-box">
-                <label style="font-weight:600; display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:0;">
-                    <input type="checkbox" name="abilita_sconto" id="abilita-sconto" onchange="toggleScontoBox()">
-                    Aggiungi a una promozione
-                </label>
-
-                <div id="sconto-box" style="display:none; margin-top:14px;">
-
-                    <!-- Tab: pacchetto libro vs abbonamento periodico -->
-                    <div class="tab-switch" id="tab-tipo-promo">
-                        <div class="tab-btn active" data-tipo="libro" onclick="selezionaTabPromo('libro')">Pacchetto sconto</div>
-                        <div class="tab-btn" data-tipo="abbonamento" onclick="selezionaTabPromo('abbonamento')" id="tab-abbonamento" style="display:none;">Abbonamento periodico</div>
-                    </div>
-
-                    <!-- ===== PACCHETTO LIBRO (saga / autore / promo) ===== -->
-                    <div id="box-tipo-libro">
-                        <label class="field-label" style="font-size:0.9em;">Vuoi aggiungerlo a un pacchetto già esistente?</label>
-                        <select id="scelta-pacchetto-esistente" class="form-control" onchange="cambiaSceltaPacchetto(this.value)">
-                            <option value="">Caricamento pacchetti...</option>
+                <div id="box-pacchetto" class="is-hidden">
+                    <p class="help-text">Il cliente ottiene lo sconto quando mette nel carrello tutti i prodotti del pacchetto.</p>
+                    <div class="form-field">
+                        <label for="scelta-pacchetto" class="form-label">Pacchetto</label>
+                        <select name="id_pacchetto_esistente" id="scelta-pacchetto" class="form-control">
+                            <option value="">Crea un nuovo pacchetto</option>
                         </select>
-
-                        <div id="box-pacchetto-esistente" style="display:none; margin-top:10px;">
-                            <p class="help-text" style="margin:0 0 10px;">
-                                Il prodotto verrà aggiunto a questo pacchetto con gli scaglioni di sconto già impostati.
-                            </p>
-                            <input type="hidden" name="id_pacchetto_esistente" id="id-pacchetto-esistente">
-                        </div>
-
-                        <div id="box-pacchetto-nuovo" style="margin-top:10px;">
-                            <label class="field-label" style="font-size:0.9em;">Nome del nuovo pacchetto</label>
-                            <input type="text" name="nome_pacchetto" id="campo-nome-pacchetto" placeholder="Es. Saga del Signore degli Anelli, Promo Autore..." class="form-control">
-
-                            <label class="field-label" style="font-size:0.9em;">Seleziona altri prodotti da includere (opzionale ora)</label>
-                            <div id="lista-libri-pacchetto" class="checklist-box">
-                                <p style="color:var(--text-sec);">Caricamento tuoi prodotti...</p>
-                            </div>
-
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:10px; font-size:0.9em; font-weight:600;">
-                                <input type="checkbox" name="e_saga" id="campo-e-saga" onchange="toggleScontoTutti()">
-                                Questo è un pacchetto chiuso (saga completa con numero fisso di volumi)
-                            </label>
-                            <span class="help-text" style="margin-top:-6px; margin-bottom:10px; display:block;">Solo le saghe complete possono avere uno sconto "tutti i volumi". Per promo generiche o raccolte aperte, lascia deselezionato: ci saranno solo gli scaglioni 2 e 3 prodotti.</span>
-
-                            <p style="font-size:0.85em; font-weight:700; color:var(--dark-green); margin:10px 0 6px;">Sconti a scaglioni</p>
-                            <div class="row-2" style="gap:10px;">
-                                <div>
-                                    <label class="help-text" style="margin-top:0;">2 prodotti (%)</label>
-                                    <input type="number" name="sconto_2" min="1" max="90" value="10" class="form-control">
-                                </div>
-                                <div>
-                                    <label class="help-text" style="margin-top:0;">3 prodotti (%)</label>
-                                    <input type="number" name="sconto_3" min="1" max="90" value="20" class="form-control">
-                                </div>
-                                <div id="box-sconto-tutti" style="display:none;">
-                                    <label class="help-text" style="margin-top:0;">Tutti (%)</label>
-                                    <input type="number" name="sconto_tutti" min="1" max="90" value="30" class="form-control">
-                                </div>
-                            </div>
-                            <span class="help-text">Lo sconto cresce in base a quanti prodotti del pacchetto il cliente ha nel carrello.</span>
-                        </div>
                     </div>
 
-                    <!-- ===== ABBONAMENTO PERIODICO ===== -->
-                    <div id="box-tipo-abbonamento" style="display:none;">
-                        <label class="field-label" style="font-size:0.9em;">Vuoi aggiungerlo a un abbonamento già esistente?</label>
-                        <select id="scelta-abbonamento-esistente" class="form-control" onchange="cambiaSceltaAbbonamento(this.value)">
-                            <option value="">Caricamento...</option>
-                        </select>
-                        <div id="box-abbonamento-esistente" style="display:none; margin-top:10px;">
-                            <p class="help-text">Il numero verrà aggiunto a questo abbonamento esistente.</p>
-                            <input type="hidden" name="id_abbonamento_esistente" id="id-abbonamento-esistente">
+                    <div id="box-pacchetto-nuovo">
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="campo-nome-pacchetto" class="form-label">Nome del pacchetto</label>
+                                <input type="text" name="nome_pacchetto" id="campo-nome-pacchetto" class="form-control" maxlength="100" placeholder="es. Trilogia della città di K.">
+                            </div>
+                            <div class="form-field">
+                                <label for="campo-sconto-pacchetto" class="form-label">Sconto (%)</label>
+                                <input type="number" name="sconto_pacchetto" id="campo-sconto-pacchetto" class="form-control" min="1" max="90" value="15">
+                            </div>
                         </div>
-                        <div id="box-abbonamento-nuovo" style="margin-top:10px;">
-                            <label class="field-label" style="font-size:0.9em;">Nome dell'abbonamento</label>
-                            <input type="text" name="nome_abbonamento" id="campo-nome-abbonamento" placeholder="Es. Vogue Italia — Abbonamento annuale" class="form-control">
-                            <label class="field-label" style="font-size:0.9em;">Periodicità</label>
-                            <select name="periodicita" id="campo-periodicita" class="form-control">
-                                <option value="mensile">Mensile</option>
-                                <option value="settimanale">Settimanale</option>
-                            </select>
-                            <label class="field-label" style="font-size:0.9em;">Sconto abbonamento (%)</label>
-                            <input type="number" name="sconto_abbonamento" min="1" max="90" value="25" class="form-control">
-                            <span class="help-text">Lo sconto si applica quando il cliente acquista tutti i numeri insieme.</span>
-                        </div>
+                        <small class="field-error" id="err-pacchetto"></small>
+                        <fieldset class="form-field">
+                            <legend class="form-label">Altri tuoi prodotti da includere</legend>
+                            <div id="lista-libri-pacchetto" class="checklist-box"><p class="muted">Caricamento...</p></div>
+                        </fieldset>
                     </div>
-
                 </div>
-            </div>
+            </fieldset>
 
-            <button type="submit" class="btn-primary btn-submit">PUBBLICA ANNUNCIO</button>
-            <p id="msg-nuovo-libro"></p>
+            <button type="submit" class="btn btn-primary btn-block btn-large" id="btnPubblica">Pubblica prodotto</button>
+            <p id="msg-nuovo-libro" class="form-msg is-hidden" role="status"></p>
         </form>
     </div>
-</div>
+</main>
 
 <script>
 let categorieDB = [];
+let pacchettiCaricati = false;
+const MAX_FOTO = 5;
+const MAX_PESO = 2 * 1024 * 1024;
 
-$(document).ready(function() {
-    caricaCategorieModal();
-
-    $("#formNuovoLibro").on("submit", function(e) {
-        e.preventDefault();
-        // Validazione categoria obbligatoria
-        const cat = $('[name="categoria"]').val();
-        const sottocat = $('[name="sottocategoria"]').val();
-        if (!cat && !sottocat) {
-            alert('Seleziona almeno una categoria per il prodotto.');
-            return;
-        }
-        const formData = new FormData(this);
-        $.ajax({
-            url: 'api/ba_aggiungi_libro.php', type: 'POST', data: formData,
-            cache: false, contentType: false, processData: false,
-            success: function(resp) {
-                const msg = $('#msg-nuovo-libro');
-                if(resp.status === 'ok') {
-                    msg.text('Prodotto pubblicato con successo! Torno alla dashboard...').css('color','green').show();
-                    setTimeout(() => { window.location.href = 'dashboard_venditore.php'; }, 1500);
-                } else {
-                    msg.text('Errore: ' + resp.msg).css('color','red').show();
-                }
-            }
+$(function() {
+    $.get('api/ba_categorie.php', function(resp) {
+        categorieDB = resp.categorie || [];
+        categorieDB.filter(c => !c.nome_categoria_padre).forEach(c => {
+            $('#campo-categoria').append($('<option>').val(c.nome_categoria).text(c.nome_categoria));
         });
+    }, 'json');
+});
+
+/* Sottocategorie della categoria scelta (gerarchia) */
+$('#campo-categoria').on('change', function() {
+    const padre = $(this).val();
+    const select = $('#campo-sottocategoria').html('<option value="">Nessuna</option>');
+    categorieDB.filter(c => c.nome_categoria_padre === padre).forEach(c => {
+        select.append($('<option>').val(c.nome_categoria).text(c.nome_categoria));
     });
 });
 
-function caricaCategorieModal() {
-    $.get('api/ba_categorie.php', function(resp) {
-        if(!resp.categorie) return;
-        categorieDB = resp.categorie;
-        const padri = resp.categorie.filter(c => !c.nome_categoria_padre);
-// commento prova
-        // Popola select categoria principale
-        padri.forEach(c => {
-            $('#modal-categoria').append(`<option value="${c.nome_categoria}">${c.nome_categoria}</option>`);
-        });
-
-        // Popola select "padre della sottocategoria" nel box nuova categoria
-        padri.forEach(c => {
-            $('#select-padre-sottocategoria').append(`<option value="${c.nome_categoria}">${c.nome_categoria}</option>`);
-        });
+/* Anteprima e controllo delle foto scelte */
+$('#campo-foto').on('change', function() {
+    const files = Array.from(this.files);
+    const anteprima = $('#anteprima-foto').empty();
+    $('#err-foto').text(controllaFoto(files));
+    files.slice(0, MAX_FOTO).forEach((file, i) => {
+        const reader = new FileReader();
+        reader.onload = e => anteprima.append(
+            $('<figure class="foto-item">').append(
+                $('<img>').attr({ src: e.target.result, alt: 'Anteprima foto ' + (i + 1) }),
+                i === 0 ? $('<figcaption>').text('Copertina') : null
+            )
+        );
+        reader.readAsDataURL(file);
     });
-}
+});
 
-function caricaSottocategorie(catPadre) {
-    const select = $('#modal-sottocategoria');
-    select.html('<option value="">Nessuna</option>');
-    if (!catPadre) return;
-    categorieDB.forEach(c => {
-        if (c.nome_categoria_padre === catPadre) {
-            select.append(`<option value="${c.nome_categoria}">${c.nome_categoria}</option>`);
-        }
-    });
-}
-
-function aggiornaCampiTipo(tipo) {
-    const labelAutore = $('#label-autore');
-    const campoAutore = $('#campo-autore');
-    const isPeriodico = ['rivista', 'magazine', 'periodico', 'fumetto'].includes(tipo);
-    isPeriodico ? $('#campo-testata-wrapper').show() : $('#campo-testata-wrapper').hide();
-
-    if (tipo === 'rivista' || tipo === 'magazine' || tipo === 'periodico') {
-        labelAutore.text('Editore');
-        campoAutore.attr('placeholder', 'Es. Condé Nast, RCS Media');
-    } else if (tipo === 'fumetto') {
-        labelAutore.text('Autore / Casa editrice');
-        campoAutore.attr('placeholder', 'Es. Walt Disney, Marvel');
-    } else {
-        labelAutore.text('Autore *');
-        campoAutore.attr('placeholder', 'Es. Elena Ferrante');
+function controllaFoto(files) {
+    if (files.length === 0) return 'Carica almeno una foto.';
+    if (files.length > MAX_FOTO) return 'Puoi caricare al massimo ' + MAX_FOTO + ' foto.';
+    for (const f of files) {
+        if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return '"' + f.name + '" non è un\'immagine JPG, PNG o WEBP.';
+        if (f.size > MAX_PESO) return '"' + f.name + '" supera i 2 MB.';
     }
-
+    return '';
 }
 
-
-
-function toggleScontoBox() {
-    const checked = $('#abilita-sconto').is(':checked');
-    $('#sconto-box').toggle(checked);
-    if (checked) {
-        const tipo = $('#tipo-prodotto').val();
-        const isPeriodico = ['rivista', 'magazine', 'periodico', 'fumetto'].includes(tipo);
-        if (isPeriodico) {
-            $('#tab-abbonamento').show();
-        } else {
-            $('#tab-abbonamento').hide();
-        }
-        selezionaTabPromo('libro');
-        caricaPacchettiEsistenti();
-        caricaLibriPacchetto();
-    }
-}
-
-function selezionaTabPromo(tipo) {
-    $('.tab-btn').removeClass('active');
-    $(`.tab-btn[data-tipo="${tipo}"]`).addClass('active');
-    if (tipo === 'abbonamento') {
-        $('#box-tipo-libro').hide();
-        $('#box-tipo-abbonamento').show();
-        caricaAbbonamentiEsistenti();
-    } else {
-        $('#box-tipo-abbonamento').hide();
-        $('#box-tipo-libro').show();
-    }
-}
-
-function caricaAbbonamentiEsistenti() {
-    $.get('api/ba_abbonamenti_venditore.php', function(resp) {
-        const select = $('#scelta-abbonamento-esistente');
-        select.html('<option value="">-- Crea un nuovo abbonamento --</option>');
-        if (resp.status === 'ok' && resp.abbonamenti.length > 0) {
-            resp.abbonamenti.forEach(a => {
-                select.append(`<option value="${a.id_pacchetto}">${a.nome} (${a.tot_prodotti} numeri)</option>`);
+/* ===== Pacchetto ===== */
+$('#abilita-pacchetto').on('change', function() {
+    const attivo = $(this).is(':checked');
+    $('#box-pacchetto').toggleClass('is-hidden', !attivo);
+    if (attivo && !pacchettiCaricati) {
+        pacchettiCaricati = true;
+        $.get('api/ba_pacchetti_venditore.php', function(resp) {
+            (resp.pacchetti || []).forEach(p => {
+                $('#scelta-pacchetto').append($('<option>').val(p.id_pacchetto)
+                    .text(p.nome + ' (-' + parseInt(p.sconto) + '%, ' + parseInt(p.tot_prodotti) + ' prodotti)'));
             });
-        }
-    }, 'json');
-}
-
-function cambiaSceltaAbbonamento(id) {
-    if (id) {
-        $('#box-abbonamento-esistente').show();
-        $('#box-abbonamento-nuovo').hide();
-        $('#id-abbonamento-esistente').val(id);
-    } else {
-        $('#box-abbonamento-esistente').hide();
-        $('#box-abbonamento-nuovo').show();
-        $('#id-abbonamento-esistente').val('');
-    }
-}
-
-function caricaPacchettiEsistenti() {
-    $.get('api/ba_pacchetti_venditore.php', function(resp) {
-        const select = $('#scelta-pacchetto-esistente');
-        select.html('<option value="">-- Crea un nuovo pacchetto --</option>');
-        if (resp.status === 'ok' && resp.pacchetti.length > 0) {
-            resp.pacchetti.forEach(p => {
-                select.append(`<option value="${p.id_pacchetto}">${p.nome} (${p.tot_prodotti} prodotti)</option>`);
-            });
-        }
-    }, 'json');
-}
-
-function cambiaSceltaPacchetto(idPacchetto) {
-    if (idPacchetto) {
-        $('#box-pacchetto-esistente').show();
-        $('#box-pacchetto-nuovo').hide();
-        $('#id-pacchetto-esistente').val(idPacchetto);
-    } else {
-        $('#box-pacchetto-esistente').hide();
-        $('#box-pacchetto-nuovo').show();
-        $('#id-pacchetto-esistente').val('');
-    }
-}
-
-function caricaLibriPacchetto() {
-    $.get('api/ba_libri_venditore.php', function(resp) {
-        if(resp.status === 'ok' && resp.libri.length > 0) {
+        }, 'json');
+        $.get('api/ba_libri_venditore.php', function(resp) {
+            const libri = resp.libri || [];
+            if (libri.length === 0) {
+                $('#lista-libri-pacchetto').html('<p class="muted">Non hai altri prodotti in vendita.</p>');
+                return;
+            }
             let html = '';
-            resp.libri.forEach(l => {
-                html += `<label>
-                    <input type="checkbox" name="libri_pacchetto[]" value="${l.id_prodotto}">
-                    <span>${l.nome}${l.autore ? ' — ' + l.autore : ''} (€${parseFloat(l.prezzo).toFixed(2)})</span>
+            libri.forEach(l => {
+                html += `<label class="checkbox-label">
+                    <input type="checkbox" name="libri_pacchetto[]" value="${parseInt(l.id_prodotto)}">
+                    ${escapeHtml(l.nome)}${l.autore ? ' (' + escapeHtml(l.autore) + ')' : ''} · ${formatPrezzo(l.prezzo)}
                 </label>`;
             });
             $('#lista-libri-pacchetto').html(html);
-        } else {
-            $('#lista-libri-pacchetto').html('<p style="color:var(--text-sec);font-size:0.85em;">Nessun prodotto disponibile.</p>');
-        }
+        }, 'json');
+    }
+});
+
+$('#scelta-pacchetto').on('change', function() {
+    $('#box-pacchetto-nuovo').toggleClass('is-hidden', !!$(this).val());
+});
+
+/* ===== Validazione e invio ===== */
+function errore(id, msg) {
+    $('#err-' + id).text(msg);
+    $('#campo-' + id).toggleClass('invalid', !!msg).attr('aria-invalid', msg ? 'true' : 'false');
+    return !!msg;
+}
+
+function validaForm() {
+    const prezzo   = parseFloat($('#campo-prezzo').val());
+    const quantita = $('#campo-quantita').val();
+    let e = false;
+    e = errore('nome',        $('#campo-nome').val().trim().length < 2 ? 'Inserisci il titolo (minimo 2 caratteri).' : '') || e;
+    e = errore('autore',      $('#campo-autore').val().trim().length < 2 ? "Inserisci l'autore (minimo 2 caratteri)." : '') || e;
+    e = errore('prezzo',      !(prezzo > 0 && prezzo <= 9999.99) ? 'Inserisci un prezzo tra 0,01 e 9999,99 €.' : '') || e;
+    e = errore('quantita',    !/^\d{1,4}$/.test(quantita) ? 'Inserisci un numero intero tra 0 e 9999.' : '') || e;
+    e = errore('categoria',   !$('#campo-categoria').val() ? 'Scegli una categoria.' : '') || e;
+    e = errore('descrizione', $('#campo-descrizione').val().trim().length < 10 ? 'Scrivi una descrizione di almeno 10 caratteri.' : '') || e;
+    e = errore('foto',        controllaFoto(Array.from($('#campo-foto')[0].files))) || e;
+
+    if ($('#abilita-pacchetto').is(':checked') && !$('#scelta-pacchetto').val()) {
+        const sconto = parseInt($('#campo-sconto-pacchetto').val());
+        let msg = '';
+        if ($('#campo-nome-pacchetto').val().trim().length < 2) msg = 'Dai un nome al pacchetto.';
+        else if (!(sconto >= 1 && sconto <= 90)) msg = 'Lo sconto deve essere tra 1 e 90%.';
+        $('#err-pacchetto').text(msg);
+        if (msg) e = true;
+    } else {
+        $('#err-pacchetto').text('');
+    }
+    return !e;
+}
+
+$('#formNuovoLibro').on('submit', function(e) {
+    e.preventDefault();
+    if (!validaForm()) {
+        $('.form-control.invalid').first().trigger('focus');
+        return;
+    }
+    const btn = $('#btnPubblica').prop('disabled', true);
+    $.ajax({
+        url: 'api/ba_aggiungi_libro.php',
+        type: 'POST',
+        data: new FormData(this),
+        dataType: 'json',
+        cache: false,
+        contentType: false,
+        processData: false,
+        success: function(resp) {
+            const msg = $('#msg-nuovo-libro').removeClass('is-hidden');
+            if (resp.status === 'ok') {
+                msg.text('Prodotto pubblicato. Torno alla dashboard...').addClass('form-msg--ok').removeClass('form-msg--err');
+                setTimeout(() => { window.location.href = 'dashboard_venditore.php'; }, 1200);
+            } else {
+                msg.text(resp.msg || 'Pubblicazione non riuscita.').addClass('form-msg--err').removeClass('form-msg--ok');
+                btn.prop('disabled', false);
+            }
+        },
+        error: function() { btn.prop('disabled', false); }
     });
-}
-
-function toggleScontoTutti() {
-    $('#box-sconto-tutti').toggle($('#campo-e-saga').is(':checked'));
-}
-
-
-
+});
 </script>
 </body>
 </html>

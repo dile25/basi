@@ -1,42 +1,57 @@
-<?php session_start(); if(isset($_SESSION['IdUtente'])) header("Location: index.php"); ?>
+<?php
+session_start();
+if (isset($_SESSION['IdUtente'])) {
+    header("Location: index.php");
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
     <title>Accedi | The (E-)Shop Around the Corner</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <?php include 'head.php'; ?>
 </head>
-<body style="background: var(--light-green); display: flex; align-items: center; justify-content: center; height: 100vh;">
+<body class="auth-page">
+<main id="contenuto" class="auth-container">
+    <h1 class="auth-title">Bentornato!</h1>
 
-    <div style="width: 100%; max-width: 350px; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
-        <h2 style="color: var(--dark-green); text-align: center; margin-bottom: 30px;">Bentornato!</h2>
+    <form id="formLogin" novalidate>
+        <div class="form-field">
+            <label for="login-username" class="form-label">Username</label>
+            <input type="text" id="login-username" name="username" class="form-control" autocomplete="username" maxlength="30" required>
+        </div>
+        <div class="form-field">
+            <label for="login-password" class="form-label">Password</label>
+            <input type="password" id="login-password" name="password" class="form-control" autocomplete="current-password" required>
+        </div>
+        <p class="form-msg form-msg--err is-hidden" id="login-errore" role="alert"></p>
+        <button type="submit" class="btn btn-primary btn-block">Accedi</button>
+    </form>
 
-        <form id="formLogin" autocomplete="off">
-            <!-- Campi trappola per bloccare autofill Chrome -->
-            <input type="text" style="display:none;" name="fake_username">
-            <input type="password" style="display:none;" name="fake_password">
-            <input type="text" name="username" placeholder="Username" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid var(--border-color);" required>
-            <input type="password" name="password" placeholder="Password" style="width:100%; padding:12px; margin-bottom:20px; border-radius:8px; border:1px solid var(--border-color);" required>
+    <p class="auth-footer">Nuovo su The (E-)Shop Around the Corner? <a href="registrazione.php">Crea un account</a></p>
+    <p class="auth-footer"><a href="index.php">Torna alla home</a></p>
+</main>
 
-            <button type="submit" class="btn-recensisci" style="width: 100%; padding: 12px;">ACCEDI</button>
-        </form>
+<script>
+$('#formLogin').on('submit', function(e) {
+    e.preventDefault();
+    const username = $('#login-username').val().trim();
+    const password = $('#login-password').val();
+    const errore   = $('#login-errore');
 
-        <p style="text-align:center; margin-top:20px; font-size:0.9em;">Nuovo su The (E-)Shop Around the Corner? <a href="registrazione.php">Registrati</a></p>
-        <p style="text-align:center; margin-top:10px; font-size:0.9em;">
-    <a href="index.php" style="color: var(--text-sec);">Torna alla home</a>
-</p>
-    </div>
+    if (!username || !password) {
+        errore.text('Inserisci username e password.').removeClass('is-hidden');
+        return;
+    }
 
-    <script>
-    $("#formLogin").on("submit", function(e) {
-        e.preventDefault();
-        $.post('api/ba_auth_login.php', $(this).serialize(), function(resp) {
-            if(resp.status === 'ok') {
-                window.location.href = "index.php";
-            } else { alert("Dati non corretti!"); }
-        });
-    });
-    </script>
+    $.post('api/ba_auth_login.php', { username: username, password: password }, function(resp) {
+        if (resp.status === 'ok') {
+            window.location.href = 'index.php';
+        } else {
+            errore.text(resp.msg || 'Username o password non corretti.').removeClass('is-hidden');
+        }
+    }, 'json');
+});
+</script>
 </body>
 </html>

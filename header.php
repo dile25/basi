@@ -1,391 +1,165 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+$tipoHeader = $_SESSION['tipoUtente'] ?? '';
 ?>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<a href="#contenuto" class="skip-link">Vai al contenuto</a>
 
-<style>
-    .cart-link { position: relative; display: inline-block; }
-    .cart-badge {
-        position: absolute;
-        top: -8px;
-        right: -8px;
-        background: #e74c3c;
-        color: white;
-        font-size: 0.7em;
-        padding: 2px 6px;
-        border-radius: 50%;
-        font-weight: 800;
-        display: none;
-        border: 2px solid white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        min-width: 18px;
-        text-align: center;
-        animation: pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    @keyframes pop-in {
-        0% { transform: scale(0); }
-        100% { transform: scale(1); }
-    }
-
-    .header-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 15px 5%;
-        background: white;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-
-    .search-wrapper { position: relative; }
-    .search-suggestions {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: white;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        z-index: 9999;
-        display: none;
-        margin-top: 5px;
-        max-height: 300px;
-        overflow-y: auto;
-    }
-    .suggestion-item {
-        padding: 10px 15px;
-        cursor: pointer;
-        border-bottom: 1px solid #eee;
-        display: flex;
-        flex-direction: column;
-    }
-    .suggestion-item:last-child { border-bottom: none; }
-    .suggestion-item:hover { background: #f5f9f6; }
-    .suggestion-item strong { color: var(--text-dark); font-size: 0.95em; }
-    .suggestion-item small { color: #777; font-size: 0.8em; margin-top: 2px; }
-
-    .user-nav { display: flex; align-items: center; gap: 20px; }
-    .user-btn {
-        text-decoration: none;
-        color: var(--text-dark);
-        font-weight: 600;
-        font-size: 0.95em;
-        transition: 0.3s;
-    }
-    .user-btn:hover { color: var(--primary-green); }
-
-    .btn-reg-header {
-        background: var(--primary-green) !important;
-        color: white !important;
-        padding: 8px 18px !important;
-        border-radius: 6px !important;
-    }
-    .btn-reg-header:hover { background: var(--dark-green) !important; }
-
-    .btn-dashboard-venditore {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: linear-gradient(135deg, var(--dark-green, #1a6b3c), var(--primary-green, #27ae60));
-        color: white !important;
-        padding: 8px 16px !important;
-        border-radius: 8px !important;
-        font-weight: 700 !important;
-        font-size: 0.9em !important;
-        text-decoration: none !important;
-        box-shadow: 0 2px 8px rgba(95, 122, 92, 0.35);
-        transition: all 0.2s ease !important;
-        border: none;
-    }
-    .btn-dashboard-venditore:hover {
-        background: linear-gradient(135deg, #145a32, #1e8449) !important;
-        box-shadow: 0 4px 14px rgba(95, 122, 92, 0.5);
-        transform: translateY(-1px);
-        color: white !important;
-    }
-    .btn-dashboard-venditore svg {
-        width: 16px;
-        height: 16px;
-        fill: white;
-        flex-shrink: 0;
-    }
-
-    /* DROPDOWN CATEGORIE */
-    .nav-categorie {
-        position: relative;
-        display: inline-block;
-    }
-    .btn-categorie {
-        background: none;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 8px 16px;
-        font-family: inherit;
-        font-size: 0.95em;
-        font-weight: 600;
-        color: var(--text-dark);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        transition: 0.2s;
-    }
-    .btn-categorie:hover {
-        border-color: var(--primary-green);
-        color: var(--primary-green);
-    }
-    .btn-categorie svg {
-        width: 14px;
-        height: 14px;
-        transition: transform 0.2s;
-    }
-    .btn-categorie.open svg {
-        transform: rotate(180deg);
-    }
-    .dropdown-categorie {
-        display: none;
-        position: absolute;
-        top: calc(100% + 6px);
-        left: 0;
-        background: white;
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-        z-index: 99999;
-        min-width: 260px;
-        padding: 8px 0;
-        max-height: 480px;
-        overflow-y: auto;
-    }
-    .dropdown-categorie.open { display: block; }
-    .dropdown-padre {
-        padding: 10px 18px 6px;
-        font-size: 0.75em;
-        font-weight: 800;
-        color: var(--primary-green);
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        border-top: 1px solid #f0f0f0;
-        margin-top: 4px;
-    }
-    .dropdown-padre:first-child { border-top: none; margin-top: 0; }
-    .dropdown-figlio {
-        display: block;
-        padding: 7px 18px 7px 28px;
-        font-size: 0.88em;
-        color: var(--text-dark);
-        text-decoration: none;
-        transition: background 0.15s;
-        cursor: pointer;
-    }
-    .dropdown-figlio:hover {
-        background: var(--light-green);
-        color: var(--dark-green);
-        font-weight: 600;
-    }
-</style>
-
-<div class="header-container">
-    <a href="index.php" class="logo" style="text-decoration:none; font-weight:700; font-size:1.3em; color:var(--dark-green); display:flex; align-items:center; gap:10px; letter-spacing:-0.01em;">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" style="width:34px; height:34px;">
+<header class="site-header">
+    <a href="index.php" class="logo" aria-label="The (E-)Shop Around the Corner, torna alla home">
+        <svg class="logo__mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden="true">
             <path d="M6 10c0-1.1.9-2 2-2h12c2.2 0 4 1.8 4 4v22c0-1.1-.9-2-2-2H8a2 2 0 0 1-2-2V10z" fill="var(--primary-green)"/>
             <path d="M42 10c0-1.1-.9-2-2-2H28c-2.2 0-4 1.8-4 4v22c0-1.1.9-2 2-2h14a2 2 0 0 0 2-2V10z" fill="var(--dark-green)"/>
-            <path d="M34 16l9 4-9 4-2-4z" fill="var(--accent-pink)" transform="translate(0,-2)"/>
-            <path d="M34 16l-3 7 3-1.2z" fill="var(--accent-pink-dark)" transform="translate(0,-2)"/>
+            <path d="M34 14l9 4-9 4-2-4z" fill="var(--accent-pink)"/>
         </svg>
-        <span>The (E-)Shop<br><span style="font-size:0.7em; font-weight:600; color:var(--accent-pink-dark); letter-spacing:0.04em;">AROUND THE CORNER</span></span>
+        <span class="logo__text">The (E-)Shop<span class="logo__sub">around the corner</span></span>
     </a>
 
-    <div style="display:flex; align-items:center; gap:12px;">
+    <div class="header-tools">
         <div class="nav-categorie">
-            <button class="btn-categorie" id="btnCategorie" onclick="toggleDropdown()">
+            <button type="button" class="btn-categorie" id="btnCategorie" aria-expanded="false" aria-controls="dropdownCategorie">
                 Categorie
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M7 10l5 5 5-5z"/>
-                </svg>
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>
             </button>
             <div class="dropdown-categorie" id="dropdownCategorie"></div>
         </div>
 
-        <div class="search-wrapper">
-            <div class="search-bar" style="display:flex; border:1px solid var(--border-color); border-radius:50px; overflow:hidden; background:#f9f9f9;">
-                <input type="search" id="headerSearchInput" autocomplete="off" placeholder="Cerca libri, autori..."
-                       onkeypress="handleSearchKeyPress(event)"
-                       style="border:none; background:none; padding:8px 15px; width:250px; outline:none;">
-                <button class="search-btn" onclick="eseguiRicerca()" style="border:none; background:var(--primary-green); color:white; padding:8px 15px; cursor:pointer;">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width:16px; height:16px; display:block;">
-                        <path d="M21 19.9l-4.69-4.69A7.5 7.5 0 1 0 4.5 15a7.5 7.5 0 0 0 4.81-1.75L14 17.94 19.9 21 21 19.9zM4.5 15a5.5 5.5 0 1 1 5.5 5.5A5.51 5.51 0 0 1 4.5 15z"/>
-                    </svg>
+        <form class="search-wrapper" role="search" action="index.php" method="get" autocomplete="off">
+            <label for="headerSearchInput" class="visually-hidden">Cerca libri o autori</label>
+            <div class="search-form">
+                <input type="search" id="headerSearchInput" name="q" class="search-input" placeholder="Cerca libri, autori..." maxlength="100">
+                <button type="submit" class="search-btn" aria-label="Cerca">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
                 </button>
             </div>
-            <div id="live-suggestions" class="search-suggestions"></div>
-        </div>
+            <div id="live-suggestions" class="search-suggestions is-hidden"></div>
+        </form>
     </div>
 
-    <div class="user-nav">
+    <nav class="user-nav" aria-label="Area utente">
         <?php if (isset($_SESSION['IdUtente'])): ?>
-            <a href="profilo.php" class="user-btn" style="display:flex;align-items:center;gap:6px;">
+            <a href="profilo.php" class="user-btn">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
                 <?php echo htmlspecialchars($_SESSION['IdUtente']); ?>
             </a>
-            <?php if ($_SESSION['tipoUtente'] === 'cliente'): ?>
-                <a href="miei_ordini.php" class="user-btn" title="I miei ordini" style="display:flex;align-items:center;gap:5px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:19px;height:19px;"><path d="M21 3H3a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zm-1 16H4V5h16v14zM6 7h12v2H6zm0 4h12v2H6zm0 4h8v2H6z"/></svg>
-                    <span>Ordini</span>
+            <?php if ($tipoHeader === 'cliente'): ?>
+                <a href="miei_ordini.php" class="user-btn">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3H3a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zm-1 16H4V5h16v14zM6 7h12v2H6zm0 4h12v2H6zm0 4h8v2H6z"/></svg>
+                    Ordini
                 </a>
-                <a href="preferiti.php" class="user-btn" title="Preferiti" style="display:flex;align-items:center;gap:5px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:19px;height:19px;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                    <span>Preferiti</span>
+                <a href="preferiti.php" class="user-btn">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    Preferiti
                 </a>
-                <a href="carrello.php" class="user-btn cart-link" title="Carrello" style="display:flex;align-items:center;gap:5px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:19px;height:19px;"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zM7.17 14.75l.03-.12.9-1.63H17c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 21.44 4H5.21L4.54 2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5 16.28 5 17h14v-2H7.42a.25.25 0 0 1-.25-.25z"/></svg>
-                    <span>Carrello</span>
-                    <span class="cart-badge" id="cartCount">0</span>
+                <a href="carrello.php" class="user-btn cart-link">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zM7.17 14.75l.03-.12.9-1.63H17c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 21.44 4H5.21L4.54 2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5 16.28 5 17h14v-2H7.42a.25.25 0 0 1-.25-.25z"/></svg>
+                    Carrello
+                    <span class="cart-badge is-hidden" id="cartCount" aria-label="articoli nel carrello">0</span>
                 </a>
-            <?php endif; ?>
-            <?php if ($_SESSION['tipoUtente'] === 'venditore'): ?>
-                <a href="dashboard_venditore.php" class="btn-dashboard-venditore">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+            <?php elseif ($tipoHeader === 'venditore'): ?>
+                <a href="dashboard_venditore.php" class="btn btn-primary btn-small">
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
                     Dashboard
                 </a>
             <?php endif; ?>
-            <button onclick="apriLogout()" class="user-btn" style="color:#e74c3c;background:none;border:none;cursor:pointer;font-family:inherit;font-size:0.95em;font-weight:600;padding:0;">Esci</button>
+            <button type="button" class="user-btn user-btn--esci" id="btnApriLogout">Esci</button>
         <?php else: ?>
             <a href="login.php" class="user-btn">Accedi</a>
-            <a href="registrazione.php" class="user-btn btn-reg-header">Registrati</a>
+            <a href="registrazione.php" class="btn btn-primary btn-small">Registrati</a>
         <?php endif; ?>
-    </div>
-</div>
+    </nav>
+</header>
 
-<!-- POPUP LOGOUT -->
-<div id="logout-overlay">
-    <div class="logout-box">
-        <h3>Uscire dall'account?</h3>
-        <p>Verrai reindirizzato alla pagina di login.</p>
-        <button class="logout-btn-confirm" onclick="window.location.href='logout.php'">Sì, esci</button>
-        <button class="logout-btn-cancel" onclick="chiudiLogout()">Annulla</button>
+<!-- DIALOG LOGOUT -->
+<div class="modal-overlay" id="logout-overlay" role="dialog" aria-modal="true" aria-labelledby="logout-titolo">
+    <div class="modal-box modal-box--small text-center">
+        <h2 class="modal-title" id="logout-titolo">Uscire dall'account?</h2>
+        <p class="muted">Verrai reindirizzato alla pagina di accesso.</p>
+        <div class="button-row button-row--center">
+            <a href="logout.php" class="btn btn-danger">Esci</a>
+            <button type="button" class="btn btn-secondary" id="btnChiudiLogout">Annulla</button>
+        </div>
     </div>
 </div>
 
 <script>
-let categoriaSelezionata = '';
-
-$(document).ready(function() {
-
-    $.get("api/ba_lista_categorie.php", function(resp) {
-        const cats = resp.categorie || [];
-        const padri = cats.filter(c => !c.nome_categoria_padre);
+$(function() {
+    /* --- Menu categorie (gerarchia padre/figlie) --- */
+    $.get('api/ba_lista_categorie.php', function(resp) {
+        const cats   = resp.categorie || [];
+        const padri  = cats.filter(c => !c.nome_categoria_padre);
         const figlie = cats.filter(c => c.nome_categoria_padre);
+        let html = '<a class="dropdown-tutte" href="index.php">Tutte le categorie</a>';
+        padri.forEach(padre => {
+            // La categoria padre è sempre cliccabile (mostra anche i prodotti delle sottocategorie)
+            html += `<div class="dropdown-gruppo">
+                <a class="dropdown-padre" href="index.php?cat=${encodeURIComponent(padre.nome_categoria)}">${escapeHtml(padre.nome_categoria)}</a>`;
+            figlie.filter(f => f.nome_categoria_padre === padre.nome_categoria).forEach(f => {
+                html += `<a class="dropdown-figlio" href="index.php?cat=${encodeURIComponent(f.nome_categoria)}">${escapeHtml(f.nome_categoria)}</a>`;
+            });
+            html += '</div>';
+        });
+        $('#dropdownCategorie').html(html);
+    }, 'json');
 
-        $("#dropdownCategorie").append(`
-            <div class="dropdown-figlio" onclick="selezionaCategoria('')">Tutte le categorie</div>
-        `);
-
-padri.forEach(padre => {
-    const sotto = figlie.filter(f => f.nome_categoria_padre === padre.nome_categoria);
-    if (sotto.length === 0) return;
-
-    $("#dropdownCategorie").append(`
-        <div class="dropdown-padre">${padre.nome_categoria}</div>
-    `);
-    sotto.forEach(figlia => {
-        $("#dropdownCategorie").append(`
-            <div class="dropdown-figlio" onclick="selezionaCategoria('${figlia.nome_categoria}')">
-                ${figlia.nome_categoria}
-            </div>
-        `);
+    $('#btnCategorie').on('click', function() {
+        const aperto = $('#dropdownCategorie').toggleClass('open').hasClass('open');
+        $(this).attr('aria-expanded', aperto);
     });
-});
 
-// Aggiungi sezione "Altro" con tipi prodotto periodici
-$("#dropdownCategorie").append(`<div class="dropdown-padre">Altro</div>`);
-[
-    { tipo: 'rivista',   label: 'Riviste' },
-    { tipo: 'magazine',  label: 'Magazine' },
-    { tipo: 'periodico', label: 'Periodici' },
-    { tipo: 'fumetto',   label: 'Fumetti' }
-].forEach(t => {
-    $("#dropdownCategorie").append(`
-        <div class="dropdown-figlio" onclick="window.location.href='index.php?tipo=${encodeURIComponent(t.tipo)}'">
-            ${t.label}
-        </div>`);
-});
-    }, "json");
-
-    <?php if(isset($_SESSION['tipoUtente']) && $_SESSION['tipoUtente'] === 'cliente'): ?>
-        updateCartBadge();
-    <?php endif; ?>
-
-    $("#headerSearchInput").on("input", function() {
+    /* --- Suggerimenti di ricerca live (AJAX) --- */
+    let timerRicerca = null;
+    $('#headerSearchInput').on('input', function() {
         const query = $(this).val().trim();
+        clearTimeout(timerRicerca);
         if (query.length < 2) {
-            $("#live-suggestions").hide().empty();
+            $('#live-suggestions').addClass('is-hidden').empty();
             return;
         }
-        $.get("api/ba_suggerimenti.php", { q: query }, function(resp) {
-            if (resp.prodotti && resp.prodotti.length > 0) {
-                let htmlSuggestions = "";
-                resp.prodotti.forEach(p => {
-                    htmlSuggestions += `
-                    <div class="suggestion-item" onclick="location.href='dettaglio_prodotto.php?id=${p.id_prodotto}'">
-                        <strong>${p.nome}</strong>
-                        <small>Autore: ${p.autore || 'Non specificato'}</small>
-                    </div>`;
+        // piccolo ritardo per non inviare una richiesta a ogni tasto
+        timerRicerca = setTimeout(function() {
+            $.get('api/ba_suggerimenti.php', { q: query }, function(resp) {
+                const prodotti = resp.prodotti || [];
+                if (prodotti.length === 0) {
+                    $('#live-suggestions').addClass('is-hidden').empty();
+                    return;
+                }
+                let html = '';
+                prodotti.forEach(p => {
+                    html += `<a class="suggestion-item" href="dettaglio_prodotto.php?id=${parseInt(p.id_prodotto)}">
+                        <strong>${escapeHtml(p.nome)}</strong>
+                        <small>${escapeHtml(p.autore || 'Autore non specificato')}</small>
+                    </a>`;
                 });
-                $("#live-suggestions").html(htmlSuggestions).show();
-            } else {
-                $("#live-suggestions").hide().empty();
-            }
-        }, "json");
+                $('#live-suggestions').html(html).removeClass('is-hidden');
+            }, 'json');
+        }, 250);
     });
 
-    $(document).click(function(e) {
-        if (!$(e.target).closest('.search-wrapper').length) {
-            $("#live-suggestions").hide();
-        }
+    /* Chiusura di menu e suggerimenti cliccando fuori */
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.search-wrapper').length) $('#live-suggestions').addClass('is-hidden');
         if (!$(e.target).closest('.nav-categorie').length) {
-            $('#btnCategorie').removeClass('open');
             $('#dropdownCategorie').removeClass('open');
+            $('#btnCategorie').attr('aria-expanded', 'false');
         }
     });
+
+    /* --- Logout --- */
+    $('#btnApriLogout').on('click', function() { $('#logout-overlay').addClass('open'); });
+    $('#btnChiudiLogout').on('click', function() { $('#logout-overlay').removeClass('open'); });
+
+    <?php if ($tipoHeader === 'cliente'): ?>
+    updateCartBadge();
+    <?php endif; ?>
 });
 
-function toggleDropdown() {
-    $('#btnCategorie').toggleClass('open');
-    $('#dropdownCategorie').toggleClass('open');
-}
-
-function selezionaCategoria(cat) {
-    if (cat === '') {
-        window.location.href = 'index.php';
-    } else {
-        window.location.href = `index.php?cat=${encodeURIComponent(cat)}`;
-    }
-}
-
+/* Badge del carrello: usa lo stesso endpoint della pagina carrello */
 function updateCartBadge() {
-    $.get("api/ba_get_carrello.php", function(resp) {
-        const badge = $("#cartCount");
-        if (resp.status === "ok" && resp.prodotti && resp.prodotti.length > 0) {
-            let qtaTotale = 0;
-            resp.prodotti.forEach(p => qtaTotale += parseInt(p.QuantitaNelCarrello));
-            badge.text(qtaTotale).fadeIn();
-        } else {
-            badge.fadeOut();
-        }
-    });
+    $.get('api/ba_carrello.php', { action: 'list' }, function(resp) {
+        const badge = $('#cartCount');
+        let totale = 0;
+        (resp.prodotti || []).forEach(p => totale += parseInt(p.quantita) || 0);
+        badge.text(totale).toggleClass('is-hidden', totale === 0);
+    }, 'json');
 }
-
-function eseguiRicerca() {
-    const q = $("#headerSearchInput").val().trim();
-    window.location.href = `index.php?q=${encodeURIComponent(q)}&cat=${encodeURIComponent(categoriaSelezionata)}`;
-}
-
-function handleSearchKeyPress(e) {
-    if (e.key === 'Enter') eseguiRicerca();
-}
-
-function apriLogout() { document.getElementById('logout-overlay').classList.add('open'); }
-function chiudiLogout() { document.getElementById('logout-overlay').classList.remove('open'); }
-
 </script>

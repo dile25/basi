@@ -1,647 +1,480 @@
 <?php
 session_start();
+$tipoUtente = $_SESSION['tipoUtente'] ?? '';
+$loggato    = isset($_SESSION['IdUtente']);
 ?>
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dettaglio Libro | The (E-)Shop Around the Corner</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .btn-fav { background: none; border: 1px solid #e74c3c; color: #e74c3c; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; flex: 1; }
-        .btn-fav:hover, .btn-fav.attivo { background: #e74c3c; color: white; }
-        .btn-carrello { background: var(--dark-green); color: white; border: none; padding: 18px; border-radius: 8px; font-size: 1.1em; font-weight: bold; width: 100%; cursor: pointer; transition: 0.3s; }
-        .btn-carrello:hover { background: #4d6649; }
-        .btn-carrello.nel-carrello { background: white; color: #e74c3c; border: 2px solid #e74c3c; }
-        .btn-carrello.nel-carrello:hover { background: #e74c3c; color: white; }
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-box { background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 480px; }
-        .star-rating { font-size: 30px; cursor: pointer; color: #ddd; margin: 15px 0; }
-        .recensione-utente { background: var(--light-green); border: 1px solid var(--border-color); border-radius: 10px; padding: 15px; margin-bottom: 15px; }
-        .btn-piccolo { padding: 5px 12px; font-size: 0.82em; border-radius: 6px; cursor: pointer; font-weight: 600; }
-        .btn-modifica-rec { background: none; border: 1px solid var(--dark-green); color: var(--dark-green); }
-        .btn-elimina-rec { background: none; border: 1px solid #e74c3c; color: #e74c3c; margin-left: 6px; }
-    </style>
+    <title>Dettaglio prodotto | The (E-)Shop Around the Corner</title>
+    <?php include 'head.php'; ?>
 </head>
 <body>
-<?php include("header.php"); ?>
+<?php include 'header.php'; ?>
 
-<div id="modalRecensione" class="modal-overlay">
+<main id="contenuto" class="page page--medium">
+    <p id="loading" class="loading">Caricamento del prodotto...</p>
+
+    <div id="contentWrapper" class="is-hidden">
+        <div class="product-layout">
+            <!-- GALLERIA FOTO -->
+            <div class="gallery">
+                <img src="" id="mainImage" class="gallery-main" alt="">
+                <div id="thumbsContainer" class="gallery-thumbs"></div>
+            </div>
+
+            <!-- INFORMAZIONI -->
+            <div class="product-info">
+                <h1 id="pTitle" class="product-title"></h1>
+                <p class="product-author">di <strong id="pAuthor"></strong></p>
+                <p class="product-meta">
+                    Venduto da <a href="#" id="pVendorLink"></a>
+                    <span aria-hidden="true">|</span> Categoria: <strong id="pCat"></strong>
+                </p>
+                <p id="pPrice" class="product-price"></p>
+                <p id="stockHtml" class="stock"></p>
+
+                <?php if ($tipoUtente !== 'venditore'): ?>
+                <div class="product-actions" id="zona-acquisto">
+                    <div class="qty-row" id="zona-quantita">
+                        <span class="form-label" id="label-quantita">Quantità</span>
+                        <div class="qty-wrapper" role="group" aria-labelledby="label-quantita">
+                            <button type="button" class="qty-btn" id="qtyMeno" aria-label="Diminuisci quantità">&minus;</button>
+                            <span class="qty-display" id="qtyValore" aria-live="polite">1</span>
+                            <button type="button" class="qty-btn" id="qtyPiu" aria-label="Aumenta quantità">+</button>
+                        </div>
+                        <span id="subtotale-dettaglio" class="subtotale"></span>
+                    </div>
+                    <button type="button" id="btnCarrello" class="btn btn-primary btn-block btn-large">Aggiungi al carrello</button>
+                    <div class="button-row">
+                        <button type="button" id="btnFav" class="btn btn-fav" aria-pressed="false">
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                            <span>Aggiungi ai preferiti</span>
+                        </button>
+                        <button type="button" id="btnRecensisci" class="btn btn-secondary is-hidden">
+                            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                            Scrivi una recensione
+                        </button>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <section class="product-desc" aria-labelledby="titolo-desc">
+                    <h2 id="titolo-desc">Descrizione</h2>
+                    <p id="pDesc"></p>
+                </section>
+            </div>
+        </div>
+
+        <!-- PACCHETTO -->
+        <section id="riquadro-pacchetto" class="pacchetto-box is-hidden" aria-labelledby="titolo-pacchetto">
+            <h2 id="titolo-pacchetto"></h2>
+            <p id="desc-pacchetto" class="muted"></p>
+            <div id="libri-pacchetto-grid" class="pacchetto-grid"></div>
+        </section>
+
+        <!-- RECENSIONI -->
+        <section class="reviews" aria-labelledby="titolo-recensioni">
+            <h2 id="titolo-recensioni">Recensioni dei lettori</h2>
+            <div id="reviewsList"></div>
+        </section>
+    </div>
+</main>
+
+<!-- DIALOG RECENSIONE (crea / modifica) -->
+<div id="modalRecensione" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-rec-titolo">
     <div class="modal-box">
-        <span onclick="$('#modalRecensione').fadeOut()" style="float:right; cursor:pointer; font-size:1.5em;">&times;</span>
-        <h3 id="modal-rec-titolo">La tua opinione</h3>
-        <p style="font-size:0.9em; color:var(--text-sec);">Raccontaci la tua esperienza con questo libro.</p>
-        <form id="formRecensione" style="margin-top:20px;" enctype="multipart/form-data">
+        <button type="button" class="modal-close js-chiudi-recensione" aria-label="Chiudi">
+            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+        <h2 class="modal-title" id="modal-rec-titolo">La tua recensione</h2>
+        <form id="formRecensione" enctype="multipart/form-data" novalidate>
             <input type="hidden" name="idProdotto" id="rev-idProdotto">
             <input type="hidden" name="id_recensione" id="rev-id-recensione" value="0">
-            <input type="hidden" name="voto" id="rev-voto-val" value="5">
-            <div class="star-rating">
-                <span class="star" data-v="1">★</span>
-                <span class="star" data-v="2">★</span>
-                <span class="star" data-v="3">★</span>
-                <span class="star" data-v="4">★</span>
-                <span class="star" data-v="5">★</span>
+
+            <fieldset class="star-rating">
+                <legend class="form-label">Valutazione</legend>
+                <?php for ($i = 1; $i <= 5; $i++): ?>
+                    <input type="radio" name="voto" id="voto-<?php echo $i; ?>" value="<?php echo $i; ?>" class="visually-hidden" <?php echo $i === 5 ? 'checked' : ''; ?>>
+                    <label for="voto-<?php echo $i; ?>" class="star" data-v="<?php echo $i; ?>" title="<?php echo $i; ?> su 5">
+                        &#9733;<span class="visually-hidden"><?php echo $i; ?> stelle</span>
+                    </label>
+                <?php endfor; ?>
+            </fieldset>
+
+            <div class="form-field">
+                <label for="rev-commento" class="form-label">Commento</label>
+                <textarea name="commento" id="rev-commento" rows="4" class="form-control" maxlength="2000" required></textarea>
+                <small class="field-error" id="err-commento"></small>
             </div>
-            <textarea name="commento" id="rev-commento" rows="4" placeholder="Cosa ne pensi del libro?" required
-                style="width:100%; border:1px solid #ddd; border-radius:8px; padding:10px; font-family:inherit; box-sizing:border-box;"></textarea>
-            <label style="font-size:0.85em; font-weight:600; color:var(--text-dark); display:block; margin-top:12px;">Aggiungi una foto (opzionale)</label>
-            <input type="file" name="fotoRecensione" id="rev-foto" accept="image/*" style="width:100%; margin-top:6px;">
-            <div id="rev-foto-preview" style="margin-top:10px; display:none;">
-                <img id="rev-foto-preview-img" src="" style="max-width:120px; border-radius:8px; border:1px solid #ddd;">
+            <div class="form-field">
+                <label for="rev-foto" class="form-label">Foto (facoltativa)</label>
+                <input type="file" name="fotoRecensione" id="rev-foto" class="form-control" accept="image/jpeg,image/png,image/webp">
+                <img id="rev-foto-preview" class="foto-preview is-hidden" src="" alt="Anteprima della foto scelta">
             </div>
-            <button type="submit" class="btn-recensisci" style="width:100%; margin-top:15px; padding:14px;">PUBBLICA RECENSIONE</button>
+            <button type="submit" class="btn btn-primary btn-block">Pubblica recensione</button>
         </form>
     </div>
 </div>
 
-<div class="container" style="max-width:1100px; margin:30px auto; padding:0 20px;">
-    <div id="loading" style="text-align:center; padding:100px;">
-        <h2 style="color:var(--dark-green);">Caricamento del volume...</h2>
-    </div>
-
-    <div id="contentWrapper" style="display:none;">
-        <div style="display:grid; grid-template-columns:300px 1fr; gap:40px; align-items:start;">
-
-            <div>
-                <img src="" id="mainImage" style="width:100%; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.1);" alt="Copertina">
-                <div id="thumbsContainer" style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;"></div>
-            </div>
-
-            <div>
-                <h1 id="pTitle" style="margin:0 0 4px; color:var(--dark-green);"></h1>
-                <p style="font-size: 1.2em; color: var(--text-dark); margin: 0 0 15px 0;">di <strong id="pAuthor"></strong></p>
-                
-                <p style="color:var(--text-sec); margin-bottom:15px;">
-                    Venduto da: <a href="#" id="pVendorLink" style="font-weight:bold; color:var(--dark-green);"></a>
-                    &nbsp;|&nbsp; Genere: <strong id="pCat"></strong>
-                </p>
-                <div id="priceHtml" style="margin-bottom:10px;"></div>
-                <div id="stockHtml" style="margin-bottom:25px; font-weight:bold;"></div>
-
-                <div style="display:flex; flex-direction:column; gap:12px;">
-                    <button id="btnCarrello" class="btn-carrello" onclick="toggleCarrello()">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:19px;height:19px;"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zM7.17 14.75l.03-.12.9-1.63H17c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 21.44 4H5.21L4.54 2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5 16.28 5 17h14v-2H7.42a.25.25 0 0 1-.25-.25z"/></svg>Aggiungi al Carrello
-                    </button>
-                    <div id="zona-quantita" style="display:none; align-items:center; gap:10px;">
-                        <label style="font-size:0.92em; color:#555; font-weight:600;">Quantità nel carrello:</label>
-                        <div style="display:flex; align-items:center; border:1.5px solid #ddd; border-radius:8px; overflow:hidden;">
-                            <button type="button" onclick="cambiaQuantita(-1)" style="background:#f5f5f5; border:none; padding:6px 12px; font-size:1.1em; cursor:pointer; line-height:1;">−</button>
-                            <input type="number" id="inputQuantita" value="1" min="1" max="99"
-                                style="width:46px; border:none; text-align:center; font-size:0.97em; font-weight:600; padding:6px 0; -moz-appearance:textfield;" readonly>
-                            <button type="button" onclick="cambiaQuantita(1)" style="background:#f5f5f5; border:none; padding:6px 12px; font-size:1.1em; cursor:pointer; line-height:1;">+</button>
-                        </div>
-                        <span id="subtotale-dettaglio" style="font-size:0.92em; color:var(--dark-green); font-weight:700;"></span>
-                    </div>
-                    <div style="display:flex; gap:10px;">
-                        <button id="btnFav" class="btn-fav" onclick="togglePreferito()">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:17px;height:17px;flex-shrink:0;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                            Aggiungi ai Preferiti
-                        </button>
-                        <?php if (!isset($_SESSION['tipoUtente']) || $_SESSION['tipoUtente'] !== 'venditore'): ?>
-                        <button id="btnRecensisci" class="btn-recensisci" style="flex:1;" onclick="apriModalRecensione()">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:17px;height:17px;flex-shrink:0;"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                            Recensisci
-                        </button>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
-                <div style="margin-top:30px;">
-                    <h3 style="color:var(--dark-green); border-bottom:2px solid var(--light-green); padding-bottom:8px;">Trama</h3>
-                    <p id="pDesc" style="white-space:pre-line; color:var(--text-dark); line-height:1.7;"></p>
-                </div>
-            </div>
-        </div>
-
-        <!-- RIQUADRO PACCHETTO -->
-        <div id="riquadro-pacchetto" style="display:none; margin-top:30px; background:#f9f4fc; border:2px solid #9b59b6; border-radius:15px; padding:25px;">
-            <h3 id="titolo-pacchetto" style="margin:0 0 5px; color:#6c3483; font-size:1.1em;"></h3>
-            <p id="desc-pacchetto" style="margin:0 0 18px; color:#666; font-size:0.88em;"></p>
-            <div id="libri-pacchetto-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px;"></div>
-        </div>
-
-        <!-- BANNER ABBONAMENTI per riviste/fumetti/magazine/periodici -->
-        <div id="banner-abbonamenti" style="display:none; margin-top:30px; background:#f5eef8; border:2px solid #9b59b6; border-radius:15px; padding:25px;">
-            <h3 style="margin:0 0 6px; color:#6c3483; font-size:1.1em; display:flex; align-items:center; gap:8px;">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#8e44ad" style="width:20px;height:20px;flex-shrink:0;"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
-                Abbonati e risparmia
-            </h3>
-            <p style="margin:0 0 18px; font-size:0.88em; color:#555;">Acquistando più numeri insieme risparmi. Scegli il piano e avvia il checkout:</p>
-            <div id="lista-abbonamenti-dettaglio" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px;"></div>
-        </div>
-
-        <div style="margin-top:50px; background:white; border-radius:15px; padding:30px; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
-            <h3 style="color:var(--dark-green); margin-bottom:20px;">Opinioni della Community</h3>
-            <div id="reviewsList"></div>
-        </div>
-    </div>
-</div>
-
 <script>
-let prodottoCorrente = null;
-let nelCarrello = false;
-let neiPeferiti = false;
-let idCarrelloSet = new Set(); // id prodotti attualmente nel carrello
+const TIPO_UTENTE = <?php echo json_encode($tipoUtente); ?>;
+const LOGGATO     = <?php echo $loggato ? 'true' : 'false'; ?>;
+const ID_PRODOTTO = parseInt(new URLSearchParams(window.location.search).get('id')) || 0;
 
-$(document).ready(function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const id = urlParams.get('id');
-    if (!id) { $("#loading").html("<h2>Libro non trovato. <a href='index.php'>Torna alla Home</a></h2>"); return; }
+let prodotto       = null;   // dati del prodotto corrente
+let nelCarrello    = false;
+let neiPreferiti   = false;
+let quantita       = 1;
+let idCarrelloSet  = new Set();
+let recensioniById = {};     // recensioni caricate, per la modifica senza passare testo negli attributi
 
-    // Carica dettagli prodotto
-    $.getJSON("api/ba_dettaglio_prodotto.php", { id: id }, function(resp) {
-        if (resp.status !== "ok") { $("#loading").html("<h3 style='color:red;'>" + resp.msg + "</h3>"); return; }
-
-        const p = resp.dettagli;
-        prodottoCorrente = p;
-
-        let badge = p.ScontoPacchetto > 0 ? `<span style="background:#e74c3c;color:white;padding:3px 10px;border-radius:20px;font-size:0.8em;font-weight:bold;margin-right:8px;">-${p.ScontoPacchetto}%</span>` : '';
-        $("#pTitle").html(badge + p.NomeProdotto);
-        
-        // POPOLA L'AUTORE ESTRATTO DAL DATABASE
-        $("#pAuthor").text(p.autore || 'Autore non specificato');
-        
-        $("#pDesc").text(p.descrizione);
-        $("#pCat").text(p.NomeCategoria || 'Generale');
-        $("#pVendorLink").text(p.NomeVenditore).attr("href", "profilo_venditore.php?u=" + encodeURIComponent(p.IdVenditore));
-        $("#rev-idProdotto").val(p.IdProdotto);
-
-        // Immagini
-        let mainImg = (p.foto && p.foto.length > 0) ? p.foto[0] : 'img/default.jpg';
-        $("#mainImage").attr("src", mainImg);
-        if (p.foto && p.foto.length > 1) {
-            let th = "";
-            p.foto.forEach((url, i) => {
-                th += `<img src="${url}" style="width:60px;height:80px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid ${i===0?'var(--primary-green)':'#ddd'};" onclick="cambiaImmagine('${url}', this)">`;
-            });
-            $("#thumbsContainer").html(th);
-        }
-
-        // Prezzo — sconto solo nel carrello, non sul singolo
-        let prezzoHtml = `<span style="font-size:1.8em;font-weight:800;color:var(--dark-green);">€${parseFloat(p.prezzo).toFixed(2)}</span>`;
-        // Mostra info sconto pacchetto/abbonamento se disponibile
-        if (p.id_pacchetto && p.NomePacchetto) {
-            if (p.tipoPacchetto === 'abbonamento') {
-                const periodoLabel = p.periodicita === 'mensile' ? "tutti i numeri dell'anno" : "tutti i numeri del mese";
-                prezzoHtml += `<div style="margin-top:8px;font-size:0.85em;color:#8e44ad;font-weight:600;background:#f5eef8;border:1px solid #d2b4de;border-radius:8px;padding:8px 10px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#8e44ad" style="width:13px;height:13px;vertical-align:middle;margin-right:3px;"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
-                    Questo numero fa parte dell'abbonamento "${p.NomePacchetto}". Acquista ${periodoLabel} per ottenere -${p.sconto_tutti}% sul totale.
-                </div>`;
-            } else {
-                prezzoHtml += `<div style="margin-top:8px;font-size:0.82em;color:#8e44ad;font-weight:600;">
-                    Pacchetto "${p.NomePacchetto}": 2 libri -${p.sconto_2}% | 3 libri -${p.sconto_3}%${(p.eSaga && p.sconto_tutti > 0) ? ' | saga completa -' + p.sconto_tutti + '%' : ''}
-                </div>`;
-            }
-        }
-        $("#priceHtml").html(prezzoHtml);
-
-        // Stock
-        if (p.QuantitaDisp > 0) {
-            $("#stockHtml").html(`<span style="color:var(--dark-green);display:flex;align-items:center;gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg> ${p.QuantitaDisp} copie disponibili</span>`);
-            $('#inputQuantita').attr('max', p.QuantitaDisp);
-        } else {
-            $("#stockHtml").html(`<span style="color:#e74c3c;display:flex;align-items:center;gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg> Momentaneamente esaurito</span>`);
-            $("#btnCarrello").prop("disabled", true).text("Non disponibile").css("opacity", "0.5");
-            // Mostra bottone "Avvisami quando torna disponibile"
-            $("#btnCarrello").after(`
-                <button id="btnAvvisami" class="btn-avvisami" style="margin-top:10px; padding:12px;"
-                    onclick="attivaAvvisami(${p.IdProdotto})">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
-                    Avvisami quando torna disponibile
-                </button>
-                <p id="msg-avvisami" style="display:none; font-size:0.85em; color:var(--dark-green); margin-top:6px; text-align:center;"></p>
-            `);
-        }
-
-        $("#loading").hide();
-        $("#contentWrapper").fadeIn();
-
-        // Controlla stato carrello e preferiti
-        verificaStatoCarrello(p.IdProdotto);
-        verificaStatoPreferiti(p.IdProdotto);
-
-        // Banner abbonamenti
-        if (p.abbonamenti && p.abbonamenti.length > 0) {
-            let abbHtml = '';
-            p.abbonamenti.forEach(a => {
-                // Durata sempre 12 mesi: mensile=12 uscite, settimanale=52 uscite
-                const durata     = '12 mesi';
-                const perioLabel = a.periodicita === 'settimanale' ? 'numeri settimanali' : 'numeri mensili';
-                const numUscite  = a.periodicita === 'settimanale' ? 52 : 12;
-                abbHtml += `
-                <div style="background:white; border:1px solid #d2b4de; border-radius:12px; padding:18px; display:flex; flex-direction:column; gap:10px;">
-                    <div style="font-weight:700; color:#6c3483; font-size:0.95em;">${a.nome}</div>
-                    <div style="font-size:0.82em; color:#666;">${a.descrizione || ''}</div>
-                    <div style="font-size:0.88em; color:#8e44ad; font-weight:600; background:#f5eef8; border-radius:6px; padding:6px 10px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#8e44ad" style="width:13px;height:13px;vertical-align:middle;margin-right:3px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
-                        Risparmia il <strong>${a.sconto_tutti}%</strong> acquistando tutti i ${perioLabel} per ${durata}
-                    </div>
-                    <button data-id="${a.id_pacchetto}" data-nome="${a.nome.replace(/"/g,'&quot;')}" data-sconto="${a.sconto_tutti}" data-uscite="${numUscite}" data-periodicita="${a.periodicita}"
-                        class="btn-avvia-abbonamento"
-                        style="background:#8e44ad; color:white; border:none; padding:10px 14px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.85em; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:6px; margin-top:auto;">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width:14px;height:14px;flex-shrink:0;"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
-                        Seleziona e vai al checkout
-                    </button>
-                </div>`;
-            });
-            $('#lista-abbonamenti-dettaglio').html(abbHtml);
-            $('#banner-abbonamenti').show();
-
-            // Handler bottoni abbonamento (event delegation per evitare problemi inline)
-            $(document).on('click', '.btn-avvia-abbonamento', function() {
-                const idPacchetto  = $(this).data('id');
-                const nomeAbb      = $(this).data('nome');
-                const sconto       = $(this).data('sconto');
-                const numUscite    = $(this).data('uscite');
-                const periodicita  = $(this).data('periodicita');
-                avviaAbbonamento(idPacchetto, nomeAbb, sconto, numUscite, periodicita);
-            });
-        }
-    });
-
-    // Recensioni
-    caricaRecensioni(id);
-
-    // Stelle
-    $(document).on("click", ".star", function() {
-        const v = $(this).data("v");
-        $("#rev-voto-val").val(v);
-        aggiornaStelle(v);
-    });
-
-    // Invio recensione (FormData per supportare upload immagine)
-    $("#formRecensione").on("submit", function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-        $.ajax({
-            url: 'api/ba_scrivi_recensione.php',
-            type: 'POST',
-            data: formData,
-            cache: false,
-            contentType: false,
-            processData: false,
-            success: function(resp) {
-                if(resp.status === 'ok') {
-                    alert("Recensione pubblicata!");
-                    $("#modalRecensione").fadeOut();
-                    $("#rev-foto-preview").hide();
-                    $("#rev-foto").val('');
-                    caricaRecensioni(new URLSearchParams(window.location.search).get('id'));
-                } else {
-                    alert(resp.msg);
-                }
-            }
-        });
-    });
-
-    // Preview immagine recensione
-    $("#rev-foto").on("change", function() {
-        const file = this.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                $("#rev-foto-preview-img").attr("src", e.target.result);
-                $("#rev-foto-preview").show();
-            };
-            reader.readAsDataURL(file);
-        } else {
-            $("#rev-foto-preview").hide();
-        }
-    });
+$(function() {
+    if (!ID_PRODOTTO) {
+        $('#loading').html('Prodotto non trovato. <a href="index.php">Torna alla home</a>');
+        return;
+    }
+    caricaProdotto();
+    caricaRecensioni();
 });
 
-function cambiaImmagine(url, el) {
-    $("#mainImage").attr("src", url);
-    $("#thumbsContainer img").css("border-color", "#ddd");
-    $(el).css("border-color", "var(--primary-green)");
-}
+/* ===================== PRODOTTO ===================== */
+function caricaProdotto() {
+    $.get('api/ba_dettaglio_prodotto.php', { id: ID_PRODOTTO }, function(resp) {
+        if (resp.status !== 'ok') {
+            $('#loading').text(resp.msg || 'Prodotto non trovato.');
+            return;
+        }
+        prodotto = resp.dettagli;
+        document.title = prodotto.NomeProdotto + ' | The (E-)Shop Around the Corner';
 
-function verificaStatoCarrello(idProdotto) {
-    $.get('api/ba_carrello.php', { action: 'list' }, function(resp) {
-        if(resp.status === 'ok') {
-            idCarrelloSet = new Set(resp.prodotti.map(p => parseInt(p.IdProdotto || p.id_prodotto)));
-            nelCarrello = idCarrelloSet.has(parseInt(idProdotto));
-            aggiornaBottoneCarrello();
-            if (nelCarrello) {
-                // Leggi la quantità attuale dal carrello
-                const prodCart = resp.prodotti.find(p => parseInt(p.IdProdotto || p.id_prodotto) === parseInt(idProdotto));
-                const qtaCart = prodCart ? parseInt(prodCart.quantita) : 1;
-                $('#inputQuantita').val(qtaCart);
-                $('#zona-quantita').css('display', 'flex');
-                aggiornaSubtotaleDettaglio(qtaCart);
-            }
-            if (nelCarrello) $('#zona-quantita').hide();
+        $('#pTitle').text(prodotto.NomeProdotto);
+        $('#pAuthor').text(prodotto.autore || 'Autore non specificato');
+        $('#pDesc').text(prodotto.descrizione || 'Nessuna descrizione.');
+        $('#pCat').text(prodotto.NomeCategoria || 'Generale');
+        $('#pVendorLink').text(prodotto.NomeVenditore)
+                         .attr('href', 'profilo_venditore.php?u=' + encodeURIComponent(prodotto.IdVenditore));
+        $('#pPrice').text(formatPrezzo(prodotto.prezzo));
+        $('#rev-idProdotto').val(prodotto.IdProdotto);
+
+        mostraGalleria(prodotto.foto || []);
+
+        const disponibili = parseInt(prodotto.QuantitaDisp) || 0;
+        if (disponibili > 0) {
+            $('#stockHtml').addClass('stock--ok').text(disponibili + (disponibili === 1 ? ' copia disponibile' : ' copie disponibili'));
+        } else {
+            $('#stockHtml').addClass('stock--ko').text('Momentaneamente esaurito');
+            $('#zona-quantita').addClass('is-hidden');
+            $('#btnCarrello').text('Non disponibile').prop('disabled', true);
+        }
+
+        if (prodotto.id_pacchetto) mostraPacchetto();
+
+        $('#loading').addClass('is-hidden');
+        $('#contentWrapper').removeClass('is-hidden');
+
+        if (TIPO_UTENTE === 'cliente') {
+            verificaStatoCarrello();
+            verificaStatoPreferiti();
+        } else {
+            aggiornaQuantita(1);
         }
     }, 'json');
 }
 
-function verificaStatoPreferiti(idProdotto) {
-    <?php if(isset($_SESSION['tipoUtente']) && $_SESSION['tipoUtente'] === 'cliente'): ?>
-    $.get('api/ba_get_preferiti.php', function(resp) {
-        if(resp.status === 'ok') {
-            neiPeferiti = resp.preferiti.some(p => p.id_prodotto == idProdotto);
-            aggiornaBottonePreferiti();
-        }
-    }, 'json');
-    <?php endif; ?>
+function mostraGalleria(foto) {
+    const principale = foto.length ? foto[0] : 'img/default.jpg';
+    $('#mainImage').attr('src', principale).attr('alt', 'Copertina di ' + prodotto.NomeProdotto);
+    if (foto.length < 2) return;
+    let html = '';
+    foto.forEach((url, i) => {
+        html += `<button type="button" class="thumb ${i === 0 ? 'active' : ''}" data-src="${escapeHtml(url)}" aria-label="Mostra foto ${i + 1} di ${foto.length}">
+            <img src="${escapeHtml(url)}" alt="">
+        </button>`;
+    });
+    $('#thumbsContainer').html(html);
 }
 
-function cambiaQuantita(delta) {
-    const input = document.getElementById('inputQuantita');
-    const max   = parseInt(input.max) || 99;
-    let val = (parseInt(input.value) || 1) + delta;
-    val = Math.max(1, Math.min(val, max));
-    input.value = val;
-    // Aggiorna carrello in tempo reale
-    if (prodottoCorrente) {
-        $.post('api/ba_carrello.php', { action: 'update', idProdotto: prodottoCorrente.IdProdotto, qty: val }, function(resp) {
-            if (resp.status === 'ok') {
-                aggiornaSubtotaleDettaglio(val);
-                if (typeof updateCartBadge === 'function') updateCartBadge();
-            }
-        }, 'json');
-    }
+$(document).on('click', '.thumb', function() {
+    $('#mainImage').attr('src', $(this).data('src'));
+    $('.thumb').removeClass('active');
+    $(this).addClass('active');
+});
+
+/* ===================== QUANTITÀ E CARRELLO ===================== */
+function maxQuantita() {
+    return Math.max(1, parseInt(prodotto ? prodotto.QuantitaDisp : 1) || 1);
 }
 
-function aggiornaSubtotaleDettaglio(qty) {
-    if (!prodottoCorrente) return;
-    const prezzo = parseFloat(prodottoCorrente.prezzo) || 0;
-    const subtotale = (prezzo * qty).toFixed(2);
-    $('#subtotale-dettaglio').text('Subtotale: €' + subtotale);
+function aggiornaQuantita(q) {
+    quantita = Math.max(1, Math.min(q, maxQuantita()));
+    $('#qtyValore').text(quantita);
+    $('#qtyMeno').prop('disabled', quantita <= 1);
+    $('#qtyPiu').prop('disabled', quantita >= maxQuantita());
+    $('#subtotale-dettaglio').text('Subtotale: ' + formatPrezzo(parseFloat(prodotto.prezzo) * quantita));
 }
 
 function aggiornaBottoneCarrello() {
-    const btn = $("#btnCarrello");
+    if ((parseInt(prodotto.QuantitaDisp) || 0) <= 0 && !nelCarrello) return;   // esaurito: resta "Non disponibile"
+    $('#btnCarrello')
+        .text(nelCarrello ? 'Rimuovi dal carrello' : 'Aggiungi al carrello')
+        .toggleClass('btn-primary', !nelCarrello)
+        .toggleClass('btn-danger-outline', nelCarrello);
+}
+
+function verificaStatoCarrello() {
+    $.get('api/ba_carrello.php', { action: 'list' }, function(resp) {
+        const prodotti = resp.prodotti || [];
+        idCarrelloSet = new Set(prodotti.map(p => parseInt(p.IdProdotto)));
+        const inCarrello = prodotti.find(p => parseInt(p.IdProdotto) === ID_PRODOTTO);
+        nelCarrello = !!inCarrello;
+        aggiornaQuantita(inCarrello ? parseInt(inCarrello.quantita) : 1);
+        aggiornaBottoneCarrello();
+        if (prodotto.id_pacchetto) mostraPacchetto();   // aggiorna i bottoni del pacchetto
+    }, 'json');
+}
+
+function cambiaQuantita(delta) {
+    const nuova = Math.max(1, Math.min(quantita + delta, maxQuantita()));
+    if (nuova === quantita) return;
+    if (!nelCarrello) { aggiornaQuantita(nuova); return; }
+    // Se il prodotto è già nel carrello la quantità si aggiorna subito sul server
+    $.post('api/ba_carrello.php', { action: 'update', idProdotto: ID_PRODOTTO, qty: nuova }, function(resp) {
+        if (resp.status === 'ok') {
+            aggiornaQuantita(nuova);
+            updateCartBadge();
+        } else {
+            mostraNotifica(resp.msg || 'Quantità non disponibile.', true);
+        }
+    }, 'json');
+}
+$('#qtyMeno').on('click', () => cambiaQuantita(-1));
+$('#qtyPiu').on('click',  () => cambiaQuantita(1));
+
+$('#btnCarrello').on('click', function() {
+    if (!LOGGATO) { window.location.href = 'login.php'; return; }
     if (nelCarrello) {
-        btn.html("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"currentColor\" style=\"width:18px;height:18px;vertical-align:middle;margin-right:6px;\"><path d=\"M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z\"/></svg> Rimuovi dal Carrello").addClass("nel-carrello");
+        $.post('api/ba_carrello.php', { action: 'remove', idProdotto: ID_PRODOTTO }, function(resp) {
+            if (resp.status === 'ok') {
+                nelCarrello = false;
+                idCarrelloSet.delete(ID_PRODOTTO);
+                aggiornaQuantita(1);
+                aggiornaBottoneCarrello();
+                updateCartBadge();
+            }
+        }, 'json');
     } else {
-        btn.html('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width:18px;height:18px;vertical-align:middle;margin-right:6px;"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zM7.17 14.75l.03-.12.9-1.63H17c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 21.44 4H5.21L4.54 2H1v2h2l3.6 7.59-1.35 2.44A2 2 0 0 0 7 18h14v-2H7.42a.25.25 0 0 1-.25-.25z"/></svg> Aggiungi al Carrello').removeClass("nel-carrello");
+        $.post('api/ba_carrello.php', { action: 'add', idProdotto: ID_PRODOTTO, quantita: quantita }, function(resp) {
+            if (resp.status === 'ok') {
+                nelCarrello = true;
+                idCarrelloSet.add(ID_PRODOTTO);
+                aggiornaBottoneCarrello();
+                updateCartBadge();
+            } else {
+                mostraNotifica(resp.msg || 'Impossibile aggiungere il prodotto.', true);
+            }
+        }, 'json');
     }
+});
+
+/* ===================== PREFERITI ===================== */
+function verificaStatoPreferiti() {
+    $.get('api/ba_get_preferiti.php', function(resp) {
+        neiPreferiti = (resp.preferiti || []).some(p => parseInt(p.id_prodotto) === ID_PRODOTTO);
+        aggiornaBottonePreferiti();
+    }, 'json');
 }
 
 function aggiornaBottonePreferiti() {
-    const btn = $("#btnFav");
-    if (neiPeferiti) {
-        btn.html("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"currentColor\" style=\"width:18px;height:18px;vertical-align:middle;margin-right:6px;\"><path d=\"M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z\"/></svg> Rimuovi dai Preferiti").addClass("attivo");
-    } else {
-        btn.html('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:17px;height:17px;vertical-align:middle;margin-right:5px;"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> Aggiungi ai Preferiti').removeClass("attivo");
-    }
+    $('#btnFav').toggleClass('attivo', neiPreferiti)
+                .attr('aria-pressed', neiPreferiti)
+                .find('span').text(neiPreferiti ? 'Nei preferiti' : 'Aggiungi ai preferiti');
 }
 
-function toggleCarrello() {
-    if (!prodottoCorrente) return;
-    <?php if(!isset($_SESSION['IdUtente'])): ?>
-        window.location.href = 'login.php'; return;
-    <?php elseif(isset($_SESSION['tipoUtente']) && $_SESSION['tipoUtente'] !== 'cliente'): ?>
-        alert('Solo i clienti possono usare il carrello.'); return;
-    <?php endif; ?>
-
-    if (nelCarrello) {
-        $.post('api/ba_carrello.php', { action: 'remove', idProdotto: prodottoCorrente.IdProdotto }, function(resp) {
-            if(resp.status === 'ok') {
-                nelCarrello = false;
-                aggiornaBottoneCarrello();
-                $('#inputQuantita').val(1);
-                $('#subtotale-dettaglio').text('');
-                $('#zona-quantita').hide();
-                if(typeof updateCartBadge === "function") updateCartBadge();
-            }
-        }, 'json');
-    } else {
-        const qty = Math.max(1, parseInt($('#inputQuantita').val()) || 1);
-        $.post('api/ba_carrello.php', { action: 'add', idProdotto: prodottoCorrente.IdProdotto, quantita: qty }, function(resp) {
-            if(resp.status === 'ok') {
-                nelCarrello = true;
-                aggiornaBottoneCarrello();
-                $('#inputQuantita').val(qty);
-                $('#zona-quantita').css('display', 'flex');
-                aggiornaSubtotaleDettaglio(qty);
-                if(typeof updateCartBadge === "function") updateCartBadge();
-                if (prodottoCorrente.libriPacchetto && prodottoCorrente.libriPacchetto.length > 0) {
-                    mostraRiquadroPacchetto();
-                }
-            } else {
-                alert(resp.msg);
-            }
-        }, 'json');
-    }
-}
-
-function togglePreferito() {
-    if (!prodottoCorrente) return;
-    <?php if(!isset($_SESSION['IdUtente'])): ?>
-        window.location.href = 'login.php'; return;
-    <?php endif; ?>
-
-    $.post('api/ba_toggle_preferiti.php', { idProdotto: prodottoCorrente.IdProdotto }, function(resp) {
-        if(resp.status === 'ok') {
-            neiPeferiti = (resp.action === 'added');
+$('#btnFav').on('click', function() {
+    if (!LOGGATO) { window.location.href = 'login.php'; return; }
+    $.post('api/ba_toggle_preferiti.php', { idProdotto: ID_PRODOTTO }, function(resp) {
+        if (resp.status === 'ok') {
+            neiPreferiti = (resp.action === 'added');
             aggiornaBottonePreferiti();
         } else {
-            alert(resp.msg || 'Accedi per usare i preferiti.');
+            mostraNotifica(resp.msg || 'Accedi come cliente per usare i preferiti.', true);
         }
     }, 'json');
-}
+});
 
+/* ===================== PACCHETTO ===================== */
+function mostraPacchetto() {
+    const altri  = prodotto.libriPacchetto || [];
+    const totale = altri.length + 1;
+    const sconto = parseInt(prodotto.sconto_pacchetto) || 0;
 
-function mostraRiquadroPacchetto() {
-    var p = prodottoCorrente;
-    var nomePack = p.NomePacchetto || 'Pacchetto';
-    var tot = p.totalePacchetto || (p.libriPacchetto.length + 1);
+    $('#titolo-pacchetto').text('Pacchetto "' + prodotto.NomePacchetto + '"');
+    $('#desc-pacchetto').text('Metti nel carrello tutti i ' + totale + ' prodotti del pacchetto: lo sconto del '
+        + sconto + '% si applica automaticamente.');
 
-    if (p.tipoPacchetto === 'abbonamento') {
-        var periodoLabel = p.periodicita === 'mensile' ? "tutti i numeri dell'anno" : "tutti i numeri del mese";
-        $('#titolo-pacchetto').text('Abbonamento "' + nomePack + '"');
-        $('#desc-pacchetto').text('Aggiungi anche gli altri numeri qui sotto: comprando ' + periodoLabel + ' ottieni -' + p.sconto_tutti + '% sul totale. Lo sconto si applica automaticamente nel carrello solo se hai tutti i numeri.');
-    } else {
-        $('#titolo-pacchetto').text('Pacchetto "' + nomePack + '" — aggiungi altri libri e risparmia!');
-        var desc = '2 libri: -' + p.sconto_2 + '%';
-        if (tot >= 3) desc += ' | 3 libri: -' + p.sconto_3 + '%';
-        if (tot > 3 && p.eSaga && p.sconto_tutti > 0) desc += ' | tutti (' + tot + '): -' + p.sconto_tutti + '%';
-        $('#desc-pacchetto').text(desc + '. Lo sconto si applica automaticamente nel carrello.');
-    }
-
-    var html = '';
-    p.libriPacchetto.forEach(function(l) {
-        var foto = l.foto || 'img/default.jpg';
-        var disp = parseInt(l.quantita_disponibile) > 0;
-        var url = 'dettaglio_prodotto.php?id=' + l.id_prodotto;
-        var giaInCarrello = idCarrelloSet.has(parseInt(l.id_prodotto));
-        html += '<div style="background:white;border-radius:10px;padding:10px;text-align:center;border:1px solid #d2b4de;">';
-        html += '<a href="' + url + '"><img src="' + foto + '" style="width:100%;height:120px;object-fit:cover;border-radius:6px;cursor:pointer;"></a>';
-        html += '<p style="margin:6px 0 2px;font-size:0.85em;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><a href="' + url + '" style="color:inherit;text-decoration:none;" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">' + l.nome + '</a></p>';
-        if (l.autore) html += '<p style="margin:0 0 6px;font-size:0.78em;color:#888;">' + l.autore + '</p>';
-        html += '<div style="color:var(--dark-green);font-weight:800;margin-bottom:8px;">€' + parseFloat(l.prezzo).toFixed(2) + '</div>';
-        if (!disp) {
-            html += '<span style="font-size:0.78em;color:#e74c3c;">Esaurito</span>';
-        } else if (giaInCarrello) {
-            html += '<button onclick="rimuoviDaPacchetto(' + l.id_prodotto + ')" class="btn-secondary" style="width:100%;padding:7px;font-size:0.8em;background:#e74c3c;color:white;border:none;border-radius:6px;cursor:pointer;">✕ Rimuovi</button>';
-        } else {
-            html += '<button onclick="aggiungiDaPacchetto(' + l.id_prodotto + ')" class="btn-primary" style="width:100%;padding:7px;font-size:0.8em;">Aggiungi</button>';
+    let html = '';
+    altri.forEach(l => {
+        const id   = parseInt(l.id_prodotto);
+        const link = 'dettaglio_prodotto.php?id=' + id;
+        let azione = '';
+        if (parseInt(l.quantita_disponibile) <= 0) {
+            azione = '<span class="badge badge-esaurito">Esaurito</span>';
+        } else if (TIPO_UTENTE === 'cliente') {
+            azione = idCarrelloSet.has(id)
+                ? `<button type="button" class="btn btn-danger-outline btn-small btn-block js-pack-rimuovi" data-id="${id}">Rimuovi</button>`
+                : `<button type="button" class="btn btn-primary btn-small btn-block js-pack-aggiungi" data-id="${id}">Aggiungi</button>`;
         }
-        html += '</div>';
+        html += `<article class="pacchetto-item">
+            <a href="${link}" tabindex="-1" aria-hidden="true"><img src="${escapeHtml(l.foto || 'img/default.jpg')}" alt=""></a>
+            <h3><a href="${link}">${escapeHtml(l.nome)}</a></h3>
+            ${l.autore ? `<p class="muted">${escapeHtml(l.autore)}</p>` : ''}
+            <p class="book-price">${formatPrezzo(l.prezzo)}</p>
+            ${azione}
+        </article>`;
     });
     $('#libri-pacchetto-grid').html(html);
-    $('#riquadro-pacchetto').slideDown(300);
+    $('#riquadro-pacchetto').removeClass('is-hidden');
 }
 
-function attivaAvvisami(idProdotto) {
-    $('#btnAvvisami').prop('disabled', true).css('opacity', '0.6');
-    $('#msg-avvisami').text('Sarai avvisato al tuo indirizzo email personale quando il prodotto torna disponibile.')
-        .css('color', 'var(--dark-green)').show();
-}
-
-function avviaAbbonamento(idPacchetto, nomeAbb, sconto, numUscite, periodicita) {
-    <?php if (!isset($_SESSION['IdUtente'])): ?>
-        if (confirm('Devi essere loggato per procedere. Vuoi accedere?')) window.location.href = 'login.php';
-        return;
-    <?php endif; ?>
-    if (!prodottoCorrente) return;
-    const idProdotto     = prodottoCorrente.IdProdotto;
-    const prezzoProdotto = parseFloat(prodottoCorrente.prezzo);
-    const nomeProdotto   = prodottoCorrente.NomeProdotto;
-    const fotoProdotto   = (prodottoCorrente.foto && prodottoCorrente.foto.length > 0)
-                           ? prodottoCorrente.foto[0] : 'img/default.jpg';
-
-    const procedi = function() {
-        sessionStorage.setItem('abbonamento_selezionato', JSON.stringify({
-            idPacchetto, nomeAbb, sconto, numUscite, periodicita,
-            prezzoProdotto, nomeProdotto, fotoProdotto
-        }));
-        window.location.href = 'checkout.php';
-    };
-
-    // Gli abbonamenti si acquistano da soli: svuota il carrello prima
-    const avvia = function() {
-        $.post('api/ba_carrello.php', { action: 'clear' }, function() {
-            nelCarrello = false;
-            $.post('api/ba_carrello.php', { action: 'add', idProdotto: idProdotto }, function(resp) {
-                if (resp.status === 'ok') { nelCarrello = true; procedi(); }
-                else alert('Errore: ' + resp.msg);
-            }, 'json');
-        }, 'json');
-    };
-
-    // Se il carrello ha altri prodotti avvisa l'utente
-    $.get('api/ba_carrello.php', { action: 'list' }, function(resp) {
-        const altriProdotti = (resp.prodotti || []).filter(p => parseInt(p.IdProdotto) !== parseInt(idProdotto));
-        if (altriProdotti.length > 0) {
-            if (!confirm('Gli abbonamenti si acquistano separatamente.\nIl carrello verrà svuotato prima di procedere. Continuare?')) return;
-        }
-        avvia();
-    }, 'json');
-}
-
-function aggiungiDaPacchetto(id) {
-    $.post('api/ba_carrello.php', { action: 'add', idProdotto: id }, function(resp) {
+$(document).on('click', '.js-pack-aggiungi, .js-pack-rimuovi', function() {
+    const id     = parseInt($(this).data('id'));
+    const azione = $(this).hasClass('js-pack-aggiungi') ? 'add' : 'remove';
+    $.post('api/ba_carrello.php', { action: azione, idProdotto: id, quantita: 1 }, function(resp) {
         if (resp.status === 'ok') {
-            if (typeof updateCartBadge === 'function') updateCartBadge();
-            idCarrelloSet.add(parseInt(id));
-            // Aggiorna il bottone in-place
-            var btn = $('button[onclick="aggiungiDaPacchetto(' + id + ')"]');
-            btn.text('✕ Rimuovi')
-               .attr('onclick', 'rimuoviDaPacchetto(' + id + ')')
-               .css({'background':'#e74c3c','color':'white','border':'none'})
-               .prop('disabled', false);
+            azione === 'add' ? idCarrelloSet.add(id) : idCarrelloSet.delete(id);
+            updateCartBadge();
+            mostraPacchetto();
         } else {
-            alert(resp.msg);
+            mostraNotifica(resp.msg || 'Operazione non riuscita.', true);
         }
     }, 'json');
+});
+
+/* ===================== RECENSIONI ===================== */
+function disegnaStelle(n) {
+    n = parseInt(n) || 0;
+    return '★'.repeat(n) + '☆'.repeat(5 - n);
 }
 
-function rimuoviDaPacchetto(id) {
-    $.post('api/ba_carrello.php', { action: 'remove', idProdotto: id }, function(resp) {
-        if (resp.status === 'ok') {
-            if (typeof updateCartBadge === 'function') updateCartBadge();
-            idCarrelloSet.delete(parseInt(id));
-            // Aggiorna il bottone in-place
-            var btn = $('button[onclick="rimuoviDaPacchetto(' + id + ')"]');
-            btn.text('Aggiungi')
-               .attr('onclick', 'aggiungiDaPacchetto(' + id + ')')
-               .css({'background':'','color':'','border':''})
-               .addClass('btn-primary');
-        } else {
-            alert(resp.msg);
+function caricaRecensioni() {
+    $.get('api/ba_recensioni_prodotto.php', { id: ID_PRODOTTO }, function(resp) {
+        const recensioni = resp.recensioni || [];
+        const utente     = <?php echo json_encode($_SESSION['IdUtente'] ?? ''); ?>;
+        recensioniById   = {};
+
+        // Il bottone compare solo se il backend conferma che il cliente ha acquistato il prodotto
+        $('#btnRecensisci').toggleClass('is-hidden', !resp.puoRecensire);
+
+        if (recensioni.length === 0) {
+            $('#reviewsList').html('<p class="muted">Ancora nessuna recensione.</p>');
+            return;
         }
+        let html = '';
+        recensioni.forEach(r => {
+            recensioniById[r.id_recensione] = r;
+            const mia = r.username === utente;
+            html += `<article class="review">
+                <header class="review-head">
+                    <div>
+                        <strong>@${escapeHtml(r.username)}</strong>
+                        ${mia ? '<span class="badge badge-tu">Tu</span>' : ''}
+                    </div>
+                    <span class="review-stars" aria-label="${parseInt(r.valutazione)} stelle su 5">${disegnaStelle(r.valutazione)}</span>
+                </header>
+                <p class="review-text">${escapeHtml(r.testo)}</p>
+                ${r.foto ? `<a href="${escapeHtml(r.foto)}" target="_blank" rel="noopener"><img class="review-photo" src="${escapeHtml(r.foto)}" alt="Foto allegata da ${escapeHtml(r.username)}"></a>` : ''}
+                <footer class="review-foot">
+                    <small class="muted">${escapeHtml(r.data)}</small>
+                    ${mia ? `<span class="button-row">
+                        <button type="button" class="btn btn-secondary btn-small js-modifica-rec" data-id="${parseInt(r.id_recensione)}">Modifica</button>
+                        <button type="button" class="btn btn-danger-outline btn-small js-elimina-rec" data-id="${parseInt(r.id_recensione)}">Elimina</button>
+                    </span>` : ''}
+                </footer>
+            </article>`;
+        });
+        $('#reviewsList').html(html);
     }, 'json');
 }
 
 function aggiornaStelle(v) {
-    $(".star").each(function() {
-        $(this).css("color", $(this).data("v") <= v ? "#f1c40f" : "#ddd");
-    });
+    $('.star').each(function() { $(this).toggleClass('on', $(this).data('v') <= v); });
 }
 
-function caricaRecensioni(id) {
-    $.getJSON("api/ba_recensioni_prodotto.php", { id: id }, function(resp) {
-        let h = "";
-        const utenteCorrente = "<?php echo $_SESSION['IdUtente'] ?? ''; ?>";
-
-        if (!resp.recensioni || resp.recensioni.length === 0) {
-            h = "<p style='color:var(--text-sec);text-align:center;padding:30px;'>Ancora nessuna recensione.</p>";
-        } else {
-            resp.recensioni.forEach(r => {
-                const stelle = "★".repeat(r.valutazione) + "☆".repeat(5 - r.valutazione);
-                const isMia = r.username === utenteCorrente;
-                h += `<div style="border-bottom:1px solid var(--border-color);padding:20px 0;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <div>
-                            <strong>@${r.username}</strong>
-                            ${isMia ? '<span style="font-size:0.78em;background:var(--light-green);color:var(--dark-green);padding:2px 8px;border-radius:10px;margin-left:8px;">Tu</span>' : ''}
-                        </div>
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <span style="font-size:1.1em;color:#f1c40f;">${stelle}</span>
-                            ${isMia ? `
-                            <button class="btn-piccolo btn-modifica-rec" onclick="modificaRecensione(${r.id_recensione}, ${r.valutazione}, \`${r.testo.replace(/`/g,"'")}\`)">Modifica</button>
-                            <button class="btn-piccolo btn-elimina-rec" onclick="eliminaRecensione(${r.id_recensione})">Elimina</button>
-                            ` : ''}
-                        </div>
-                    </div>
-                    <p style="margin:10px 0;color:var(--text-dark);">${r.testo}</p>
-                    ${r.foto ? `<img src="${r.foto}" style="max-width:160px; border-radius:8px; border:1px solid #ddd; margin-bottom:8px; cursor:pointer;" onclick="window.open('${r.foto}','_blank')">` : ''}
-                    <small style="color:var(--text-sec);">${r.data}</small>
-                </div>`;
-            });
-        }
-        $("#reviewsList").html(h);
-    });
-}
-
-function modificaRecensione(idRec, voto, testo) {
-    $("#rev-id-recensione").val(idRec);
-    $("#rev-voto-val").val(voto);
-    $("#rev-commento").val(testo);
-    $("#modal-rec-titolo").text("Modifica la tua recensione");
+function apriModalRecensione(idRec, voto, testo, titolo) {
+    $('#formRecensione')[0].reset();
+    $('#rev-idProdotto').val(ID_PRODOTTO);
+    $('#rev-id-recensione').val(idRec);
+    $('#voto-' + voto).prop('checked', true);
     aggiornaStelle(voto);
-    $("#modalRecensione").css("display","flex").hide().fadeIn();
+    $('#rev-commento').val(testo);
+    $('#err-commento').text('');
+    $('#rev-foto-preview').addClass('is-hidden');
+    $('#modal-rec-titolo').text(titolo);
+    $('#modalRecensione').addClass('open');
+    $('#rev-commento').trigger('focus');
 }
 
-function apriModalRecensione() {
-    <?php if(!isset($_SESSION['IdUtente'])): ?>
-        window.location.href = 'login.php'; return;
-    <?php elseif(isset($_SESSION['tipoUtente']) && $_SESSION['tipoUtente'] === 'venditore'): ?>
-        alert('Devi accedere come cliente per lasciare una recensione.'); return;
-    <?php endif; ?>
-    $("#rev-id-recensione").val(0);
-    $("#rev-voto-val").val(5);
-    $("#rev-commento").val('');
-    $("#modal-rec-titolo").text("La tua opinione");
-    aggiornaStelle(5);
-    $("#modalRecensione").css("display","flex").hide().fadeIn();
-}
+$('#btnRecensisci').on('click', function() {
+    apriModalRecensione(0, 5, '', 'La tua recensione');
+});
 
-function eliminaRecensione(idRec) {
-    if(!confirm("Vuoi eliminare la tua recensione?")) return;
-    $.post('api/ba_elimina_recensione.php', { id_recensione: idRec }, function(resp) {
-        if(resp.status === 'ok') {
-            caricaRecensioni(new URLSearchParams(window.location.search).get('id'));
-        } else {
-            alert(resp.msg);
-        }
+$(document).on('click', '.js-modifica-rec', function() {
+    const r = recensioniById[$(this).data('id')];
+    if (r) apriModalRecensione(r.id_recensione, parseInt(r.valutazione), r.testo, 'Modifica la tua recensione');
+});
+
+$(document).on('click', '.js-elimina-rec', function() {
+    if (!confirm('Vuoi eliminare la tua recensione?')) return;
+    $.post('api/ba_elimina_recensione.php', { id_recensione: $(this).data('id') }, function(resp) {
+        if (resp.status === 'ok') caricaRecensioni();
+        else mostraNotifica(resp.msg || 'Eliminazione non riuscita.', true);
     }, 'json');
-}
+});
+
+$('input[name="voto"]').on('change', function() { aggiornaStelle(parseInt($(this).val())); });
+$('.js-chiudi-recensione').on('click', function() { $('#modalRecensione').removeClass('open'); });
+
+$('#rev-foto').on('change', function() {
+    const file = this.files[0];
+    if (!file) { $('#rev-foto-preview').addClass('is-hidden'); return; }
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size > 2 * 1024 * 1024) {
+        mostraNotifica('La foto deve essere JPG, PNG o WEBP e pesare al massimo 2 MB.', true);
+        $(this).val('');
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => $('#rev-foto-preview').attr('src', e.target.result).removeClass('is-hidden');
+    reader.readAsDataURL(file);
+});
+
+$('#formRecensione').on('submit', function(e) {
+    e.preventDefault();
+    const testo = $('#rev-commento').val().trim();
+    if (testo.length < 3) {
+        $('#err-commento').text('Scrivi almeno qualche parola (minimo 3 caratteri).');
+        return;
+    }
+    // FormData + contentType/processData false: necessario per inviare il file via AJAX
+    $.ajax({
+        url: 'api/ba_scrivi_recensione.php',
+        type: 'POST',
+        data: new FormData(this),
+        dataType: 'json',
+        cache: false,
+        contentType: false,
+        processData: false,
+        success: function(resp) {
+            if (resp.status === 'ok') {
+                $('#modalRecensione').removeClass('open');
+                mostraNotifica('Recensione pubblicata.');
+                caricaRecensioni();
+            } else {
+                mostraNotifica(resp.msg || 'Pubblicazione non riuscita.', true);
+            }
+        }
+    });
+});
 </script>
 </body>
 </html>

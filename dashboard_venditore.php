@@ -1,614 +1,475 @@
 <?php
 session_start();
-if(!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
-    header("Location: login.php"); exit;
+if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
+    header("Location: login.php");
+    exit;
 }
 ?>
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Venditore | The (E-)Shop Around the Corner</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
+    <title>Dashboard venditore | The (E-)Shop Around the Corner</title>
+    <?php include 'head.php'; ?>
 </head>
 <body>
-<?php include("header.php"); ?>
+<?php include 'header.php'; ?>
 
-<div class="container" style="max-width:1200px; margin:0 auto; padding:20px;">
-    <header style="display:flex; justify-content:space-between; align-items:center; margin:20px 0 30px;">
-        <h2 style="color:var(--dark-green); margin:0;">Pannello Venditore</h2>
-        <button class="btn-primary" onclick="window.location.href='aggiungi_prodotto.php'">+ Aggiungi Prodotto</button>
-    </header>
+<main id="contenuto" class="page">
+    <div class="dash-header">
+        <h1 class="page-title">Pannello venditore</h1>
+        <a href="aggiungi_prodotto.php" class="btn btn-primary">Aggiungi prodotto</a>
+    </div>
 
     <!-- STATISTICHE -->
-    <div class="dash-grid" style="margin-bottom:30px;">
+    <div class="stat-grid">
         <div class="stat-box">
-            <h3>Prodotti Online</h3>
-            <div class="stat-number" id="count-libri">0</div>
+            <h2>Prodotti in vendita</h2>
+            <p class="stat-number" id="count-libri">0</p>
         </div>
-        <div class="stat-box" style="cursor:pointer;" onclick="scrollToOrdini()">
-            <h3>Ordini Ricevuti</h3>
-            <div class="stat-number" id="count-ordini">0</div>
-            <small style="color:var(--text-sec);">Clicca per vedere lo storico</small>
-        </div>
-        <div class="stat-box stat-box-guadagno" id="box-guadagno">
-            <h3>Guadagno Disponibile</h3>
-            <div class="stat-number" id="total-guadagno">€ 0.00</div>
-            <small style="color:var(--text-sec);" id="ultimo-trasf"></small>
-            <button class="btn-trasferisci" id="btn-trasferisci" onclick="trasferisciGuadagno()" style="display:none;">
-                Trasferisci sul conto
-            </button>
+        <div class="stat-box">
+            <h2>Vendite</h2>
+            <p class="stat-number" id="count-ordini">0</p>
+            <a href="#sezione-ordini" class="stat-link">Vedi lo storico</a>
         </div>
     </div>
 
-    <!-- MODAL TRASFERIMENTO -->
-    <div id="modalTrasferimento" class="modal-overlay">
-        <div class="modal-box" style="max-width:420px; text-align:center;">
-            <div style="font-size:3em; margin-bottom:10px; color:var(--dark-green);">&#10003;</div>
-            <h3 style="color:var(--dark-green);">Trasferimento completato</h3>
-            <p id="msg-trasferimento" style="color:#555; font-size:1.05em; margin:15px 0 25px;"></p>
-            <button class="btn-primary" onclick="$('#modalTrasferimento').fadeOut()">Chiudi</button>
-        </div>
-    </div>
-
-    <!-- GRIGLIA PRODOTTI + ORDINI -->
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:30px;">
-        <section>
-            <h3 style="color:var(--dark-green); margin-bottom:15px;">I tuoi Prodotti</h3>
-            <div id="lista-libri-venditore"><p style="color:var(--text-sec);">Caricamento...</p></div>
+    <div class="dash-columns">
+        <!-- PRODOTTI -->
+        <section aria-labelledby="titolo-prodotti">
+            <h2 class="section-title" id="titolo-prodotti">I tuoi prodotti</h2>
+            <div id="lista-libri-venditore"><p class="loading">Caricamento...</p></div>
         </section>
 
-        <section id="sezione-ordini">
-            <h3 style="color:var(--dark-green); margin-bottom:15px;">Ordini Ricevuti</h3>
-            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:15px;">
-                <button class="filtro-btn active" onclick="filtraOrdini('', this)">Tutti</button>
-                <button class="filtro-btn" onclick="filtraOrdini('Pagato', this)">Pagati</button>
-                <button class="filtro-btn" onclick="filtraOrdini('In lavorazione', this)">In lavorazione</button>
-                <button class="filtro-btn" onclick="filtraOrdini('Spedito', this)">Spediti</button>
-                <button class="filtro-btn" onclick="filtraOrdini('Consegnato', this)">Consegnati</button>
+        <!-- VENDITE (sola lettura) -->
+        <section id="sezione-ordini" aria-labelledby="titolo-ordini">
+            <h2 class="section-title" id="titolo-ordini">Vendite</h2>
+            <div class="filtri" role="group" aria-label="Filtra le vendite">
+                <button type="button" class="filtro-btn active" data-stato="" aria-pressed="true">Tutte</button>
+                <button type="button" class="filtro-btn" data-stato="Pagato" aria-pressed="false">Pagate</button>
+                <button type="button" class="filtro-btn" data-stato="Annullato" aria-pressed="false">Annullate</button>
             </div>
-            <div id="lista-ordini-venditore"><p style="color:var(--text-sec);">Caricamento...</p></div>
+            <div id="lista-ordini-venditore"><p class="loading">Caricamento...</p></div>
         </section>
     </div>
-</div>
 
-<!-- SEZIONE PACCHETTI E ABBONAMENTI -->
-<div class="container" style="max-width:1200px; margin:0 auto; padding:0 20px 30px;">
-    <h3 style="color:var(--dark-green); margin-bottom:15px; display:flex; align-items:center; gap:8px;">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:22px;height:22px;"><path d="M20 6h-2.18c.07-.44.18-.87.18-1.33C18 2.54 15.96.5 13.46.5c-1.29 0-2.4.51-3.19 1.33L9 3.1 7.73 1.83C6.94 1.01 5.83.5 4.54.5 2.04.5 0 2.54 0 4.67c0 .46.11.89.18 1.33H0v2h20v-2z"/></svg>
-        I miei Pacchetti e Abbonamenti
-    </h3>
-    <div id="lista-pacchetti-venditore"><p style="color:var(--text-sec);">Caricamento...</p></div>
-</div>
+    <!-- PACCHETTI -->
+    <section aria-labelledby="titolo-pacchetti">
+        <h2 class="section-title" id="titolo-pacchetti">I tuoi pacchetti</h2>
+        <div id="lista-pacchetti-venditore" class="pacchetti-grid"><p class="loading">Caricamento...</p></div>
+    </section>
+</main>
 
-<!-- MODAL MODIFICA PACCHETTO -->
-<div id="modalModificaPacchetto" class="modal-overlay" style="display:none; justify-content:center; align-items:center;">
-    <div class="modal-box" style="max-width:480px; position:relative;">
-        <button onclick="$('#modalModificaPacchetto').hide()" style="position:absolute;top:14px;right:16px;background:none;border:none;cursor:pointer;color:#999;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:22px;height:22px;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+<!-- DIALOG MODIFICA PRODOTTO -->
+<div id="modalModifica" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="titolo-modifica">
+    <div class="modal-box modal-box--large">
+        <button type="button" class="modal-close js-chiudi-modal" aria-label="Chiudi">
+            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
-        <h3 style="color:var(--dark-green); margin:0 0 16px;">Modifica Pacchetto</h3>
-        <input type="hidden" id="mod-pack-id">
-        <input type="hidden" id="mod-pack-tipo">
-        <label style="font-size:0.9em; font-weight:600; display:block; margin-bottom:4px;">Nome</label>
-        <input type="text" id="mod-pack-nome" class="form-control" placeholder="Nome pacchetto">
-        <div id="mod-pack-sconti-libro">
-            <label style="font-size:0.9em; font-weight:600; display:block; margin-bottom:4px;">Sconto 2 prodotti (%)</label>
-            <input type="number" id="mod-pack-s2" class="form-control" min="0" max="99">
-            <label style="font-size:0.9em; font-weight:600; display:block; margin-bottom:4px;">Sconto 3 prodotti (%)</label>
-            <input type="number" id="mod-pack-s3" class="form-control" min="0" max="99">
-            <div style="display:flex; align-items:center; gap:10px; margin:8px 0;">
-                <input type="checkbox" id="mod-pack-esaga" style="width:16px;height:16px;cursor:pointer;">
-                <label for="mod-pack-esaga" style="font-size:0.9em; font-weight:600; cursor:pointer;">Saga completa (numero fisso di volumi)</label>
+        <h2 class="modal-title" id="titolo-modifica">Modifica prodotto</h2>
+        <form id="formModifica" enctype="multipart/form-data" novalidate>
+            <input type="hidden" name="id_prodotto" id="modifica-id">
+            <div class="form-field">
+                <label for="modifica-nome" class="form-label">Titolo</label>
+                <input type="text" name="nome" id="modifica-nome" class="form-control" maxlength="150">
             </div>
-            <div id="mod-pack-box-st" style="display:none;">
-                <label style="font-size:0.9em; font-weight:600; display:block; margin-bottom:4px;">Sconto saga completa (%)</label>
-                <input type="number" id="mod-pack-st" class="form-control" min="0" max="99">
+            <div class="form-field">
+                <label for="modifica-autore" class="form-label">Autore</label>
+                <input type="text" name="autore" id="modifica-autore" class="form-control" maxlength="100">
             </div>
-            <label style="font-size:0.9em; font-weight:600; display:block; margin:8px 0 4px;">Prodotti nel pacchetto</label>
-            <div id="mod-pack-prodotti" style="max-height:160px; overflow-y:auto; border:1px solid #eee; border-radius:8px; padding:8px; font-size:0.85em; color:#555;">
-                Caricamento...
+            <div class="form-field">
+                <label for="modifica-descrizione" class="form-label">Descrizione</label>
+                <textarea name="descrizione" id="modifica-descrizione" class="form-control" rows="4" maxlength="2000"></textarea>
             </div>
-            <label style="font-size:0.9em; font-weight:600; display:block; margin:8px 0 4px;">Aggiungi prodotti disponibili</label>
-            <div id="mod-pack-disponibili" style="max-height:120px; overflow-y:auto; border:1px solid #eee; border-radius:8px; padding:8px; font-size:0.85em; color:#555;">
-                Caricamento...
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="modifica-prezzo" class="form-label">Prezzo (€)</label>
+                    <input type="number" name="prezzo" id="modifica-prezzo" class="form-control" step="0.01" min="0.01" max="9999.99">
+                </div>
+                <div class="form-field">
+                    <label for="modifica-quantita" class="form-label">Copie disponibili</label>
+                    <input type="number" name="quantita" id="modifica-quantita" class="form-control" min="0" max="9999" step="1">
+                </div>
             </div>
-        </div>
-        <div id="mod-pack-sconti-abb" style="display:none;">
-            <label style="font-size:0.9em; font-weight:600; display:block; margin-bottom:4px;">Sconto abbonamento (%)</label>
-            <input type="number" id="mod-pack-sa" class="form-control" min="0" max="99">
-            <label style="font-size:0.9em; font-weight:600; display:block; margin-bottom:4px;">Periodicità</label>
-            <select id="mod-pack-perio" class="form-control">
-                <option value="mensile">Mensile (12 uscite/anno)</option>
-                <option value="settimanale">Settimanale (52 uscite/anno)</option>
-            </select>
-        </div>
-        <p id="mod-pack-err" style="color:#e74c3c; font-size:0.88em; display:none; margin-top:8px;"></p>
-        <button onclick="salvaPacchetto()" class="btn-primary" style="width:100%; padding:12px; margin-top:12px;">Salva modifiche</button>
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="modifica-categoria" class="form-label">Categoria</label>
+                    <select name="categoria" id="modifica-categoria" class="form-control"></select>
+                </div>
+                <div class="form-field">
+                    <label for="modifica-sottocategoria" class="form-label">Sottocategoria</label>
+                    <select name="sottocategoria" id="modifica-sottocategoria" class="form-control"></select>
+                </div>
+            </div>
+            <div class="form-field">
+                <label for="modifica-pacchetto" class="form-label">Pacchetto</label>
+                <select name="id_pacchetto" id="modifica-pacchetto" class="form-control"></select>
+            </div>
+
+            <fieldset class="form-field">
+                <legend class="form-label">Foto attuali</legend>
+                <div id="modifica-foto-esistenti" class="foto-gestione"></div>
+            </fieldset>
+            <div class="form-field">
+                <label for="modifica-foto" class="form-label">Aggiungi foto</label>
+                <input type="file" name="foto[]" id="modifica-foto" class="form-control" accept="image/jpeg,image/png,image/webp" multiple>
+                <small class="help-text">JPG, PNG o WEBP, massimo 2 MB ciascuna, 5 foto in totale.</small>
+            </div>
+
+            <small class="field-error" id="err-modifica"></small>
+            <button type="submit" class="btn btn-primary btn-block">Salva modifiche</button>
+            <p id="msg-modifica" class="form-msg is-hidden" role="status"></p>
+        </form>
     </div>
 </div>
 
-<!-- MODAL MODIFICA -->
-<div id="modalModifica" class="modal-overlay">
-    <div class="modal-box" style="max-width:520px;">
-        <span onclick="$('#modalModifica').fadeOut()" style="float:right; cursor:pointer; font-size:1.5em;">&times;</span>
-        <h3 style="color:var(--dark-green); margin-bottom:20px;">Modifica Prodotto</h3>
-        <input type="hidden" id="modifica-id">
-        <input type="hidden" id="modifica-tipo-prodotto">
-        <label style="font-weight:600;">Titolo</label>
-        <input type="text" id="modifica-nome" class="form-control">
-        <label style="font-weight:600;">Autore / Editore</label>
-        <input type="text" id="modifica-autore" class="form-control">
-        <label style="font-weight:600;">Descrizione</label>
-        <textarea id="modifica-descrizione" class="form-control" rows="3"></textarea>
-        <div style="display:flex; gap:10px;">
-            <div style="flex:1;">
-                <label style="font-weight:600;">Prezzo (€)</label>
-                <input type="number" id="modifica-prezzo" step="0.01" class="form-control">
+<!-- DIALOG MODIFICA PACCHETTO -->
+<div id="modalPacchetto" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="titolo-mod-pack">
+    <div class="modal-box">
+        <button type="button" class="modal-close js-chiudi-modal" aria-label="Chiudi">
+            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+        <h2 class="modal-title" id="titolo-mod-pack">Modifica pacchetto</h2>
+        <form id="formPacchetto" novalidate>
+            <input type="hidden" id="mod-pack-id">
+            <div class="form-row">
+                <div class="form-field">
+                    <label for="mod-pack-nome" class="form-label">Nome</label>
+                    <input type="text" id="mod-pack-nome" class="form-control" maxlength="100">
+                </div>
+                <div class="form-field">
+                    <label for="mod-pack-sconto" class="form-label">Sconto (%)</label>
+                    <input type="number" id="mod-pack-sconto" class="form-control" min="1" max="90">
+                </div>
             </div>
-            <div style="flex:1;">
-                <label style="font-weight:600;">Quantità disponibile</label>
-                <input type="number" id="modifica-quantita" min="0" class="form-control">
-            </div>
-        </div>
-        <label style="font-weight:600;">Nuova immagine (opzionale)</label>
-        <img id="modifica-preview" src="" style="width:55px;height:75px;object-fit:cover;border-radius:6px;margin-bottom:8px;display:none;">
-        <input type="file" id="modifica-foto" accept="image/*" class="form-control">
-
-
-
-        <button class="btn-primary" style="width:100%; padding:12px;" onclick="salvaModifica()">Salva Modifiche</button>
-        <p id="msg-modifica" style="display:none; font-weight:600; margin-top:8px; text-align:center;"></p>
+            <small class="field-error" id="mod-pack-err"></small>
+            <button type="submit" class="btn btn-primary">Salva</button>
+        </form>
+        <h3 class="sub-title">Prodotti nel pacchetto</h3>
+        <ul id="mod-pack-prodotti" class="lista-gestione"></ul>
+        <h3 class="sub-title">Prodotti che puoi aggiungere</h3>
+        <ul id="mod-pack-disponibili" class="lista-gestione"></ul>
     </div>
 </div>
 
 <script>
-let filtroCorrente = '';
+let filtroOrdini = '';
+let libriById    = {};    // prodotti del venditore, indicizzati per id
+let pacchetti    = [];
+let categorieDB  = [];
 
-$(document).ready(function() {
+$(function() {
+    $.get('api/ba_categorie.php', function(resp) { categorieDB = resp.categorie || []; }, 'json');
     caricaLibri();
-    caricaOrdini('');
+    caricaOrdini();
     caricaPacchetti();
 });
 
+/* Chiusura generica dei dialog */
+$('.js-chiudi-modal').on('click', function() { $(this).closest('.modal-overlay').removeClass('open'); });
+
+/* ===================== PRODOTTI ===================== */
 function caricaLibri() {
-    $.get('api/ba_libri_venditore.php', function(resp) {
-        if(resp.status === 'ok') {
-            $('#count-libri').text(resp.libri.length);
-            if(resp.libri.length === 0) {
-                $('#lista-libri-venditore').html('<p style="color:var(--text-sec);">Nessun prodotto in vendita.</p>');
-                return;
-            }
-            let html = '';
-            resp.libri.forEach(lib => {
-                const qta = lib.quantita_disponibile;
-                const qtaHtml = qta > 0
-                    ? `<span style="color:var(--dark-green);">${qta} disp.</span>`
-                    : `<span style="color:#e74c3c;">Esaurito</span>`;
-                const tipo = lib.tipo_prodotto || 'libro';
-                const tipoLabel = {
-                    'libro': 'Libro', 'fumetto': 'Fumetto', 'rivista': 'Rivista',
-                    'magazine': 'Magazine', 'periodico': 'Periodico'
-                }[tipo] || tipo;
-                const badgeTipo = `<span class="badge-tipo tipo-${tipo}">${tipoLabel}</span>`;
-                html += `
-                <div class="manage-book-card">
-                    <img src="${lib.url_foto || 'img/default.jpg'}" class="manage-book-img">
-                    <div style="flex-grow:1;">
-                        <div style="font-weight:bold;">${lib.nome} ${badgeTipo}</div>
-                        <div style="font-size:0.82em; color:var(--text-sec);">
-                            ${lib.autore ? lib.autore + ' &nbsp;|&nbsp; ' : ''}
-                            €${parseFloat(lib.prezzo).toFixed(2)} &nbsp;|&nbsp; ${qtaHtml}
-                        </div>
-                    </div>
-                    <button class="btn-modifica-libro" onclick="apriModifica(${lib.id_prodotto},'${lib.nome.replace(/'/g,"\\'")}','${(lib.autore||'').replace(/'/g,"\\'")}','${(lib.descrizione||'').replace(/'/g,"\\'").replace(/\n/g,' ')}',${lib.prezzo},${lib.quantita_disponibile},'${lib.url_foto||''}','${lib.tipo_prodotto||'libro'}',${lib.id_pacchetto || 'null'})">Modifica</button>
-                    <button class="btn-elimina" onclick="eliminaLibro(${lib.id_prodotto})">Elimina</button>
-                </div>`;
-            });
-            $('#lista-libri-venditore').html(html);
-        }
-    });
-}
-
-function caricaOrdini(stato) {
-    filtroCorrente = stato;
-    $.get('api/ba_ordini_venditore.php', { action: 'list', stato: stato }, function(resp) {
-        if(resp.status === 'ok') {
-            $('#count-ordini').text(resp.ordini.length);
-            const guadagno = parseFloat(resp.guadagno || 0);
-            $('#total-guadagno').text('€ ' + guadagno.toFixed(2));
-            if (guadagno > 0) {
-                $('#btn-trasferisci').show();
-            } else {
-                $('#btn-trasferisci').hide();
-            }
-
-            if(resp.ordini.length === 0) {
-                $('#lista-ordini-venditore').html('<p style="color:var(--text-sec);">Nessun ordine trovato.</p>');
-                return;
-            }
-
-            let html = '';
-            resp.ordini.forEach(o => {
-                // o.Stato = stato del venditore (per azioni), o.StatoOrdine = stato aggregato (visibile al cliente)
-                const statoV = o.Stato || 'Pagato';
-                const statoO = o.StatoOrdine || statoV;
-                const badgeClass = {
-                    'Pagato':'stato-pagato','In lavorazione':'stato-lavorazione',
-                    'Spedito':'stato-spedito','Consegnato':'stato-consegnato',
-                    'Annullato':'stato-annullato'
-                }[statoV] || 'stato-pagato';
-                const badgeClassOrdine = {
-                    'Pagato':'stato-pagato','In lavorazione':'stato-lavorazione',
-                    'Spedito':'stato-spedito','Consegnato':'stato-consegnato'
-                }[statoO] || 'stato-pagato';
-                // Mostra badge ordine cliente solo se diverso dallo stato venditore
-                const badgeOrdineHtml = statoV !== statoO
-                    ? `<span class="badge-stato ${badgeClassOrdine}" style="opacity:0.7;" title="Stato visibile al cliente">${statoO} (cliente)</span>`
-                    : '';
-
-                let libriHtml = '';
-                o.libri.forEach(l => {
-                    libriHtml += `
-                    <div class="ordine-libro">
-                        <img src="${l.Foto}" style="width:40px;height:55px;object-fit:cover;border-radius:4px;">
-                        <div>
-                            <strong style="font-size:0.9em;">${l.Titolo}</strong><br>
-                            <small style="color:var(--text-sec);">x ${l.Quantita} — €${(parseFloat(l.Prezzo)*parseInt(l.Quantita)).toFixed(2)}</small>
-                        </div>
-                    </div>`;
-                });
-
-                let azioniHtml = '';
-                if (statoO === 'Annullato') {
-                    azioniHtml = `<div style="margin-top:10px; padding:10px 14px; background:#fff3f3; border:1px solid #e74c3c; border-radius:8px; color:#c0392b; font-size:0.88em; display:flex; align-items:center; gap:8px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;flex-shrink:0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-                        Ordine annullato — rimborso da effettuare al cliente <strong>${o.Cliente}</strong>.
-                    </div>`;
-                } else if(statoV === 'Pagato') {
-                    azioniHtml = `<button class="btn-primary" style="padding:7px 14px;font-size:0.85em;margin-top:10px;" onclick="aggiornaStato(${o.IdOrdine},'In lavorazione')">Conferma ordine</button>`;
-                } else if(statoV === 'In lavorazione') {
-                    azioniHtml = `<button class="btn-primary" style="padding:7px 14px;font-size:0.85em;margin-top:10px;" onclick="aggiornaStato(${o.IdOrdine},'Spedito')">Segna come Spedito</button>`;
-                } else if(statoV === 'Spedito') {
-                    azioniHtml = `<button class="btn-primary" style="padding:7px 14px;font-size:0.85em;margin-top:10px;" onclick="aggiornaStato(${o.IdOrdine},'Consegnato')">Segna come Consegnato</button>`;
-                }
-
-                html += `
-                <div class="ordine-card">
-                    <div class="ordine-header" onclick="toggleOrdine(this)">
-                        <div>
-                            <strong>Ordine #${o.IdOrdine}</strong>
-                            <span style="color:var(--text-sec);margin-left:10px;font-size:0.85em;">${o.DataOrdine}</span>
-                            <span style="color:var(--text-sec);margin-left:10px;font-size:0.85em;">${o.Cliente}</span>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <span class="badge-stato ${badgeClass}">${statoV}</span>
-                            ${badgeOrdineHtml}
-                            <strong style="color:var(--dark-green);" title="Il tuo guadagno su questo ordine">€${parseFloat(o.TotaleVenditore || 0).toFixed(2)}</strong>
-                            <span style="color:var(--text-sec);">&#9660;</span>
-                        </div>
-                    </div>
-                    <div class="ordine-body">
-                        ${libriHtml}
-                        ${azioniHtml}
-                    </div>
-                </div>`;
-            });
-            $('#lista-ordini-venditore').html(html);
-        }
-    }, 'json');
-}
-
-function trasferisciGuadagno() {
-    const guadagno = $('#total-guadagno').text();
-    if (!confirm('Confermi il trasferimento di ' + guadagno + ' sul tuo conto?')) return;
-    $.post('api/ba_trasferisci_guadagno.php', function(resp) {
-        if (resp.status === 'ok') {
-            $('#msg-trasferimento').text(resp.msg);
-            $('#modalTrasferimento').css('display','flex').hide().fadeIn();
-            $('#total-guadagno').text('€ 0.00');
-            $('#btn-trasferisci').hide();
-        } else {
-            alert(resp.msg);
-        }
-    }, 'json');
-}
-
-function toggleOrdine(header) { $(header).next('.ordine-body').slideToggle(200); }
-function filtraOrdini(stato, btn) { $('.filtro-btn').removeClass('active'); $(btn).addClass('active'); caricaOrdini(stato); }
-function scrollToOrdini() { $('html,body').animate({ scrollTop: $('#sezione-ordini').offset().top - 20 }, 400); }
-
-// ===== GESTIONE PACCHETTI E ABBONAMENTI =====
-
-function caricaPacchetti() {
-    // Carica sia pacchetti libro che abbonamenti
-    $.when(
-        $.get('api/ba_pacchetti_venditore.php'),
-        $.get('api/ba_abbonamenti_venditore.php')
-    ).done(function(rPack, rAbb) {
-        const pacchetti = rPack[0].status === 'ok' ? rPack[0].pacchetti : [];
-        const abbonamenti = rAbb[0].status === 'ok' ? rAbb[0].abbonamenti : [];
-
-        if (pacchetti.length === 0 && abbonamenti.length === 0) {
-            $('#lista-pacchetti-venditore').html("<p style='color:var(--text-sec);'>Nessun pacchetto o abbonamento creato. Aggiungili durante l'inserimento di un prodotto.</p>");
+    return $.get('api/ba_libri_venditore.php', function(resp) {
+        const libri = resp.libri || [];
+        libriById = {};
+        $('#count-libri').text(libri.length);
+        if (libri.length === 0) {
+            $('#lista-libri-venditore').html('<p class="muted">Non hai ancora prodotti in vendita.</p>');
             return;
         }
-
-        let html = '<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px;">';
-        pacchetti.forEach(p => {
-            const sagaLabel = p.e_saga ? 'SAGA' : 'PROMO';
-            const sagaColor = p.e_saga ? '#1b5e20' : '#1565c0';
-            const sagaBg    = p.e_saga ? '#e8f5e9' : '#e3f2fd';
-            const scontoDesc = p.e_saga
-                ? `${p.sconto_2}% (2), ${p.sconto_3}% (3), ${p.sconto_tutti}% (saga completa)`
-                : `${p.sconto_2}% (2), ${p.sconto_3}% (3)`;
-            html += `<div style="background:white; border:1px solid var(--border-color); border-radius:10px; padding:14px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <strong style="font-size:0.95em; color:var(--dark-green);">${p.nome}</strong>
-                    <span style="font-size:0.75em; background:${sagaBg}; color:${sagaColor}; padding:2px 8px; border-radius:10px; font-weight:700;">${sagaLabel}</span>
+        let html = '';
+        libri.forEach(lib => {
+            libriById[lib.id_prodotto] = lib;
+            const qta = parseInt(lib.quantita_disponibile) || 0;
+            html += `<article class="manage-book-card">
+                <img src="${escapeHtml(lib.url_foto || 'img/default.jpg')}" class="manage-book-img" alt="">
+                <div class="manage-book-body">
+                    <h3><a href="dettaglio_prodotto.php?id=${parseInt(lib.id_prodotto)}">${escapeHtml(lib.nome)}</a></h3>
+                    <p class="muted">
+                        ${lib.autore ? escapeHtml(lib.autore) + ' · ' : ''}${formatPrezzo(lib.prezzo)} ·
+                        ${qta > 0 ? `<span class="stock--ok">${qta} disponibili</span>` : '<span class="stock--ko">Esaurito</span>'}
+                    </p>
                 </div>
-                <small style="color:var(--text-sec);">
-                    Sconto: ${scontoDesc} — ${p.tot_prodotti} prodotti
-                </small>
-                <div style="display:flex; gap:8px; margin-top:10px;">
-                    <button onclick="apriModificaPacchetto(${p.id_pacchetto},'${encodeURIComponent(p.nome)}','libro',${p.sconto_2},${p.sconto_3},${p.sconto_tutti},0)"
-                        style="flex:1; padding:5px; font-size:0.82em; background:white; color:var(--dark-green); border:1px solid var(--dark-green); border-radius:6px; cursor:pointer;">Modifica</button>
-                    <button onclick="eliminaPacchetto(${p.id_pacchetto},'${encodeURIComponent(p.nome)}')"
-                        style="flex:1; padding:5px; font-size:0.82em; background:white; color:#e74c3c; border:1px solid #e74c3c; border-radius:6px; cursor:pointer;">Elimina</button>
+                <div class="button-row">
+                    <button type="button" class="btn btn-secondary btn-small js-modifica" data-id="${parseInt(lib.id_prodotto)}">Modifica</button>
+                    <button type="button" class="btn btn-danger-outline btn-small js-elimina" data-id="${parseInt(lib.id_prodotto)}">Elimina</button>
                 </div>
-            </div>`;
+            </article>`;
         });
-        abbonamenti.forEach(a => {
-            html += `<div style="background:white; border:1px solid #d2b4de; border-radius:10px; padding:14px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <strong style="font-size:0.95em; color:#6c3483;">${a.nome}</strong>
-                    <span style="font-size:0.75em; background:#f3e5f5; color:#6a1b9a; padding:2px 8px; border-radius:10px; font-weight:700;">ABBONAMENTO</span>
-                </div>
-                <small style="color:var(--text-sec);">
-                    Sconto: ${a.sconto_tutti}% — ${a.periodicita || ''} — ${a.tot_prodotti} numeri
-                </small>
-                <div style="display:flex; gap:8px; margin-top:10px;">
-                    <button onclick="apriModificaPacchetto(${a.id_pacchetto},'${encodeURIComponent(a.nome)}','abbonamento',0,0,${a.sconto_tutti},${a.sconto_tutti},'${a.periodicita || "mensile"}')"
-                        style="flex:1; padding:5px; font-size:0.82em; background:white; color:#6c3483; border:1px solid #6c3483; border-radius:6px; cursor:pointer;">Modifica</button>
-                    <button onclick="eliminaPacchetto(${a.id_pacchetto},'${encodeURIComponent(a.nome)}')"
-                        style="flex:1; padding:5px; font-size:0.82em; background:white; color:#e74c3c; border:1px solid #e74c3c; border-radius:6px; cursor:pointer;">Elimina</button>
-                </div>
-            </div>`;
-        });
-        html += '</div>';
-        $('#lista-pacchetti-venditore').html(html);
-    });
+        $('#lista-libri-venditore').html(html);
+    }, 'json');
 }
 
-function apriModificaPacchetto(id, nomeEnc, tipo, s2, s3, st, sa, perio) {
-    const nome = decodeURIComponent(nomeEnc);
-    $('#mod-pack-id').val(id);
-    $('#mod-pack-tipo').val(tipo);
-    $('#mod-pack-nome').val(nome);
-    $('#mod-pack-err').hide();
-    if (tipo === 'abbonamento') {
-        $('#mod-pack-sconti-libro').hide();
-        $('#mod-pack-sconti-abb').show();
-        $('#mod-pack-sa').val(sa);
-        $('#mod-pack-perio').val(perio || 'mensile');
-    } else {
-        $('#mod-pack-sconti-abb').hide();
-        $('#mod-pack-sconti-libro').show();
-        $('#mod-pack-s2').val(s2);
-        $('#mod-pack-s3').val(s3);
-        const isSaga = st > 0;
-        $('#mod-pack-esaga').prop('checked', isSaga);
-        $('#mod-pack-box-st').toggle(isSaga);
-        $('#mod-pack-st').val(st);
-        // Carica prodotti del pacchetto e prodotti disponibili
-        aggiornaListeProdottiPacchetto(id);
-    }
-    $('#modalModificaPacchetto').css('display','flex');
-}
-
-// Toggle sconto saga completa
-$('#mod-pack-esaga').on('change', function() {
-    $('#mod-pack-box-st').toggle($(this).is(':checked'));
+$(document).on('click', '.js-elimina', function() {
+    const lib = libriById[$(this).data('id')];
+    if (!confirm('Eliminare "' + lib.nome + '"?')) return;
+    $.post('api/ba_elimina_libro.php', { id_prodotto: lib.id_prodotto }, function(resp) {
+        if (resp.status === 'ok') { caricaLibri(); caricaPacchetti(); }
+        else mostraNotifica(resp.msg || 'Eliminazione non riuscita.', true);
+    }, 'json');
 });
 
-function aggiornaListeProdottiPacchetto(idPacchetto) {
-    $.get('api/ba_pacchetti_venditore.php', function(resp) {
-        const pack = (resp.pacchetti || []).find(p => p.id_pacchetto == idPacchetto);
-        const prodottiNelPack = pack ? (pack.prodotti || []) : [];
-        const idNelPack = prodottiNelPack.map(p => p.id_prodotto);
+/* --- Modifica prodotto --- */
+function popolaCategorie(categoria, sottocategoria) {
+    const selCat = $('#modifica-categoria').empty();
+    categorieDB.filter(c => !c.nome_categoria_padre).forEach(c => {
+        selCat.append($('<option>').val(c.nome_categoria).text(c.nome_categoria));
+    });
+    selCat.val(categoria);
+    popolaSottocategorie(categoria, sottocategoria);
+}
 
-        // Lista prodotti NEL pacchetto (con bottone rimuovi)
-        if (prodottiNelPack.length === 0) {
-            $('#mod-pack-prodotti').html('<em style="color:#999;">Nessun prodotto nel pacchetto</em>');
-        } else {
-            $('#mod-pack-prodotti').html(prodottiNelPack.map(p =>
-                `<div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid #f0f0f0;">
-                    <span>${p.nome}</span>
-                    <button onclick="rimuoviDaPacchetto(${p.id_prodotto},${idPacchetto})"
-                        style="background:none; border:none; color:#e74c3c; cursor:pointer; font-size:1.1em;" title="Rimuovi">✕</button>
-                </div>`
-            ).join(''));
+function popolaSottocategorie(padre, selezionata) {
+    const sel = $('#modifica-sottocategoria').html('<option value="">Nessuna</option>');
+    categorieDB.filter(c => c.nome_categoria_padre === padre).forEach(c => {
+        sel.append($('<option>').val(c.nome_categoria).text(c.nome_categoria));
+    });
+    sel.val(selezionata || '');
+}
+
+$('#modifica-categoria').on('change', function() { popolaSottocategorie($(this).val(), ''); });
+
+$(document).on('click', '.js-modifica', function() {
+    const lib = libriById[$(this).data('id')];
+    $('#formModifica')[0].reset();
+    $('#msg-modifica').addClass('is-hidden');
+    $('#err-modifica').text('');
+
+    $('#modifica-id').val(lib.id_prodotto);
+    $('#modifica-nome').val(lib.nome);
+    $('#modifica-autore').val(lib.autore || '');
+    $('#modifica-descrizione').val(lib.descrizione || '');
+    $('#modifica-prezzo').val(lib.prezzo);
+    $('#modifica-quantita').val(lib.quantita_disponibile);
+
+    // Se la categoria del prodotto ha un padre, il padre va nella prima select e lei nella seconda
+    if (lib.nome_categoria_padre) popolaCategorie(lib.nome_categoria_padre, lib.nome_categoria);
+    else popolaCategorie(lib.nome_categoria, '');
+
+    const selPack = $('#modifica-pacchetto').html('<option value="">Nessun pacchetto</option>');
+    pacchetti.forEach(p => selPack.append($('<option>').val(p.id_pacchetto).text(p.nome + ' (-' + parseInt(p.sconto) + '%)')));
+    selPack.val(lib.id_pacchetto || '');
+
+    caricaFotoProdotto(lib.id_prodotto);
+    $('#modalModifica').addClass('open');
+});
+
+/* Foto del prodotto: lettura ed eliminazione singola (CRUD sulle foto) */
+function caricaFotoProdotto(idProdotto) {
+    $('#modifica-foto-esistenti').html('<p class="muted">Caricamento...</p>');
+    $.get('api/ba_foto_prodotto.php', { action: 'list', id_prodotto: idProdotto }, function(resp) {
+        const foto = resp.foto || [];
+        if (foto.length === 0) {
+            $('#modifica-foto-esistenti').html('<p class="muted">Nessuna foto: verrà mostrata l\'immagine predefinita.</p>');
+            return;
         }
-
-        // Lista prodotti DISPONIBILI (stesso venditore, senza pacchetto o in altro pacchetto)
-        $.get('api/ba_libri_venditore.php', function(rLibri) {
-            const disponibili = (rLibri.libri || []).filter(l =>
-                !idNelPack.includes(l.id_prodotto) &&
-                ['libro', 'fumetto'].includes(l.tipo_prodotto)
-            );
-            if (disponibili.length === 0) {
-                $('#mod-pack-disponibili').html('<em style="color:#999;">Nessun prodotto disponibile da aggiungere</em>');
-            } else {
-                $('#mod-pack-disponibili').html(disponibili.map(l =>
-                    `<div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid #f0f0f0;">
-                        <span>${l.nome}</span>
-                        <button onclick="aggiungiAPacchetto(${l.id_prodotto},${idPacchetto})"
-                            style="background:none; border:none; color:var(--dark-green); cursor:pointer; font-size:1.1em;" title="Aggiungi">✚</button>
-                    </div>`
-                ).join(''));
-            }
+        let html = '';
+        foto.forEach((f, i) => {
+            html += `<figure class="foto-item">
+                <img src="${escapeHtml(f.url)}" alt="Foto ${i + 1} del prodotto">
+                <button type="button" class="btn btn-danger-outline btn-small js-elimina-foto" data-id="${parseInt(f.id_foto)}" data-prodotto="${parseInt(idProdotto)}">Elimina</button>
+            </figure>`;
         });
-    });
-}
-
-function rimuoviDaPacchetto(idProdotto, idPacchetto) {
-    $.post('api/ba_modifica_pacchetto.php', {
-        action: 'remove_product', id_pacchetto: idPacchetto, id_prodotto: idProdotto
-    }, function(resp) {
-        if (resp.status === 'ok') {
-            aggiornaListeProdottiPacchetto(idPacchetto);
-            caricaPacchetti();
-        } else alert(resp.msg || 'Errore');
+        $('#modifica-foto-esistenti').html(html);
     }, 'json');
 }
 
-function aggiungiAPacchetto(idProdotto, idPacchetto) {
-    $.post('api/ba_modifica_pacchetto.php', {
-        action: 'add_product', id_pacchetto: idPacchetto, id_prodotto: idProdotto
-    }, function(resp) {
-        if (resp.status === 'ok') {
-            aggiornaListeProdottiPacchetto(idPacchetto);
-            caricaPacchetti();
-        } else alert(resp.msg || 'Errore');
+$(document).on('click', '.js-elimina-foto', function() {
+    if (!confirm('Eliminare questa foto?')) return;
+    const idProdotto = $(this).data('prodotto');
+    $.post('api/ba_foto_prodotto.php', { action: 'delete', id_foto: $(this).data('id') }, function(resp) {
+        if (resp.status === 'ok') { caricaFotoProdotto(idProdotto); caricaLibri(); }
+        else mostraNotifica(resp.msg || 'Eliminazione non riuscita.', true);
     }, 'json');
-}
+});
 
-function salvaPacchetto() {
-    const id   = $('#mod-pack-id').val();
-    const tipo = $('#mod-pack-tipo').val();
-    const nome = $('#mod-pack-nome').val().trim();
-    if (!nome) { $('#mod-pack-err').text('Il nome è obbligatorio.').show(); return; }
+$('#formModifica').on('submit', function(e) {
+    e.preventDefault();
+    const prezzo = parseFloat($('#modifica-prezzo').val());
+    const qta    = $('#modifica-quantita').val();
+    const files  = Array.from($('#modifica-foto')[0].files);
+    let msg = '';
+    if ($('#modifica-nome').val().trim().length < 2)        msg = 'Il titolo deve avere almeno 2 caratteri.';
+    else if ($('#modifica-autore').val().trim().length < 2) msg = "L'autore deve avere almeno 2 caratteri.";
+    else if (!(prezzo > 0 && prezzo <= 9999.99))           msg = 'Il prezzo deve essere tra 0,01 e 9999,99 €.';
+    else if (!/^\d{1,4}$/.test(qta))                       msg = 'Le copie devono essere un numero intero tra 0 e 9999.';
+    else if (!$('#modifica-categoria').val())              msg = 'Scegli una categoria.';
+    else if (files.some(f => !/^image\/(jpeg|png|webp)$/.test(f.type) || f.size > 2 * 1024 * 1024))
+        msg = 'Le foto devono essere JPG, PNG o WEBP e pesare al massimo 2 MB.';
+    $('#err-modifica').text(msg);
+    if (msg) return;
 
-    const data = { id_pacchetto: id, nome: nome, tipo_pacchetto: tipo };
-    if (tipo === 'abbonamento') {
-        data.sconto_tutti = $('#mod-pack-sa').val();
-        data.periodicita  = $('#mod-pack-perio').val();
-    } else {
-        data.sconto_2     = $('#mod-pack-s2').val();
-        data.sconto_3     = $('#mod-pack-s3').val();
-        data.e_saga       = $('#mod-pack-esaga').is(':checked') ? 1 : 0;
-        data.sconto_tutti = $('#mod-pack-esaga').is(':checked') ? $('#mod-pack-st').val() : 0;
-    }
-
-    $.post('api/ba_modifica_pacchetto.php', data, function(resp) {
-        if (resp.status === 'ok') {
-            $('#modalModificaPacchetto').hide();
-            caricaPacchetti();
-        } else {
-            $('#mod-pack-err').text(resp.msg || 'Errore.').show();
-        }
-    }, 'json');
-}
-
-function eliminaPacchetto(id, nomeEnc) {
-    const nome = decodeURIComponent(nomeEnc);
-    if (!confirm('Eliminare il pacchetto "' + nome + '"?\nI prodotti collegati perderanno l\'associazione ma non verranno eliminati.')) return;
-    $.post('api/ba_elimina_pacchetto.php', { id_pacchetto: id }, function(resp) {
-        if (resp.status === 'ok') {
-            caricaPacchetti();
-        } else {
-            alert(resp.msg || 'Errore eliminazione.');
-        }
-    }, 'json');
-}
-function aggiornaStato(idOrdine, stato) {
-    $.post('api/ba_ordini_venditore.php?action=update_status', { idOrdine: idOrdine, stato: stato }, function(resp) {
-        if(resp.status === 'ok') caricaOrdini(filtroCorrente);
-        else alert('Errore: ' + resp.msg);
-    }, 'json');
-}
-function apriModifica(id, nome, autore, desc, prezzo, qta, urlFoto, tipoProdotto, idPacchetto) {
-    $('#modifica-id').val(id);
-    $('#modifica-nome').val(nome);
-    $('#modifica-autore').val(autore);
-    $('#modifica-descrizione').val(desc);
-    $('#modifica-prezzo').val(prezzo);
-    $('#modifica-quantita').val(qta);
-    $('#modifica-foto').val('');
-    $('#modifica-tipo-prodotto').val(tipoProdotto || 'libro');
-    urlFoto ? $('#modifica-preview').attr('src',urlFoto).show() : $('#modifica-preview').hide();
-    $('#msg-modifica').hide();
-    caricaSezionePacchettoModifica(tipoProdotto, idPacchetto);
-    $('#modalModifica').css('display','flex').hide().fadeIn();
-}
-
-function caricaSezionePacchettoModifica(tipoProdotto, idPacchettoAttuale) {
-    const eAbbonabile = (tipoProdotto === 'rivista' || tipoProdotto === 'magazine' || tipoProdotto === 'periodico');
-    $('#modifica-box-libro, #modifica-box-abbonamento').hide();
-
-    if (eAbbonabile) {
-        $('#modifica-pacchetto-stato').text('Caricamento abbonamenti...');
-        $.get('api/ba_abbonamenti_venditore.php', function(resp) {
-            const select = $('#modifica-scelta-abbonamento');
-            select.html('<option value="">-- Nessun abbonamento --</option>');
-            if (resp.status === 'ok' && resp.abbonamenti.length > 0) {
-                resp.abbonamenti.forEach(a => {
-                    const sel = (idPacchettoAttuale && a.id_pacchetto == idPacchettoAttuale) ? 'selected' : '';
-                    select.append(`<option value="${a.id_pacchetto}" ${sel}>${a.nome} (${a.tot_prodotti} numeri, ${a.periodicita_label})</option>`);
-                });
-            }
-            $('#modifica-box-abbonamento').show();
-            $('#modifica-pacchetto-stato').text(idPacchettoAttuale ? 'Questo numero è già assegnato a un abbonamento.' : 'Questo numero non è ancora in nessun abbonamento.');
-        }, 'json');
-    } else {
-        $('#modifica-pacchetto-stato').text('Caricamento pacchetti...');
-        $.get('api/ba_pacchetti_venditore.php', function(resp) {
-            const select = $('#modifica-scelta-pacchetto');
-            select.html('<option value="">-- Nessun pacchetto --</option>');
-            if (resp.status === 'ok' && resp.pacchetti.length > 0) {
-                resp.pacchetti.forEach(p => {
-                    const sel = (idPacchettoAttuale && p.id_pacchetto == idPacchettoAttuale) ? 'selected' : '';
-                    select.append(`<option value="${p.id_pacchetto}" ${sel}>${p.nome} (${p.tot_prodotti} prodotti)</option>`);
-                });
-            }
-            $('#modifica-box-libro').show();
-            $('#modifica-pacchetto-stato').text(idPacchettoAttuale ? 'Questo prodotto è già assegnato a un pacchetto sconto.' : 'Questo prodotto non è ancora in nessun pacchetto sconto.');
-        }, 'json');
-    }
-}
-
-function salvaModifica() {
-    const formData = new FormData();
-    formData.append('id_prodotto', $('#modifica-id').val());
-    formData.append('nome', $('#modifica-nome').val());
-    formData.append('autore', $('#modifica-autore').val());
-    formData.append('descrizione', $('#modifica-descrizione').val());
-    formData.append('prezzo', $('#modifica-prezzo').val());
-    formData.append('quantita', $('#modifica-quantita').val());
-
-    const tipoProdotto = $('#modifica-tipo-prodotto').val();
-    const eAbbonabile = (tipoProdotto === 'rivista' || tipoProdotto === 'magazine' || tipoProdotto === 'periodico');
-    if (eAbbonabile) {
-        formData.append('id_pacchetto', $('#modifica-scelta-abbonamento').val());
-    } else {
-        formData.append('id_pacchetto', $('#modifica-scelta-pacchetto').val());
-    }
-
-    const foto = $('#modifica-foto')[0].files[0];
-    if(foto) formData.append('fotoLibro', foto);
     $.ajax({
-        url: 'api/ba_modifica_libro.php', type: 'POST', data: formData,
-        cache: false, contentType: false, processData: false,
+        url: 'api/ba_modifica_libro.php',
+        type: 'POST',
+        data: new FormData(this),
+        dataType: 'json',
+        cache: false,
+        contentType: false,
+        processData: false,
         success: function(resp) {
-            if(resp.status === 'ok') {
-                $('#msg-modifica').text('Salvato!').css('color','green').show();
-                setTimeout(() => { $('#modalModifica').fadeOut(); caricaLibri(); }, 1500);
+            if (resp.status === 'ok') {
+                $('#msg-modifica').text('Modifiche salvate.').addClass('form-msg--ok').removeClass('form-msg--err is-hidden');
+                caricaLibri();
+                caricaPacchetti();
+                setTimeout(() => $('#modalModifica').removeClass('open'), 900);
             } else {
-                $('#msg-modifica').text('Errore: '+resp.msg).css('color','red').show();
+                $('#msg-modifica').text(resp.msg || 'Salvataggio non riuscito.').addClass('form-msg--err').removeClass('form-msg--ok is-hidden');
             }
         }
     });
+});
+
+/* ===================== VENDITE (sola lettura) ===================== */
+$('.filtro-btn').on('click', function() {
+    $('.filtro-btn').removeClass('active').attr('aria-pressed', 'false');
+    $(this).addClass('active').attr('aria-pressed', 'true');
+    filtroOrdini = $(this).data('stato');
+    caricaOrdini();
+});
+
+function caricaOrdini() {
+    $.get('api/ba_ordini_venditore.php', { action: 'list', stato: filtroOrdini }, function(resp) {
+        const ordini = resp.ordini || [];
+        $('#count-ordini').text(ordini.length);
+
+        if (ordini.length === 0) {
+            $('#lista-ordini-venditore').html('<p class="muted">Nessuna vendita trovata.</p>');
+            return;
+        }
+        let html = '';
+        ordini.forEach(o => {
+            const id = parseInt(o.IdOrdine);
+            const annullato = o.StatoOrdine === 'Annullato';
+            let righe = '';
+            (o.libri || []).forEach(l => {
+                righe += `<div class="ordine-libro">
+                    <img src="${escapeHtml(l.Foto || 'img/default.jpg')}" alt="">
+                    <div>
+                        <strong>${escapeHtml(l.Titolo)}</strong><br>
+                        <small class="muted">&times; ${parseInt(l.Quantita)} · ${formatPrezzo(parseFloat(l.Prezzo) * parseInt(l.Quantita))}</small>
+                    </div>
+                </div>`;
+            });
+            html += `<article class="ordine-card">
+                <h3 class="order-heading">
+                    <button type="button" class="ordine-header" aria-expanded="false" aria-controls="vendita-${id}">
+                        <span><strong>Ordine #${id}</strong> <span class="muted">${escapeHtml(o.DataOrdine)} · ${escapeHtml(o.Cliente)}</span></span>
+                        <span class="order-header__right">
+                            <span class="badge ${annullato ? 'stato-annullato' : 'stato-pagato'}">${escapeHtml(o.StatoOrdine)}</span>
+                            <strong>${formatPrezzo(o.TotaleVenditore)}</strong>
+                        </span>
+                    </button>
+                </h3>
+                <div class="ordine-body is-hidden" id="vendita-${id}">${righe}</div>
+            </article>`;
+        });
+        $('#lista-ordini-venditore').html(html);
+    }, 'json');
 }
-function eliminaLibro(id) {
-    if(!confirm('Eliminare questo prodotto?')) return;
-    $.post('api/ba_elimina_libro.php', { id_prodotto: id }, function(resp) {
-        if(resp.status === 'ok') caricaLibri();
-        else alert('Errore: ' + resp.msg);
-    });
+
+$(document).on('click', '.ordine-header', function() {
+    const corpo  = $('#' + $(this).attr('aria-controls'));
+    const aperto = corpo.toggleClass('is-hidden').is(':visible');
+    $(this).attr('aria-expanded', aperto);
+});
+
+/* ===================== PACCHETTI ===================== */
+function caricaPacchetti() {
+    $.get('api/ba_pacchetti_venditore.php', function(resp) {
+        pacchetti = resp.pacchetti || [];
+        if (pacchetti.length === 0) {
+            $('#lista-pacchetti-venditore').html('<p class="muted">Nessun pacchetto. Puoi crearne uno quando aggiungi un prodotto.</p>');
+            return;
+        }
+        let html = '';
+        pacchetti.forEach(p => {
+            html += `<article class="pacchetto-card">
+                <h3>${escapeHtml(p.nome)}</h3>
+                <p class="muted">Sconto ${parseInt(p.sconto)}% acquistando tutti i ${parseInt(p.tot_prodotti)} prodotti</p>
+                <div class="button-row">
+                    <button type="button" class="btn btn-secondary btn-small js-modifica-pack" data-id="${parseInt(p.id_pacchetto)}">Modifica</button>
+                    <button type="button" class="btn btn-danger-outline btn-small js-elimina-pack" data-id="${parseInt(p.id_pacchetto)}">Elimina</button>
+                </div>
+            </article>`;
+        });
+        $('#lista-pacchetti-venditore').html(html);
+
+        // Se il dialog è aperto, ne aggiorna le liste
+        const aperto = $('#mod-pack-id').val();
+        if ($('#modalPacchetto').hasClass('open') && aperto) disegnaListePacchetto(parseInt(aperto));
+    }, 'json');
 }
+
+function trovaPacchetto(id) {
+    return pacchetti.find(p => parseInt(p.id_pacchetto) === parseInt(id));
+}
+
+function disegnaListePacchetto(idPacchetto) {
+    const pack = trovaPacchetto(idPacchetto);
+    if (!pack) return;
+    const dentro = pack.prodotti || [];
+    $('#mod-pack-prodotti').html(dentro.length
+        ? dentro.map(p => `<li><span>${escapeHtml(p.nome)}</span>
+            <button type="button" class="btn btn-danger-outline btn-small js-pack-prod" data-azione="remove_product" data-prodotto="${parseInt(p.id_prodotto)}">Togli</button></li>`).join('')
+        : '<li class="muted">Nessun prodotto nel pacchetto.</li>');
+
+    // Un prodotto può appartenere a un solo pacchetto
+    const liberi = Object.values(libriById).filter(l => !l.id_pacchetto);
+    $('#mod-pack-disponibili').html(liberi.length
+        ? liberi.map(l => `<li><span>${escapeHtml(l.nome)}</span>
+            <button type="button" class="btn btn-secondary btn-small js-pack-prod" data-azione="add_product" data-prodotto="${parseInt(l.id_prodotto)}">Aggiungi</button></li>`).join('')
+        : '<li class="muted">Tutti i tuoi prodotti sono già in un pacchetto.</li>');
+}
+
+$(document).on('click', '.js-modifica-pack', function() {
+    const pack = trovaPacchetto($(this).data('id'));
+    $('#mod-pack-id').val(pack.id_pacchetto);
+    $('#mod-pack-nome').val(pack.nome);
+    $('#mod-pack-sconto').val(pack.sconto);
+    $('#mod-pack-err').text('');
+    disegnaListePacchetto(pack.id_pacchetto);
+    $('#modalPacchetto').addClass('open');
+});
+
+$('#formPacchetto').on('submit', function(e) {
+    e.preventDefault();
+    const nome   = $('#mod-pack-nome').val().trim();
+    const sconto = parseInt($('#mod-pack-sconto').val());
+    if (nome.length < 2)              { $('#mod-pack-err').text('Il nome deve avere almeno 2 caratteri.'); return; }
+    if (!(sconto >= 1 && sconto <= 90)) { $('#mod-pack-err').text('Lo sconto deve essere tra 1 e 90%.'); return; }
+    $.post('api/ba_modifica_pacchetto.php', { action: 'update', id_pacchetto: $('#mod-pack-id').val(), nome: nome, sconto: sconto }, function(resp) {
+        if (resp.status === 'ok') {
+            $('#modalPacchetto').removeClass('open');
+            caricaPacchetti();
+        } else {
+            $('#mod-pack-err').text(resp.msg || 'Salvataggio non riuscito.');
+        }
+    }, 'json');
+});
+
+$(document).on('click', '.js-pack-prod', function() {
+    const idPacchetto = $('#mod-pack-id').val();
+    $.post('api/ba_modifica_pacchetto.php', {
+        action: $(this).data('azione'), id_pacchetto: idPacchetto, id_prodotto: $(this).data('prodotto')
+    }, function(resp) {
+        if (resp.status === 'ok') {
+            // prima i prodotti (id_pacchetto aggiornato), poi i pacchetti
+            caricaLibri().done(caricaPacchetti);
+        } else {
+            mostraNotifica(resp.msg || 'Operazione non riuscita.', true);
+        }
+    }, 'json');
+});
+
+$(document).on('click', '.js-elimina-pack', function() {
+    const pack = trovaPacchetto($(this).data('id'));
+    if (!confirm('Eliminare il pacchetto "' + pack.nome + '"? I prodotti restano in vendita senza sconto.')) return;
+    $.post('api/ba_elimina_pacchetto.php', { id_pacchetto: pack.id_pacchetto }, function(resp) {
+        if (resp.status === 'ok') { caricaPacchetti(); caricaLibri(); }
+        else mostraNotifica(resp.msg || 'Eliminazione non riuscita.', true);
+    }, 'json');
+});
 </script>
 </body>
 </html>

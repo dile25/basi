@@ -1,354 +1,201 @@
-<?php session_start(); ?>
+<?php
+session_start();
+$tipoUtente = $_SESSION['tipoUtente'] ?? '';
+$loggato    = isset($_SESSION['IdUtente']);
+?>
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
     <title>The (E-)Shop Around the Corner | La tua libreria online</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- stili in style.css -->
+    <?php include 'head.php'; ?>
 </head>
 <body>
-<?php include("header.php"); ?>
+<?php include 'header.php'; ?>
 
-<section class="hero">
-    <h1>Benvenuto su The (E-)Shop Around the Corner</h1>
-    <p>Scopri il nostro catalogo completo di libri, riviste e altre pubblicazioni.</p>
-</section>
+<main id="contenuto">
+    <section class="hero">
+        <h1>Benvenuto su The (E-)Shop Around the Corner</h1>
+        <p>Libri nuovi e usati dalle librerie indipendenti, a portata di click.</p>
+    </section>
 
-<!-- BANNER CATEGORIE -->
-<div id="categories-banner-wrapper" style="max-width:1200px; margin:0 auto 40px; padding:0 20px;">
-    <div id="categorie-banner" class="categories-scroll"></div>
-</div>
+    <div class="page">
+        <!-- CATEGORIE -->
+        <nav id="categories-banner-wrapper" aria-label="Sfoglia per categoria">
+            <div id="categorie-banner" class="categories-scroll"></div>
+        </nav>
 
-<!-- MODAL AVVISAMI -->
-<div id="modal-avvisami">
-    <div class="modal-box">
-        <div id="modal-stato-confirm">
-            <div style="font-size:2.5em; margin-bottom:12px; color:#e67e22;">&#9993;</div>
-            <h3 id="modal-titolo-libro">Avvisami quando torna disponibile</h3>
-            <p style="color:#555; font-size:0.9em; margin-bottom:20px;">Riceverai una notifica quando questo prodotto sarà di nuovo in stock.</p>
-            <input type="hidden" id="modal-id-prodotto">
-            <input type="hidden" id="modal-nome-prodotto">
-            <button class="modal-btn-confirm" onclick="confermaAvvisami()">Si, avvisami!</button>
-            <br>
-            <button class="modal-btn-cancel" onclick="chiudiModal()">Annulla</button>
-        </div>
-        <div id="modal-stato-ok" style="display:none;">
-            <div style="font-size:2.5em; margin-bottom:12px; color:var(--primary-green);">&#10003;</div>
-            <h3 style="color:var(--dark-green);">Sei nella lista!</h3>
-            <p id="modal-ok-msg" style="color:#555;"></p>
-            <button class="modal-btn-confirm" style="background:var(--primary-green);" onclick="chiudiModal()">Chiudi</button>
-        </div>
-    </div>
-</div>
+        <!-- RISULTATI DI RICERCA / FILTRO -->
+        <section id="sezione-filtro" class="is-hidden" aria-live="polite">
+            <a href="index.php" class="back-link">&#8592; Torna alla home</a>
+            <h2 class="section-title" id="titolo-filtro"></h2>
+            <div id="grid-filtro" class="books-grid"></div>
+        </section>
 
-<div id="main-container" style="max-width:1200px; margin:0 auto;">
-
-    <!-- SEZIONE FILTRO (visibile solo con ricerca/categoria) -->
-    <div id="sezione-filtro" style="display:none;">
-        <div style="padding:0 20px;">
-            <a href="index.php" style="color:var(--primary-green); font-size:0.9em; text-decoration:none;">&#8592; Torna alla home</a>
-        </div>
-        <h2 class="section-title" id="titolo-filtro"></h2>
-        <div id="grid-filtro" class="books-grid"></div>
-    </div>
-
-    <!-- SEZIONI HOME NORMALI -->
-    <div id="sezione-home">
-        <h2 class="section-title" id="titolo-nuovi">Nuovi Arrivi</h2>
-        <div id="grid-nuovi" class="books-grid"></div>
-
-        <div id="sezione-sconti-wrapper">
-            <h2 class="section-title">In Offerta</h2>
-            <div id="grid-sconti" class="books-grid"></div>
-        </div>
-
-        <div id="sezione-presto-wrapper">
-            <h2 class="section-title">Presto di Nuovo Disponibile</h2>
-            <div id="grid-presto" class="books-grid"></div>
+        <!-- SEZIONI DELLA HOME -->
+        <div id="sezione-home">
+            <section aria-labelledby="titolo-nuovi">
+                <h2 class="section-title" id="titolo-nuovi">Nuovi arrivi</h2>
+                <div id="grid-nuovi" class="books-grid"></div>
+            </section>
+            <section id="sezione-offerte" aria-labelledby="titolo-offerte">
+                <h2 class="section-title" id="titolo-offerte">In offerta nei pacchetti</h2>
+                <div id="grid-offerte" class="books-grid"></div>
+            </section>
         </div>
     </div>
-
-</div>
+</main>
 
 <script>
-var TIPO_UTENTE = "<?php echo isset($_SESSION['tipoUtente']) ? $_SESSION['tipoUtente'] : ''; ?>";
-var idCarrelloSet = new Set(); // traccia id prodotti nel carrello per bottone rimuovi
+const TIPO_UTENTE = <?php echo json_encode($tipoUtente); ?>;
+const LOGGATO     = <?php echo $loggato ? 'true' : 'false'; ?>;
+let idCarrelloSet = new Set();   // id dei prodotti già nel carrello
 
-$(document).ready(function() {
+$(function() {
+    caricaBannerCategorie();
 
-    // Carica stato carrello (solo per clienti)
-    <?php if(isset($_SESSION['tipoUtente']) && $_SESSION['tipoUtente'] === 'cliente'): ?>
-    $.get('api/ba_carrello.php', { action: 'list' }, function(resp) {
-        if (resp.status === 'ok' && resp.prodotti) {
-            resp.prodotti.forEach(p => idCarrelloSet.add(parseInt(p.IdProdotto || p.id_prodotto)));
-        }
-    }, 'json');
-    <?php endif; ?>
+    // Prima si legge il carrello (solo per i clienti), POI si disegnano i prodotti:
+    // così i bottoni "Aggiungi/Rimuovi" sono sempre corretti.
+    const carrelloPronto = (TIPO_UTENTE === 'cliente')
+        ? $.get('api/ba_carrello.php', { action: 'list' }, function(resp) {
+              (resp.prodotti || []).forEach(p => idCarrelloSet.add(parseInt(p.IdProdotto)));
+          }, 'json')
+        : $.Deferred().resolve();
 
-    // Banner categorie + tipi prodotto
+    carrelloPronto.always(caricaProdotti);
+});
+
+function caricaBannerCategorie() {
     $.get('api/ba_lista_categorie.php', function(resp) {
         const cats   = resp.categorie || [];
         const padri  = cats.filter(c => !c.nome_categoria_padre);
         const figlie = cats.filter(c => c.nome_categoria_padre);
+        let html = '';
         padri.forEach(padre => {
-            const sotto = figlie.filter(f => f.nome_categoria_padre === padre.nome_categoria);
-            if (sotto.length === 0) return;
-            const chips = sotto.map(f =>
-                `<a href="index.php?cat=${encodeURIComponent(f.nome_categoria)}" class="cat-chip">${f.nome_categoria}</a>`
-            ).join('');
-            $('#categorie-banner').append(`
-                <div class="cat-group">
-                    <div class="cat-group-label">${padre.nome_categoria}</div>
-                    <div class="cat-group-chips">${chips}</div>
-                </div>`);
+            const chips = figlie
+                .filter(f => f.nome_categoria_padre === padre.nome_categoria)
+                .map(f => `<a href="index.php?cat=${encodeURIComponent(f.nome_categoria)}" class="cat-chip">${escapeHtml(f.nome_categoria)}</a>`)
+                .join('');
+            html += `<div class="cat-group">
+                <a class="cat-group-label" href="index.php?cat=${encodeURIComponent(padre.nome_categoria)}">${escapeHtml(padre.nome_categoria)}</a>
+                ${chips ? `<div class="cat-group-chips">${chips}</div>` : ''}
+            </div>`;
         });
+        $('#categorie-banner').html(html);
     }, 'json');
+}
 
-    // Aggiungi chips per tipo prodotto (riviste, fumetti, etc.)
-    const tipiProdotto = [
-        { tipo: 'rivista',   label: 'Riviste' },
-        { tipo: 'magazine',  label: 'Magazine' },
-        { tipo: 'periodico', label: 'Periodici' },
-        { tipo: 'fumetto',   label: 'Fumetti' }
-    ];
-    let tipsHtml = tipiProdotto.map(t =>
-        `<a href="index.php?tipo=${encodeURIComponent(t.tipo)}" class="cat-chip">${t.label}</a>`
-    ).join('');
-    $('#categorie-banner').append(`
-        <div class="cat-group">
-            <div class="cat-group-label">Altro</div>
-            <div class="cat-group-chips">${tipsHtml}</div>
-        </div>`);
+function caricaProdotti() {
+    const params = new URLSearchParams(window.location.search);
+    const cat = params.get('cat') || '';
+    const q   = params.get('q')   || '';
 
-    // Prodotti
-    const urlParams = new URLSearchParams(window.location.search);
-    const catFiltro  = urlParams.get('cat')  || '';
-    const qFiltro    = urlParams.get('q')    || '';
-    const tipoFiltro = urlParams.get('tipo') || '';
+    if (cat || q) {
+        // Modalità ricerca/filtro
+        $('#sezione-home, #categories-banner-wrapper').addClass('is-hidden');
+        $('#sezione-filtro').removeClass('is-hidden');
+        $('#titolo-filtro').text(cat ? 'Categoria: ' + cat : 'Risultati per "' + q + '"');
 
-    $.get('api/ba_ricerca.php', { cat: catFiltro, q: qFiltro, tipo: tipoFiltro }, function(resp) {
-        const libri = resp.prodotti || [];
-
-        if (catFiltro || qFiltro || tipoFiltro) {
-            // Modalità filtro — nascondi home, mostra risultati
-            $('#sezione-home').hide();
-            $('#categories-banner-wrapper').hide();
-            $('#sezione-filtro').show();
-            const titolo = catFiltro
-                ? `Risultati per categoria: <em>${catFiltro}</em>`
-                : tipoFiltro
-                ? `Risultati per: <em>${tipoFiltro}</em>`
-                : `Risultati per: <em>"${qFiltro}"</em>`;
-            $('#titolo-filtro').html(titolo);
-            if (libri.length === 0) {
+        $.get('api/ba_ricerca.php', { cat: cat, q: q }, function(resp) {
+            const prodotti = resp.prodotti || [];
+            if (prodotti.length === 0) {
                 $('#grid-filtro').html(`
-                    <div style="padding:60px 20px; text-align:center; color:var(--text-sec); grid-column:1/-1;">
-                        <div style="font-size:3em; margin-bottom:16px; color:#ccc;">&#128218;</div>
-                        <h3 style="color:var(--dark-green);">Nessun titolo trovato</h3>
-                        <p>Prova con un'altra categoria o termine di ricerca.</p>
-                        <a href="index.php" style="color:var(--dark-green); font-weight:600;">&#8592; Torna alla home</a>
+                    <div class="empty-state">
+                        <h3>Nessun titolo trovato</h3>
+                        <p>Prova con un'altra categoria o con un termine di ricerca diverso.</p>
+                        <a href="index.php" class="btn btn-secondary">Torna alla home</a>
                     </div>`);
             } else {
-                renderizza(libri, '#grid-filtro');
+                renderizza(prodotti, '#grid-filtro');
             }
-        } else {
-            // Home normale
-            const disponibili  = libri.filter(l => parseInt(l.quantita_disponibile) > 0);
-            const esauriti     = libri.filter(l => parseInt(l.quantita_disponibile) === 0);
+        }, 'json');
+        return;
+    }
 
-            // Nuovi arrivi: 10 più recenti disponibili
-            renderizza(disponibili.slice(0, 10), '#grid-nuovi');
-
-            // In Offerta: un solo prodotto per pacchetto, max 10
-            const vistoPacchetto = new Set();
-            const inOfferta = [];
-            libri.filter(l => l.nome_pacchetto && parseInt(l.quantita_disponibile) > 0).forEach(l => {
-                if (!vistoPacchetto.has(l.nome_pacchetto) && inOfferta.length < 10) {
-                    vistoPacchetto.add(l.nome_pacchetto);
-                    inOfferta.push(l);
-                }
-            });
-            if (inOfferta.length > 0) {
-                renderizza(inOfferta, '#grid-sconti');
-            } else {
-                $('#sezione-sconti-wrapper').hide();
-            }
-
-            // Presto disponibile: esauriti max 10
-            if (esauriti.length > 0) {
-                renderizza(esauriti.slice(0, 10), '#grid-presto');
-            } else {
-                $('#sezione-presto-wrapper').hide();
-            }
-        }
+    // Home: ogni sezione chiede al server solo i prodotti che mostra (LIMIT lato server)
+    $.get('api/ba_ricerca.php', { sezione: 'nuovi', limit: 10 }, function(resp) {
+        renderizza(resp.prodotti || [], '#grid-nuovi');
     }, 'json');
-});
 
-function renderizza(libri, selector) {
+    $.get('api/ba_ricerca.php', { sezione: 'offerte', limit: 10 }, function(resp) {
+        const prodotti = resp.prodotti || [];
+        if (prodotti.length) renderizza(prodotti, '#grid-offerte');
+        else $('#sezione-offerte').addClass('is-hidden');
+    }, 'json');
+}
+
+function bottoneCarrello(id) {
+    return idCarrelloSet.has(id)
+        ? `<button type="button" class="btn btn-danger-outline btn-block js-rimuovi-carrello" data-id="${id}">Rimuovi dal carrello</button>`
+        : `<button type="button" class="btn btn-primary btn-block js-aggiungi-carrello" data-id="${id}">Aggiungi al carrello</button>`;
+}
+
+function renderizza(prodotti, selettore) {
     let html = '';
-    libri.forEach(lib => {
-        const esaurito    = parseInt(lib.quantita_disponibile) === 0;
-        const eAbbonabile = ['rivista','magazine','periodico','fumetto'].includes(lib.tipo_prodotto);
-        const haPacchetto = lib.nome_pacchetto && parseFloat(lib.sconto_pacchetto) > 0;
-        const haPacchettoBadge = lib.nome_pacchetto && !eAbbonabile; // saga/promo: badge senza prezzo scontato
-        const prezzo      = parseFloat(lib.prezzo);
-        const prezzoSc    = parseFloat(lib.PrezzoScontato || lib.prezzo);
-        const nelCarr     = idCarrelloSet.has(parseInt(lib.id_prodotto));
+    prodotti.forEach(p => {
+        const id       = parseInt(p.id_prodotto);
+        const esaurito = parseInt(p.quantita_disponibile) <= 0;
+        const nome     = escapeHtml(p.nome);
+        const link     = 'dettaglio_prodotto.php?id=' + id;
 
-        // Badge sconto pacchetto (saga, promo autore, offerte reali)
-        let badgeSconto = '';
-        if (haPacchettoBadge) {
-            const nomePack = lib.nome_pacchetto;
-            let label = '';
-            if (nomePack.toLowerCase().includes('autore') || nomePack.toLowerCase().includes('autrice')) {
-                label = 'Promo autore';
-            } else if (nomePack.toLowerCase().includes('saga') || nomePack.toLowerCase().includes('trilogia') || nomePack.toLowerCase().includes('serie')) {
-                label = 'Fa parte di una saga';
-            } else if (lib.tipo_pacchetto === 'abbonamento') {
-                label = 'Abbonamento disponibile';
-            } else {
-                label = nomePack;
-            }
-            badgeSconto = `<span class="badge-sconto" style="font-size:0.7em;">${label}</span><br>`;
-        }
+        const badge = p.nome_pacchetto
+            ? `<span class="badge badge-pacchetto">Pacchetto -${parseInt(p.sconto_pacchetto)}%</span>`
+            : '';
 
-        // Badge abbonamento solo se il prodotto ha effettivamente un abbonamento associato
-        let badgeAbb = '';
-        if (eAbbonabile && lib.tipo_pacchetto === 'abbonamento') {
-            badgeAbb = `<span style="display:inline-block;background:#f5eef8;color:#8e44ad;border:1px solid #d2b4de;border-radius:4px;font-size:0.7em;font-weight:700;padding:2px 7px;margin-bottom:4px;">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#8e44ad" style="width:10px;height:10px;vertical-align:middle;margin-right:2px;"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
-                Abbonamento disponibile
-            </span><br>`;
-        }
-
-        // Prezzo (scontato solo se sconto_pacchetto > 0)
-        let prezzoHtml = `<div class="book-price">€${prezzo.toFixed(2)}</div>`;
-        if (haPacchetto && prezzoSc < prezzo) {
-            prezzoHtml = `<div class="book-price">€${prezzoSc.toFixed(2)} <small style="text-decoration:line-through;color:#bbb;font-size:0.6em;font-weight:400;margin-left:4px;">€${prezzo.toFixed(2)}</small></div>`;
-        }
-
-        // Bottone: avvisami / vuoto per venditore / aggiungi o rimuovi
-        let btnHtml = '';
+        let azione = '';
         if (esaurito) {
-            btnHtml = `
-                <span class="badge-esaurito">Esaurito</span>
-                <button class="btn-avvisami" onclick="event.stopPropagation(); apriModal(${lib.id_prodotto}, '${lib.nome.replace(/'/g,"\\'")}')">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;"><path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
-                    Avvisami quando torna
-                </button>`;
-        } else if (TIPO_UTENTE === 'venditore') {
-            btnHtml = '';
-        } else if (nelCarr) {
-            btnHtml = `<button class="btn-add-cart" id="btn-cart-${lib.id_prodotto}"
-                style="background:#e74c3c;"
-                onclick="event.stopPropagation(); rimuoviDaCarrelloHome(${lib.id_prodotto}, this)">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-                Rimuovi dal carrello
-            </button>`;
-        } else {
-            btnHtml = `<button class="btn-add-cart" id="btn-cart-${lib.id_prodotto}"
-                onclick="event.stopPropagation(); aggiungiAlCarrello(${lib.id_prodotto}, this)">
-                Aggiungi al carrello
-            </button>`;
+            azione = '<span class="badge badge-esaurito">Esaurito</span>';
+        } else if (TIPO_UTENTE !== 'venditore') {
+            azione = bottoneCarrello(id);
         }
 
         html += `
-        <div class="book-card">
-            <img src="${lib.URLfoto || 'img/default.jpg'}" alt="${lib.nome}"
-                 onclick="location.href='dettaglio_prodotto.php?id=${lib.id_prodotto}'"
-                 style="cursor:pointer; height:260px; object-fit:cover;">
+        <article class="book-card">
+            <a href="${link}" class="book-card__img-link" tabindex="-1" aria-hidden="true">
+                <img class="book-card__img" src="${escapeHtml(p.URLfoto || 'img/default.jpg')}" alt="">
+            </a>
             <div class="book-info">
-                ${badgeSconto}${badgeAbb}
-                <h3 style="margin:0; font-size:1em; line-height:1.3; cursor:pointer;"
-                    onclick="location.href='dettaglio_prodotto.php?id=${lib.id_prodotto}'">${lib.nome}</h3>
-                <small style="color:#888; margin-top:2px;">${lib.autore || ''}</small>
-                ${prezzoHtml}
-                ${btnHtml}
+                ${badge}
+                <h3 class="book-title"><a href="${link}">${nome}</a></h3>
+                <p class="book-author">${escapeHtml(p.autore || '')}</p>
+                <p class="book-price">${formatPrezzo(p.prezzo)}</p>
+                ${azione}
             </div>
-        </div>`;
+        </article>`;
     });
-    $(selector).html(html || '<p style="padding:20px; color:#999;">Nessun prodotto disponibile.</p>');
+    $(selettore).html(html || '<p class="muted">Nessun prodotto disponibile.</p>');
 }
 
-// MODAL AVVISAMI
-function apriModal(id, nome) {
-    <?php if (!isset($_SESSION['IdUtente'])): ?>
-        if (confirm('Devi essere loggato. Vuoi accedere?')) window.location.href = 'login.php';
+/* --- Carrello (event delegation: i bottoni sono creati dinamicamente) --- */
+$(document).on('click', '.js-aggiungi-carrello', function() {
+    if (!LOGGATO) {
+        if (confirm('Devi accedere per usare il carrello. Vuoi accedere ora?')) window.location.href = 'login.php';
         return;
-    <?php endif; ?>
-    $('#modal-stato-confirm').show();
-    $('#modal-stato-ok').hide();
-    $('#modal-id-prodotto').val(id);
-    $('#modal-nome-prodotto').val(nome);
-    $('#modal-titolo-libro').text('Vuoi essere avvisato quando "' + nome + '" torna disponibile?');
-    $('#modal-avvisami').addClass('open');
-}
-
-function chiudiModal() { $('#modal-avvisami').removeClass('open'); }
-
-$('#modal-avvisami').on('click', function(e) {
-    if ($(e.target).is('#modal-avvisami')) chiudiModal();
+    }
+    const btn = $(this);
+    const id  = parseInt(btn.data('id'));
+    $.post('api/ba_carrello.php', { action: 'add', idProdotto: id, quantita: 1 }, function(resp) {
+        if (resp.status === 'ok') {
+            idCarrelloSet.add(id);
+            btn.replaceWith(bottoneCarrello(id));
+            updateCartBadge();
+        } else {
+            mostraNotifica(resp.msg || 'Impossibile aggiungere il prodotto.', true);
+        }
+    }, 'json');
 });
 
-function confermaAvvisami() {
-    $('#modal-stato-confirm').hide();
-    $('#modal-ok-msg').text('Sarai avvisato al tuo indirizzo email personale quando il prodotto torna disponibile.');
-    $('#modal-stato-ok').show();
-}
-
-function aggiungiAlCarrello(id, btn) {
-    <?php if(!isset($_SESSION['IdUtente'])): ?>
-        if (confirm('Devi essere loggato per aggiungere al carrello. Vuoi accedere?')) {
-            window.location.href = 'login.php';
-        }
-        return;
-    <?php endif; ?>
-    $.post('api/ba_carrello.php', { action: 'add', idProdotto: id }, function(resp) {
-        if (resp.status === 'ok') {
-            mostraNotifica('Aggiunto al carrello!');
-            if (typeof updateCartBadge === 'function') updateCartBadge();
-            idCarrelloSet.add(parseInt(id));
-            if (btn) {
-                btn.style.background = '#e74c3c';
-                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg> Rimuovi dal carrello';
-                btn.setAttribute('onclick', `event.stopPropagation(); rimuoviDaCarrelloHome(${id}, this)`);
-            }
-        } else {
-            mostraNotifica(resp.msg || 'Errore!', true);
-        }
-    }, 'json');
-}
-
-function rimuoviDaCarrelloHome(id, btn) {
+$(document).on('click', '.js-rimuovi-carrello', function() {
+    const btn = $(this);
+    const id  = parseInt(btn.data('id'));
     $.post('api/ba_carrello.php', { action: 'remove', idProdotto: id }, function(resp) {
         if (resp.status === 'ok') {
-            if (typeof updateCartBadge === 'function') updateCartBadge();
-            idCarrelloSet.delete(parseInt(id));
-            if (btn) {
-                btn.style.background = '';
-                btn.innerHTML = 'Aggiungi al carrello';
-                btn.setAttribute('onclick', `event.stopPropagation(); aggiungiAlCarrello(${id}, this)`);
-            }
+            idCarrelloSet.delete(id);
+            btn.replaceWith(bottoneCarrello(id));
+            updateCartBadge();
         }
     }, 'json');
-}
+});
 
-function mostraNotifica(msg, isError = false) {
-    const v = document.getElementById('popup-overlay');
-    if (v) v.remove();
-    const overlay = document.createElement('div');
-    overlay.id = 'popup-overlay';
-    overlay.innerHTML = `
-        <div id="popup-box">
-            <div id="popup-icon" style="color:${isError ? '#e74c3c' : 'var(--primary-green)'};">${isError ? '&#10007;' : '&#10003;'}</div>
-            <div id="popup-msg">${msg}</div>
-            <button id="popup-ok" onclick="this.closest('#popup-overlay').remove()">OK</button>
-        </div>`;
-    document.body.appendChild(overlay);
-    overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
-}
 </script>
 </body>
 </html>

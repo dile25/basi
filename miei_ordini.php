@@ -1,59 +1,63 @@
 <?php
 session_start();
-if(!isset($_SESSION['IdUtente'])) { header("Location: login.php"); exit; }
+if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'cliente') {
+    header("Location: login.php");
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>I Miei Ordini | The (E-)Shop Around the Corner</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- stili in style.css -->
+    <title>I miei ordini | The (E-)Shop Around the Corner</title>
+    <?php include 'head.php'; ?>
 </head>
 <body>
-<?php include("header.php"); ?>
+<?php include 'header.php'; ?>
 
-<div class="container" style="max-width:900px; margin:40px auto; padding:0 20px;">
-    <h2 style="color:var(--dark-green); margin-bottom:20px; display:flex; align-items:center; gap:10px;">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:28px;height:28px;"><path d="M21 3H3a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zm-1 16H4V5h16v14zM6 7h12v2H6zm0 4h12v2H6zm0 4h8v2H6z"/></svg>
-        I Miei Ordini
-    </h2>
+<main id="contenuto" class="page page--medium">
+    <h1 class="page-title">I miei ordini</h1>
 
-    <!-- Filtri -->
-    <div style="margin-bottom:20px;">
-        <button class="filtro-btn active" onclick="filtra('', this)">Tutti</button>
-        <button class="filtro-btn" onclick="filtra('Pagato', this)">Pagati</button>
-        <button class="filtro-btn" onclick="filtra('In lavorazione', this)">In lavorazione</button>
-        <button class="filtro-btn" onclick="filtra('Spedito', this)">Spediti</button>
-        <button class="filtro-btn" onclick="filtra('Consegnato', this)">Consegnati</button>
+    <div class="filtri" role="group" aria-label="Filtra gli ordini">
+        <button type="button" class="filtro-btn active" data-stato="" aria-pressed="true">Tutti</button>
+        <button type="button" class="filtro-btn" data-stato="Pagato" aria-pressed="false">Pagati</button>
+        <button type="button" class="filtro-btn" data-stato="Annullato" aria-pressed="false">Annullati</button>
     </div>
 
-    <div id="ordini-lista">
-        <p style="text-align:center; padding:50px;">Caricamento...</p>
-    </div>
-</div>
+    <div id="ordini-lista" aria-live="polite"><p class="loading">Caricamento...</p></div>
+</main>
 
-<!-- MODAL RECENSIONE -->
-<div id="modalRecensione" class="modal-overlay">
-    <div style="background:#fff; border-radius:16px; padding:32px; width:100%; max-width:440px; position:relative; box-shadow:0 8px 30px rgba(0,0,0,0.15);">
-        <button onclick="$('#modalRecensione').fadeOut()" style="position:absolute;top:14px;right:16px;background:none;border:none;cursor:pointer;padding:4px;line-height:1;color:#999;" title="Chiudi">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:22px;height:22px;display:block;"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+<!-- DIALOG RECENSIONE -->
+<div id="modalRecensione" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="rev-titolo">
+    <div class="modal-box">
+        <button type="button" class="modal-close js-chiudi-recensione" aria-label="Chiudi">
+            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
         </button>
-        <h3 id="rev-titolo" style="margin:0 0 4px; color:var(--dark-green); font-size:1.1em; padding-right:30px;">Recensisci il libro</h3>
-        <p style="color:#999; font-size:0.88em; margin:0 0 20px;">La tua opinione aiuterà altri lettori!</p>
-        <form id="formRecensione">
+        <h2 class="modal-title" id="rev-titolo">Recensisci il libro</h2>
+        <p class="muted">La tua opinione aiuta gli altri lettori.</p>
+        <form id="formRecensione" enctype="multipart/form-data" novalidate>
             <input type="hidden" name="idProdotto" id="rev-idProdotto">
-            <input type="hidden" name="voto" id="rev-voto-val" value="5">
-            <div class="star-rating" style="margin-bottom:16px;">
-                <span class="star" data-v="1">★</span><span class="star" data-v="2">★</span>
-                <span class="star" data-v="3">★</span><span class="star" data-v="4">★</span>
-                <span class="star" data-v="5">★</span>
+            <input type="hidden" name="id_recensione" value="0">
+
+            <fieldset class="star-rating">
+                <legend class="form-label">Valutazione</legend>
+                <?php for ($i = 1; $i <= 5; $i++): ?>
+                    <input type="radio" name="voto" id="voto-<?php echo $i; ?>" value="<?php echo $i; ?>" class="visually-hidden" <?php echo $i === 5 ? 'checked' : ''; ?>>
+                    <label for="voto-<?php echo $i; ?>" class="star on" data-v="<?php echo $i; ?>" title="<?php echo $i; ?> su 5">
+                        &#9733;<span class="visually-hidden"><?php echo $i; ?> stelle</span>
+                    </label>
+                <?php endfor; ?>
+            </fieldset>
+
+            <div class="form-field">
+                <label for="rev-commento" class="form-label">Commento</label>
+                <textarea name="commento" id="rev-commento" rows="4" class="form-control" maxlength="2000" required></textarea>
+                <small class="field-error" id="err-commento"></small>
             </div>
-            <textarea name="commento" rows="4" placeholder="Scrivi la tua recensione..." required
-                style="width:100%;border:1px solid #ddd;border-radius:10px;padding:12px;font-family:inherit;box-sizing:border-box;font-size:0.95em;resize:vertical;"></textarea>
-            <button type="submit" class="btn-primary" style="width:100%;margin-top:14px;padding:14px;font-weight:700;border-radius:10px;font-size:1em;">PUBBLICA</button>
+            <div class="form-field">
+                <label for="rev-foto" class="form-label">Foto (facoltativa)</label>
+                <input type="file" name="fotoRecensione" id="rev-foto" class="form-control" accept="image/jpeg,image/png,image/webp">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Pubblica recensione</button>
         </form>
     </div>
 </div>
@@ -61,155 +65,169 @@ if(!isset($_SESSION['IdUtente'])) { header("Location: login.php"); exit; }
 <script>
 let filtroCorrente = '';
 
-$(document).ready(function() {
-    caricaOrdini('');
-
-    $(document).on("click", ".star", function() {
-        const v = $(this).data("v");
-        $("#rev-voto-val").val(v);
-        aggiornaStelle(v);
-    });
-
-    $("#formRecensione").on("submit", function(e) {
-        e.preventDefault();
-        $.post('api/ba_scrivi_recensione.php', $(this).serialize(), function(resp) {
-            if(resp.status === 'ok') {
-                alert("Recensione inviata!");
-                $("#modalRecensione").fadeOut();
-                caricaOrdini(filtroCorrente);
-            } else { alert(resp.msg); }
-        }, "json");
-    });
+$(function() {
+    caricaOrdini();
 });
 
-function filtra(stato, btn) {
-    $('.filtro-btn').removeClass('active');
-    $(btn).addClass('active');
-    filtroCorrente = stato;
-    caricaOrdini(stato);
-}
+$('.filtro-btn').on('click', function() {
+    $('.filtro-btn').removeClass('active').attr('aria-pressed', 'false');
+    $(this).addClass('active').attr('aria-pressed', 'true');
+    filtroCorrente = $(this).data('stato');
+    caricaOrdini();
+});
 
-function caricaOrdini(stato) {
-    $.get('api/ba_miei_ordini.php', { stato: stato }, function(resp) {
-        if(resp.status !== 'ok') return;
-        if(resp.ordini.length === 0) {
-            $("#ordini-lista").html("<div style='text-align:center;padding:60px;'><h3>Nessun ordine trovato.</h3><a href='index.php' style='color:var(--dark-green);'>Esplora i libri</a></div>");
+function caricaOrdini() {
+    $.get('api/ba_miei_ordini.php', { stato: filtroCorrente }, function(resp) {
+        const ordini = resp.ordini || [];
+        if (ordini.length === 0) {
+            $('#ordini-lista').html(`<div class="empty-state">
+                <h2>Nessun ordine trovato</h2>
+                <a href="index.php" class="btn btn-primary">Esplora il catalogo</a>
+            </div>`);
             return;
         }
 
-        let h = '';
-        resp.ordini.forEach(ord => {
-            const stato = ord.stato;
-            const statiOrdine = ['Pagato', 'In lavorazione', 'Spedito', 'Consegnato'];
-            const idxCorrente = statiOrdine.indexOf(stato);
-            const fillPerc = ['0%','33%','66%','100%'][idxCorrente] || '0%';
+        let html = '';
+        ordini.forEach(ord => {
+            const idOrdine  = parseInt(ord.id_ordine);
+            const annullato = ord.stato === 'Annullato';
 
-            const badgeClass = {
-                'Pagato':'stato-pagato','In lavorazione':'stato-lavorazione',
-                'Spedito':'stato-spedito','Consegnato':'stato-consegnato',
-                'Annullato':'stato-annullato'
-            }[stato] || 'stato-pagato';
-
-            const icone = [
-                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>',
-                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><path d="M20 6h-2.18c.07-.44.18-.87.18-1.33C18 2.54 15.96.5 13.46.5c-1.29 0-2.4.51-3.19 1.33L9 3.1 7.73 1.83C6.94 1.01 5.83.5 4.54.5 2.04.5 0 2.54 0 4.67c0 .46.11.89.18 1.33H0v2h20v-2z M0 20c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9H0v11z"/></svg>',
-                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><path d="M20 8H4V6H2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6h-2v2zm0 12H4v-6h16v6zm0-8H4v-2h16v2zM4 2h2v2H4zm14 0h2v2h-2z"/></svg>',
-                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>'
-            ];
-            const label = ['Ricevuto','In preparazione','In spedizione','Consegnato'];
-            let stepsHtml = '';
-            statiOrdine.forEach((s, i) => {
-                let cls = '';
-                if(i < idxCorrente) cls = 'done';
-                else if(i === idxCorrente) cls = 'done current';
-                stepsHtml += `<div class="tracker-step ${cls}"><div class="tracker-dot">${icone[i]}</div>${label[i]}</div>`;
-            });
-
-            h += `
-            <div class="order-card">
-                <div class="order-header" onclick="$(this).next('.tracker').toggle(200); $(this).nextAll('.order-body').first().toggle(200);">
-                    <div>
-                        <strong>ORDINE #${ord.id_ordine}</strong>
-                        <span style="margin-left:12px;color:#666;font-size:0.9em;">${ord.data}</span>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:12px;">
-                        <span class="badge ${badgeClass}">${stato}</span>
-                        <strong style="color:var(--dark-green);">€${parseFloat(ord.totale).toFixed(2)}</strong>
-                        <span style="color:#aaa;">▼</span>
-                    </div>
-                </div>
-
-                ${ord.stato !== 'Annullato' ? `<div class="tracker">
-                    <div class="tracker-steps">
-                        <div class="tracker-line-bg"></div>
-                        <div class="tracker-line-fill" style="width:${fillPerc};"></div>
-                        ${stepsHtml}
-                    </div>
-                </div>` : ''}
-
-                <div class="order-body">
-                ${ord.stato === 'Annullato' ? `<div style="background:#fff3f3; border:1px solid #e74c3c; border-radius:8px; padding:12px 16px; margin-bottom:12px; color:#c0392b; font-size:0.92em; display:flex; align-items:center; gap:8px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;flex-shrink:0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-                    Questo ordine è stato annullato. Se hai già pagato, contatta il supporto per il rimborso.
-                </div>` : ''}`;
-
-            // Raggruppa libri per venditore
+            // Raggruppamento dei prodotti per venditore (un ordine può contenere più venditori)
             const perVenditore = {};
             ord.libri.forEach(lib => {
                 const v = lib.venditore || 'Venditore';
-                if (!perVenditore[v]) perVenditore[v] = [];
-                perVenditore[v].push(lib);
+                (perVenditore[v] = perVenditore[v] || []).push(lib);
             });
-
             const venditori = Object.keys(perVenditore);
+
+            let corpo = '';
+            if (annullato) {
+                corpo += '<p class="avviso avviso--errore">Ordine annullato: i prodotti sono tornati disponibili e il pagamento è stato stornato.</p>';
+            }
             venditori.forEach(venditore => {
+                const libri = perVenditore[venditore];
                 if (venditori.length > 1) {
-                    const totV = perVenditore[venditore].reduce((s, l) => s + parseFloat(l.prezzo_acquisto || 0), 0);
-                    h += `<div style="margin:10px 0 6px; padding:8px 12px; background:#f8f8f8; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:0.85em; color:#555; display:flex; align-items:center; gap:6px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
-                            Venduto da <strong style="margin-left:4px;">${venditore}</strong>
-                        </span>
-                        <span style="font-size:0.85em; color:var(--dark-green); font-weight:700;">€${totV.toFixed(2)}</span>
+                    const totV = libri.reduce((s, l) => s + parseFloat(l.prezzo_acquisto || 0) * parseInt(l.quantita || 1), 0);
+                    corpo += `<div class="venditore-group">
+                        <span>Venduto da <strong>${escapeHtml(venditore)}</strong></span>
+                        <strong>${formatPrezzo(totV)}</strong>
                     </div>`;
                 }
-                perVenditore[venditore].forEach(lib => {
-                    h += `
-                    <div class="book-item">
-                        <img src="${lib.foto}" class="book-img" onclick="location.href='dettaglio_prodotto.php?id=${lib.id_prodotto}'" style="cursor:pointer;">
-                        <div style="flex-grow:1;">
-                            <strong>${lib.nome}</strong><br>
-                            <small style="color:#666;">Quantità: ${lib.quantita} | Prezzo: €${parseFloat(lib.prezzo_acquisto).toFixed(2)}</small>
+                libri.forEach(lib => {
+                    const idProd = parseInt(lib.id_prodotto);
+                    let azione = '';
+                    if (lib.gia_recensito) {
+                        azione = `<span class="review-stars" aria-label="Hai dato ${parseInt(lib.voto_utente)} stelle">${'★'.repeat(parseInt(lib.voto_utente) || 0)}</span>`;
+                    } else if (!annullato) {
+                        azione = `<button type="button" class="btn btn-secondary btn-small js-recensisci" data-id="${idProd}" data-nome="${escapeHtml(lib.nome)}">Recensisci</button>`;
+                    }
+                    corpo += `<div class="book-item">
+                        <a href="dettaglio_prodotto.php?id=${idProd}" tabindex="-1" aria-hidden="true"><img class="book-img" src="${escapeHtml(lib.foto || 'img/default.jpg')}" alt=""></a>
+                        <div class="book-item__body">
+                            <a href="dettaglio_prodotto.php?id=${idProd}"><strong>${escapeHtml(lib.nome)}</strong></a>
+                            <small class="muted">Quantità: ${parseInt(lib.quantita)} · Prezzo: ${formatPrezzo(lib.prezzo_acquisto)}</small>
                         </div>
-                        <div>
-                            ${lib.gia_recensito
-                                ? `<span style="color:#f1c40f;font-size:1.1em;">${'★'.repeat(lib.voto_utente)}</span>`
-                                : `<button class="btn-recensisci-colorato" onclick="apriModal(${lib.id_prodotto},'${lib.nome.replace(/'/g,"\'")}')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width:14px;height:14px;"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg> Recensisci</button>`
-                            }
-                        </div>
+                        <div>${azione}</div>
                     </div>`;
                 });
             });
 
-            h += `</div></div>`;
+            if (ord.stato === 'Pagato') {
+                corpo += `<div class="order-actions">
+                    <button type="button" class="btn btn-danger-outline btn-small js-annulla" data-id="${idOrdine}">Annulla ordine</button>
+                </div>`;
+            }
+
+            html += `<article class="order-card">
+                <h2 class="order-heading">
+                    <button type="button" class="order-header" aria-expanded="false" aria-controls="ordine-${idOrdine}">
+                        <span><strong>Ordine #${idOrdine}</strong> <span class="muted">${escapeHtml(ord.data)}</span></span>
+                        <span class="order-header__right">
+                            <span class="badge ${annullato ? 'stato-annullato' : 'stato-pagato'}">${escapeHtml(ord.stato)}</span>
+                            <strong>${formatPrezzo(ord.totale)}</strong>
+                            <svg class="icon order-caret" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"/></svg>
+                        </span>
+                    </button>
+                </h2>
+                <div class="order-body is-hidden" id="ordine-${idOrdine}">${corpo}</div>
+            </article>`;
         });
-        $("#ordini-lista").html(h);
-    }, "json");
+        $('#ordini-lista').html(html);
+    }, 'json');
 }
 
-function apriModal(id, titolo) {
-    $("#rev-idProdotto").val(id);
-    $("#rev-titolo").text(titolo);
-    $("#formRecensione")[0].reset();
-    aggiornaStelle(5);
-    $("#modalRecensione").css('display','flex').hide().fadeIn();
-}
+/* Apertura/chiusura dettagli ordine */
+$(document).on('click', '.order-header', function() {
+    const corpo  = $('#' + $(this).attr('aria-controls'));
+    const aperto = corpo.toggleClass('is-hidden').is(':visible');
+    $(this).attr('aria-expanded', aperto);
+});
 
+/* Annullamento (UPDATE dello stato): il server ripristina le quantità in una transazione */
+$(document).on('click', '.js-annulla', function() {
+    const id = $(this).data('id');
+    if (!confirm('Vuoi annullare l\'ordine #' + id + '? I prodotti torneranno disponibili.')) return;
+    $.post('api/ba_miei_ordini.php', { action: 'annulla', id_ordine: id }, function(resp) {
+        if (resp.status === 'ok') {
+            mostraNotifica('Ordine #' + id + ' annullato.');
+            caricaOrdini();
+        } else {
+            mostraNotifica(resp.msg || 'Annullamento non riuscito.', true);
+        }
+    }, 'json');
+});
+
+/* ===== Recensioni ===== */
 function aggiornaStelle(v) {
-    $(".star").each(function() {
-        $(this).css("color", $(this).data("v") <= v ? "#f1c40f" : "#ddd");
-    });
+    $('.star').each(function() { $(this).toggleClass('on', $(this).data('v') <= v); });
 }
+
+$(document).on('click', '.js-recensisci', function() {
+    $('#formRecensione')[0].reset();
+    $('#rev-idProdotto').val($(this).data('id'));
+    $('#rev-titolo').text('Recensisci "' + $(this).data('nome') + '"');
+    $('#err-commento').text('');
+    aggiornaStelle(5);
+    $('#modalRecensione').addClass('open');
+    $('#rev-commento').trigger('focus');
+});
+
+$('input[name="voto"]').on('change', function() { aggiornaStelle(parseInt($(this).val())); });
+$('.js-chiudi-recensione').on('click', function() { $('#modalRecensione').removeClass('open'); });
+
+$('#rev-foto').on('change', function() {
+    const file = this.files[0];
+    if (file && (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size > 2 * 1024 * 1024)) {
+        mostraNotifica('La foto deve essere JPG, PNG o WEBP e pesare al massimo 2 MB.', true);
+        $(this).val('');
+    }
+});
+
+$('#formRecensione').on('submit', function(e) {
+    e.preventDefault();
+    if ($('#rev-commento').val().trim().length < 3) {
+        $('#err-commento').text('Scrivi almeno qualche parola (minimo 3 caratteri).');
+        return;
+    }
+    $.ajax({
+        url: 'api/ba_scrivi_recensione.php',
+        type: 'POST',
+        data: new FormData(this),
+        dataType: 'json',
+        cache: false,
+        contentType: false,
+        processData: false,
+        success: function(resp) {
+            if (resp.status === 'ok') {
+                $('#modalRecensione').removeClass('open');
+                mostraNotifica('Recensione pubblicata.');
+                caricaOrdini();
+            } else {
+                mostraNotifica(resp.msg || 'Pubblicazione non riuscita.', true);
+            }
+        }
+    });
+});
 </script>
 </body>
 </html>

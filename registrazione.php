@@ -1,168 +1,199 @@
+<?php
+session_start();
+if (isset($_SESSION['IdUtente'])) {
+    header("Location: index.php");
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <title>Unisciti a The (E-)Shop Around the Corner</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>Crea un account | The (E-)Shop Around the Corner</title>
+    <?php include 'head.php'; ?>
 </head>
-<body style="background: var(--light-green);">
+<body class="auth-page">
+<main id="contenuto" class="auth-container">
+    <h1 class="auth-title">Crea il tuo account</h1>
 
-    <div class="auth-container">
-        <h2 style="color: var(--dark-green); text-align: center; margin-bottom: 25px;">Crea il tuo Account</h2>
+    <form id="formRegistrazione" novalidate>
+        <fieldset class="role-selector">
+            <legend class="form-label">Voglio registrarmi come</legend>
+            <label class="role-option">
+                <input type="radio" name="tipoUtente" value="cliente" checked>
+                <span>Cliente</span>
+            </label>
+            <label class="role-option">
+                <input type="radio" name="tipoUtente" value="venditore">
+                <span>Venditore</span>
+            </label>
+        </fieldset>
 
-        <form id="formRegistrazione">
-            <input type="text" name="username" placeholder="Username (3-30 caratteri)" class="auth-input" id="field-username" required>
+        <div class="form-field">
+            <label for="field-username" class="form-label">Username</label>
+            <input type="text" name="username" id="field-username" class="form-control" maxlength="30" autocomplete="username" aria-describedby="err-username" required>
             <small class="field-error" id="err-username"></small>
-            <input type="text" name="nome" placeholder="Nome" class="auth-input" id="field-nome" required>
-            <small class="field-error" id="err-nome"></small>
-            <input type="text" name="cognome" placeholder="Cognome" class="auth-input" id="field-cognome" required>
-            <small class="field-error" id="err-cognome"></small>
-            <input type="email" name="email" placeholder="Email" class="auth-input" id="field-email" required>
+        </div>
+        <div class="form-row">
+            <div class="form-field">
+                <label for="field-nome" class="form-label">Nome</label>
+                <input type="text" name="nome" id="field-nome" class="form-control" maxlength="50" autocomplete="given-name" aria-describedby="err-nome" required>
+                <small class="field-error" id="err-nome"></small>
+            </div>
+            <div class="form-field">
+                <label for="field-cognome" class="form-label">Cognome</label>
+                <input type="text" name="cognome" id="field-cognome" class="form-control" maxlength="50" autocomplete="family-name" aria-describedby="err-cognome" required>
+                <small class="field-error" id="err-cognome"></small>
+            </div>
+        </div>
+        <div class="form-field">
+            <label for="field-email" class="form-label">Email</label>
+            <input type="email" name="email" id="field-email" class="form-control" maxlength="100" autocomplete="email" aria-describedby="err-email" required>
             <small class="field-error" id="err-email"></small>
-            <input type="password" name="password" placeholder="Password (min 8 car., maiuscola, numero, simbolo)" class="auth-input" id="field-password" required>
+        </div>
+        <div class="form-field">
+            <label for="field-password" class="form-label">Password</label>
+            <input type="password" name="password" id="field-password" class="form-control" autocomplete="new-password" aria-describedby="help-password err-password" required>
+            <small class="help-text" id="help-password">Almeno 8 caratteri, con una maiuscola, un numero e un simbolo.</small>
             <small class="field-error" id="err-password"></small>
+        </div>
 
-            <!-- Campi solo per CLIENTE -->
-            <div id="cliente-fields">
-                <input type="tel" name="telefono" placeholder="Telefono (es. 3201234567)" class="auth-input" id="field-telefono">
+        <!-- Campi solo per CLIENTE -->
+        <div id="cliente-fields">
+            <div class="form-field">
+                <label for="field-telefono" class="form-label">Telefono</label>
+                <input type="tel" name="telefono" id="field-telefono" class="form-control" maxlength="16" autocomplete="tel" placeholder="es. 3201234567" aria-describedby="err-telefono">
                 <small class="field-error" id="err-telefono"></small>
-                <input type="text" name="indirizzo" placeholder="Indirizzo (es. Via Roma 1, Milano)" class="auth-input" id="field-indirizzo">
+            </div>
+            <div class="form-field">
+                <label for="field-indirizzo" class="form-label">Indirizzo</label>
+                <input type="text" name="indirizzo" id="field-indirizzo" class="form-control" maxlength="150" autocomplete="street-address" placeholder="es. Via Roma 1, Pisa, 56126" aria-describedby="err-indirizzo">
                 <small class="field-error" id="err-indirizzo"></small>
             </div>
+        </div>
 
-            <!-- Campi solo per VENDITORE -->
-            <div id="vendor-fields" style="display:none;">
-                <input type="text" name="ragione_sociale" placeholder="Ragione Sociale" class="auth-input" id="field-ragione">
+        <!-- Campi solo per VENDITORE -->
+        <div id="vendor-fields" class="is-hidden">
+            <div class="form-field">
+                <label for="field-ragione" class="form-label">Ragione sociale</label>
+                <input type="text" name="ragione_sociale" id="field-ragione" class="form-control" maxlength="100" aria-describedby="err-ragione">
                 <small class="field-error" id="err-ragione"></small>
-                <input type="text" name="partita_iva" placeholder="Partita IVA (11 cifre)" class="auth-input" id="field-piva">
+            </div>
+            <div class="form-field">
+                <label for="field-piva" class="form-label">Partita IVA</label>
+                <input type="text" name="partita_iva" id="field-piva" class="form-control" maxlength="11" inputmode="numeric" placeholder="11 cifre" aria-describedby="err-piva">
                 <small class="field-error" id="err-piva"></small>
             </div>
+        </div>
 
-            <p style="font-size: 0.8em; margin-bottom: 10px; color: #666;">Voglio registrarmi come:</p>
-            <div class="role-selector">
-                <div class="role-option active" onclick="setRole('cliente', this)">Cliente</div>
-                <div class="role-option" onclick="setRole('venditore', this)">Venditore</div>
-            </div>
-            <input type="hidden" name="tipoUtente" id="tipoUtente" value="cliente">
+        <button type="submit" class="btn btn-primary btn-block">Crea account</button>
+    </form>
 
-            <button type="submit" class="btn-recensisci" style="width: 100%; padding: 12px;">REGISTRATI</button>
-        </form>
+    <p class="auth-footer">Hai già un account? <a href="login.php">Accedi</a></p>
+    <p class="auth-footer"><a href="index.php">Torna alla home</a></p>
+</main>
 
-        <p style="text-align:center; margin-top:20px; font-size:0.9em;">Hai già un account? <a href="login.php">Accedi qui</a></p>
-        <p style="text-align:center; margin-top:10px; font-size:0.9em;">
-    <a href="index.php" style="color: var(--text-sec);">Torna alla home</a>
-</p>
-    </div>
+<script>
+/* ===== Validazione lato client (la stessa va ripetuta lato server) ===== */
+function tipoSelezionato() {
+    return $('input[name="tipoUtente"]:checked').val();
+}
 
-    <script>
-    function setRole(role, el) {
-        $('.role-option').removeClass('active');
-        $(el).addClass('active');
-        $('#tipoUtente').val(role);
-        if (role === 'venditore') {
-            $('#vendor-fields').slideDown();
-            $('#cliente-fields').slideUp();
+$('input[name="tipoUtente"]').on('change', function() {
+    const venditore = tipoSelezionato() === 'venditore';
+    $('#vendor-fields').toggleClass('is-hidden', !venditore);
+    $('#cliente-fields').toggleClass('is-hidden', venditore);
+});
+
+function setErr(id, msg) {
+    const campo = $('#field-' + id);
+    $('#err-' + id).text(msg);
+    campo.toggleClass('invalid', !!msg)
+         .toggleClass('valid', !msg && campo.val().trim() !== '')
+         .attr('aria-invalid', msg ? 'true' : 'false');
+    return !!msg;
+}
+
+function validaUsername(v) {
+    if (!v) return 'Inserisci uno username.';
+    if (!/^[a-zA-Z0-9_\-]{3,30}$/.test(v)) return 'Da 3 a 30 caratteri: solo lettere, numeri, _ o -.';
+    return '';
+}
+function validaNome(v, label) {
+    if (!v) return 'Inserisci il ' + label + '.';
+    if (v.length < 2) return label.charAt(0).toUpperCase() + label.slice(1) + ' troppo corto (minimo 2 caratteri).';
+    if (!/^[a-zA-ZÀ-ÿ\s'\-]+$/.test(v)) return 'Usa solo lettere, spazi, apostrofi o trattini.';
+    return '';
+}
+function validaEmail(v) {
+    if (!v) return "Inserisci l'email.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) return 'Email non valida (es. nome@dominio.it).';
+    return '';
+}
+function validaPassword(v) {
+    if (!v) return 'Inserisci una password.';
+    if (!/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(v))
+        return 'Almeno 8 caratteri, con una maiuscola, un numero e un simbolo.';
+    return '';
+}
+function validaTelefono(v) {
+    if (!v) return 'Inserisci il numero di telefono.';
+    const pulito = v.replace(/[\s\-]/g, '');
+    if (!/^(\+39)?\d{6,11}$/.test(pulito)) return 'Numero non valido (es. 3201234567 o +39 050 123456).';
+    return '';
+}
+function validaIndirizzo(v) {
+    if (!v) return "Inserisci l'indirizzo.";
+    if (v.length < 5) return 'Indirizzo troppo corto (minimo 5 caratteri).';
+    return '';
+}
+function validaPiva(v) {
+    if (!v) return 'Inserisci la partita IVA.';
+    if (!/^\d{11}$/.test(v)) return 'La partita IVA è composta da 11 cifre.';
+    return '';
+}
+function validaRagione(v) {
+    if (!v) return 'Inserisci la ragione sociale.';
+    if (v.length < 2) return 'Ragione sociale troppo corta (minimo 2 caratteri).';
+    return '';
+}
+
+const validatori = {
+    username:  () => validaUsername($('#field-username').val().trim()),
+    nome:      () => validaNome($('#field-nome').val().trim(), 'nome'),
+    cognome:   () => validaNome($('#field-cognome').val().trim(), 'cognome'),
+    email:     () => validaEmail($('#field-email').val().trim()),
+    password:  () => validaPassword($('#field-password').val()),
+    telefono:  () => validaTelefono($('#field-telefono').val().trim()),
+    indirizzo: () => validaIndirizzo($('#field-indirizzo').val().trim()),
+    ragione:   () => validaRagione($('#field-ragione').val().trim()),
+    piva:      () => validaPiva($('#field-piva').val().trim())
+};
+
+// Validazione campo per campo all'uscita dal campo
+Object.keys(validatori).forEach(id => {
+    $('#field-' + id).on('blur', function() { setErr(id, validatori[id]()); });
+});
+
+$('#formRegistrazione').on('submit', function(e) {
+    e.preventDefault();
+    const campi = ['username', 'nome', 'cognome', 'email', 'password'].concat(
+        tipoSelezionato() === 'cliente' ? ['telefono', 'indirizzo'] : ['ragione', 'piva']
+    );
+    let errori = false;
+    campi.forEach(id => { if (setErr(id, validatori[id]())) errori = true; });
+    if (errori) {
+        $('.form-control.invalid').first().trigger('focus');
+        return;
+    }
+
+    $.post('api/ba_registrazione.php', $(this).serialize(), function(resp) {
+        if (resp.status === 'ok') {
+            window.location.href = 'index.php';
         } else {
-            $('#cliente-fields').slideDown();
-            $('#vendor-fields').slideUp();
+            mostraNotifica(resp.msg || 'Registrazione non riuscita.', true);
         }
-    }
-
-    function setErr(id, msg) {
-        $('#err-' + id).text(msg);
-        $('#field-' + id).toggleClass('invalid', !!msg).toggleClass('valid', !msg && $('#field-' + id).val().trim() !== '');
-        return !!msg;
-    }
-
-    function validaUsername(v) {
-        if (!v) return 'Username obbligatorio.';
-        if (!/^[a-zA-Z0-9_\-]{3,30}$/.test(v)) return 'Username: 3-30 caratteri, solo lettere, numeri, _ o -.';
-        return '';
-    }
-    function validaNome(v, label) {
-        if (!v) return label + ' obbligatorio/a.';
-        if (v.length < 2) return label + ' troppo corto (min 2 caratteri).';
-        if (!/^[a-zA-ZÀ-ÿ\s'\-]+$/.test(v)) return label + ' non valido (solo lettere e spazi).';
-        return '';
-    }
-    function validaEmail(v) {
-        if (!v) return 'Email obbligatoria.';
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) return 'Email non valida (es. nome@dominio.it).';
-        return '';
-    }
-    function validaPassword(v) {
-        if (!v) return 'Password obbligatoria.';
-        if (!/^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\|,.<>\/?]).{8,}$/.test(v))
-            return 'Password: min 8 caratteri, 1 maiuscola, 1 numero, 1 simbolo.';
-        return '';
-    }
-    function validaTelefono(v) {
-        if (!v) return 'Telefono obbligatorio.';
-        if (!/^(\+39\s?)?3\d{2}[\s\-]?\d{6,7}$/.test(v)) return 'Telefono non valido (es. 3201234567 o +39 320 1234567).';
-        return '';
-    }
-    function validaIndirizzo(v) {
-        if (!v) return 'Indirizzo obbligatorio.';
-        if (v.length < 5) return 'Indirizzo troppo corto (min 5 caratteri).';
-        return '';
-    }
-    function validaPiva(v) {
-        if (!v) return 'Partita IVA obbligatoria.';
-        if (!/^\d{11}$/.test(v)) return 'Partita IVA: esattamente 11 cifre numeriche.';
-        return '';
-    }
-    function validaRagione(v) {
-        if (!v) return 'Ragione Sociale obbligatoria.';
-        if (v.length < 2) return 'Ragione Sociale troppo corta (min 2 caratteri).';
-        return '';
-    }
-
-    // Validazione live campo per campo
-    $('#field-username').on('blur', function() { setErr('username', validaUsername($(this).val().trim())); });
-    $('#field-nome').on('blur', function() { setErr('nome', validaNome($(this).val().trim(), 'Nome')); });
-    $('#field-cognome').on('blur', function() { setErr('cognome', validaNome($(this).val().trim(), 'Cognome')); });
-    $('#field-email').on('blur', function() { setErr('email', validaEmail($(this).val().trim())); });
-    $('#field-password').on('blur', function() { setErr('password', validaPassword($(this).val())); });
-    $('#field-telefono').on('blur', function() { setErr('telefono', validaTelefono($(this).val().trim())); });
-    $('#field-indirizzo').on('blur', function() { setErr('indirizzo', validaIndirizzo($(this).val().trim())); });
-    $('#field-piva').on('blur', function() { setErr('piva', validaPiva($(this).val().trim())); });
-    $('#field-ragione').on('blur', function() { setErr('ragione', validaRagione($(this).val().trim())); });
-
-    $("#formRegistrazione").on("submit", function(e) {
-        e.preventDefault();
-        const tipo = $('#tipoUtente').val();
-
-        // Valida tutti i campi
-        let errori = false;
-        errori |= setErr('username', validaUsername($('[name="username"]').val().trim()));
-        errori |= setErr('nome',     validaNome($('[name="nome"]').val().trim(), 'Nome'));
-        errori |= setErr('cognome',  validaNome($('[name="cognome"]').val().trim(), 'Cognome'));
-        errori |= setErr('email',    validaEmail($('[name="email"]').val().trim()));
-        errori |= setErr('password', validaPassword($('[name="password"]').val()));
-
-        if (tipo === 'cliente') {
-            errori |= setErr('telefono', validaTelefono($('[name="telefono"]').val().trim()));
-            errori |= setErr('indirizzo', validaIndirizzo($('[name="indirizzo"]').val().trim()));
-        } else {
-            errori |= setErr('ragione', validaRagione($('[name="ragione_sociale"]').val().trim()));
-            errori |= setErr('piva',    validaPiva($('[name="partita_iva"]').val().trim()));
-        }
-
-        if (errori) return;
-
-        $.post('api/ba_registrazione.php', $(this).serialize())
-            .done(function(resp) {
-                if (resp.status === 'ok') {
-                    window.location.href = "index.php";
-                } else {
-                    alert("Errore: " + resp.msg);
-                }
-            })
-            .fail(function(xhr) {
-                alert("Errore di rete (" + xhr.status + "): controlla che il file PHP esista.");
-            });
-    });
-    </script>
+    }, 'json');
+});
+</script>
 </body>
 </html>
