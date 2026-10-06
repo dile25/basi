@@ -1,47 +1,33 @@
 <?php
-require_once('../db_connect.php');
-header('Content-Type: application/json');
+require_once __DIR__ . '/comune.php';
 
-$username = $_GET['u'] ?? '';
-if (empty($username)) {
-    echo json_encode(['status' => 'error', 'msg' => 'Venditore non specificato']);
-    exit;
+$username = trim($_GET['u'] ?? '');
+if (!preg_match('/^[a-zA-Z0-9_\-]{3,30}$/', $username)) {
+    errore('Venditore non valido.');
 }
 
-// Info pubbliche venditore
-$stmt = $conn->prepare("SELECT u.nome, u.cognome, u.data_registrazione, v.ragione_sociale
-                        FROM UTENTE u JOIN VENDITORE v ON u.username = v.username
-                        WHERE u.username = ? AND u.attivo = 1");
+$stmt = $conn->prepare(
+    "SELECT u.username AS nome_visualizzato, u.data_registrazione, v.ragione_sociale
+     FROM utente u JOIN venditore v ON v.username = u.username
+     WHERE u.username = ? AND u.attivo = 1"
+);
 $stmt->bind_param("s", $username);
 $stmt->execute();
 $venditore = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+if (!$venditore) errore('Venditore non trovato.');
 
-if (!$venditore) {
-    echo json_encode(['status' => 'error', 'msg' => 'Venditore non trovato']);
-    exit;
-}
+$stmt = $conn->prepare(
+    "SELECT p.id_prodotto, p.nome, p.autore, p.prezzo, p.quantita_disponibile,
+            (SELECT i.url FROM immagine_prodotto i WHERE i.id_prodotto = p.id_prodotto
+              ORDER BY i.id_immagine_prodotto LIMIT 1) AS foto
+     FROM prodotto p
+     WHERE p.username = ? AND p.attivo = 1
+     ORDER BY p.data_inserimento DESC, p.id_prodotto DESC"
+);
+$stmt->bind_param("s", $username);
+$stmt->execute();
+$libri = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
 
-// Usa lo username come nome visualizzato — sempre aggiornato, non dipende da
-// ragione_sociale o nome/cognome che potrebbero non essere stati aggiornati altrove
-$venditore['nome_visualizzato'] = $username;
-
-// Libri del venditore
-$stmtL = $conn->prepare("SELECT p.id_prodotto, p.nome, p.autore, p.prezzo, p.quantita_disponibile,
-                                 (SELECT url FROM IMMAGINE_PRODOTTO WHERE id_prodotto = p.id_prodotto LIMIT 1) as foto,
-                                 (SELECT nome_categoria FROM DESCRIVE WHERE id_prodotto = p.id_prodotto LIMIT 1) as categoria
-                          FROM PRODOTTO p
-                          WHERE p.username = ? AND p.attivo = 1
-                          ORDER BY p.id_prodotto DESC");
-$stmtL->bind_param("s", $username);
-$stmtL->execute();
-$resL = $stmtL->get_result();
-
-$libri = [];
-while ($row = $resL->fetch_assoc()) $libri[] = $row;
-
-echo json_encode([
-    'status'    => 'ok',
-    'venditore' => $venditore,
-    'username'  => $username,
-    'libri'     => $libri
-]);
+ok(['venditore' => $venditore, 'libri' => $libri]);

@@ -1,56 +1,90 @@
 <?php
-session_start();
-header('Content-Type: application/json');
-require_once('../db_connect.php');
+/*
+ * Crea o modifica (id_recensione > 0) la recensione del cliente su un prodotto.
+ * Si può recensire solo un prodotto acquistato in un ordine non annullato.
+ * Foto facoltativa: in modifica, una nuova foto sostituisce la precedente.
+ */
+require_once __DIR__ . '/comune.php';
+richiediMetodo('POST');
+$username = richiediLogin('cliente');
 
-if (!isset($_SESSION['IdUtente'])) {
-    echo json_encode(['status' => 'error', 'msg' => 'Accedi per lasciare una recensione']);
-    exit;
-}
-// I venditori non possono recensire prodotti
-if ($_SESSION['tipoUtente'] === 'venditore') {
-    echo json_encode(['status' => 'error', 'msg' => 'I venditori non possono lasciare recensioni.']);
-    exit;
-}
+$idProdotto   = intero($_POST['idProdotto'] ?? null, 1, PHP_INT_MAX);
+$idRecensione = intero($_POST['id_recensione'] ?? 0, 0, PHP_INT_MAX) ?? 0;
+$voto         = intero($_POST['voto'] ?? null, 1, 5);
+if (!$idProdotto)  errore('Prodotto non valido.');
+if ($voto === null) errore('Il voto deve essere da 1 a 5 stelle.');
+$commento = testo($_POST, 'commento', 3, 2000, 'Commento');
 
-$idUtente   = $_SESSION['IdUtente'];
-$idProdotto = intval($_POST['idProdotto'] ?? 0);
-$voto       = intval($_POST['voto'] ?? 0);
-$commento   = trim($_POST['commento'] ?? '');
-$idRec      = intval($_POST['id_recensione'] ?? 0); // presente solo in modifica
-
-if ($voto < 1 || $voto > 5) {
-    echo json_encode(['status' => 'error', 'msg' => 'Il voto deve essere tra 1 e 5']);
-    exit;
-}
-if (empty($commento)) {
-    echo json_encode(['status' => 'error', 'msg' => 'Il commento non può essere vuoto']);
-    exit;
+if (!haAcquistato($conn, $username, $idProdotto)) {
+    errore('Puoi recensire solo i prodotti che hai acquistato.');
 }
 
-if ($idRec > 0) {
-    // MODIFICA: aggiorna la recensione esistente verificando che sia dell'utente
-    $stmt = $conn->prepare("UPDATE RECENSIONE SET valutazione=?, testo=?, data=CURRENT_DATE WHERE id_recensione=? AND username=?");
-    $stmt->bind_param("isis", $voto, $commento, $idRec, $idUtente);
-    if ($stmt->execute() && $stmt->affected_rows > 0) {
-        echo json_encode(['status' => 'ok', 'msg' => 'Recensione aggiornata!']);
+$fotoNuova = null;
+if (isset($_FILES['fotoRecensione']) && $_FILES['fotoRecensione']['error'] !== UPLOAD_ERR_NO_FILE) {
+    $fotoNuova = salvaImmagine($_FILES['fotoRecensione'], 'recensioni');
+}
+
+$fotoVecchie = [];
+$conn->begin_transaction();
+try {
+    if ($idRecensione > 0) {
+        // MODIFICA: solo la propria recensione su quel prodotto
+        $stmt = $conn->prepare(
+            "SELECT id_recensione FROM recensione WHERE id_recensione = ? AND username = ? AND id_prodotto = ?"
+        );
+        $stmt->bind_param("isi", $idRecensione, $username, $idProdotto);
+        $stmt->execute();
+        if ($stmt->get_result()->num_rows === 0) throw new ErroreUtente('Recensione non trovata.');
+        $stmt->close();
+
+        $stmt = $conn->prepare("UPDATE recensione SET valutazione = ?, testo = ?, data = CURRENT_DATE WHERE id_recensione = ?");
+        $stmt->bind_param("isi", $voto, $commento, $idRecensione);
+        $stmt->execute();
+        $stmt->close();
+
+        if ($fotoNuova) {
+            $stmt = $conn->prepare("SELECT url FROM immagine_recensione WHERE id_recensione = ?");
+            $stmt->bind_param("i", $idRecensione);
+            $stmt->execute();
+            $fotoVecchie = array_column($stmt->get_result()->fetch_all(MYSQLI_ASSOC), 'url');
+            $stmt->close();
+
+            $stmt = $conn->prepare("DELETE FROM immagine_recensione WHERE id_recensione = ?");
+            $stmt->bind_param("i", $idRecensione);
+            $stmt->execute();
+            $stmt->close();
+        }
     } else {
-        echo json_encode(['status' => 'error', 'msg' => 'Errore aggiornamento']);
+        // NUOVA: una sola recensione per prodotto (vincolo UNIQUE nel DB)
+        $stmt = $conn->prepare("SELECT 1 FROM recensione WHERE username = ? AND id_prodotto = ?");
+        $stmt->bind_param("si", $username, $idProdotto);
+        $stmt->execute();
+        if ($stmt->get_result()->num_rows > 0) throw new ErroreUtente('Hai già recensito questo prodotto: puoi modificare la tua recensione.');
+        $stmt->close();
+
+        $stmt = $conn->prepare(
+            "INSERT INTO recensione (username, id_prodotto, valutazione, testo, data) VALUES (?, ?, ?, ?, CURRENT_DATE)"
+        );
+        $stmt->bind_param("siis", $username, $idProdotto, $voto, $commento);
+        $stmt->execute();
+        $idRecensione = $conn->insert_id;
+        $stmt->close();
     }
-} else {
-    // NUOVA: inserisce solo se non ne esiste già una per questo prodotto
-    $check = $conn->prepare("SELECT id_recensione FROM RECENSIONE WHERE id_prodotto=? AND username=?");
-    $check->bind_param("is", $idProdotto, $idUtente);
-    $check->execute();
-    if ($check->get_result()->num_rows > 0) {
-        echo json_encode(['status' => 'error', 'msg' => 'Hai già recensito questo libro. Usa il bottone Modifica.']);
-        exit;
+
+    if ($fotoNuova) {
+        $alt = 'Foto della recensione di ' . $username;
+        $stmt = $conn->prepare("INSERT INTO immagine_recensione (id_recensione, url, alt_text) VALUES (?, ?, ?)");
+        $stmt->bind_param("iss", $idRecensione, $fotoNuova, $alt);
+        $stmt->execute();
+        $stmt->close();
     }
-    $stmt = $conn->prepare("INSERT INTO RECENSIONE (id_prodotto, username, valutazione, testo, data) VALUES (?, ?, ?, ?, CURRENT_DATE)");
-    $stmt->bind_param("isis", $idProdotto, $idUtente, $voto, $commento);
-    if ($stmt->execute()) {
-        echo json_encode(['status' => 'ok', 'msg' => 'Recensione pubblicata!']);
-    } else {
-        echo json_encode(['status' => 'error', 'msg' => 'Errore nel salvataggio']);
-    }
+
+    $conn->commit();
+} catch (Throwable $e) {
+    $conn->rollback();
+    eliminaImmagine($fotoNuova);   // il file salvato non serve più
+    throw $e;
 }
+
+foreach ($fotoVecchie as $url) eliminaImmagine($url);
+ok();

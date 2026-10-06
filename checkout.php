@@ -215,12 +215,6 @@ $('#btnProcedi').on('click', function() {
 
     datiOrdine.indirizzo = `${via}, ${citta}, ${cap}${prov ? ', ' + prov : ''}`;
 
-    // Aggiorna l'indirizzo predefinito del profilo
-    $.ajax({
-        url: 'api/ba_aggiorna_profilo.php', method: 'POST', dataType: 'json',
-        contentType: 'application/json', data: JSON.stringify({ indirizzo: datiOrdine.indirizzo })
-    });
-
     $('#recap-indirizzo').text(datiOrdine.indirizzo);
     $('#recap-metodo').text(NOMI_METODO[metodo] || metodo);
     $('#recap-totale').text(formatPrezzo(datiOrdine.totale));

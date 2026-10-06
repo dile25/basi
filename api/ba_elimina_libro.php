@@ -1,26 +1,35 @@
 <?php
-session_start();
-require_once('../db_connect.php');
-header('Content-Type: application/json');
+/*
+ * "Eliminazione" di un prodotto: viene tolto dalla vendita (attivo = 0) invece di
+ * essere cancellato, perché le righe degli ordini già fatti devono restare nello storico.
+ */
+require_once __DIR__ . '/comune.php';
+richiediMetodo('POST');
+$username = richiediLogin('venditore');
 
-if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
-    echo json_encode(['status' => 'error', 'msg' => 'Non autorizzato']); exit;
-}
+$id = intero($_POST['id_prodotto'] ?? null, 1, PHP_INT_MAX);
+if (!$id) errore('Prodotto non valido.');
 
-$user = $_SESSION['IdUtente'];
-$id   = intval($_POST['id_prodotto'] ?? 0);
-
+$conn->begin_transaction();
 try {
-    // Rimuovi il prodotto dai carrelli di tutti i clienti prima di eliminarlo
-    $stmtCarr = $conn->prepare("DELETE FROM CARRELLO WHERE id_prodotto = ?");
-    $stmtCarr->bind_param("i", $id);
-    $stmtCarr->execute();
-    $stmtCarr->close();
-
-    $stmt = $conn->prepare("DELETE FROM PRODOTTO WHERE id_prodotto=? AND username=?");
-    $stmt->bind_param("is", $id, $user);
+    $stmt = $conn->prepare(
+        "UPDATE prodotto SET attivo = 0, id_pacchetto = NULL WHERE id_prodotto = ? AND username = ? AND attivo = 1"
+    );
+    $stmt->bind_param("is", $id, $username);
     $stmt->execute();
-    echo json_encode(['status' => 'ok']);
-} catch (Exception $e) {
-    echo json_encode(['status' => 'error', 'msg' => $e->getMessage()]);
+    if ($stmt->affected_rows === 0) throw new ErroreUtente('Prodotto non trovato.');
+    $stmt->close();
+
+    foreach (['carrello', 'preferiti'] as $tabella) {
+        $stmt = $conn->prepare("DELETE FROM $tabella WHERE id_prodotto = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $stmt->close();
+    }
+    $conn->commit();
+} catch (Throwable $e) {
+    $conn->rollback();
+    throw $e;
 }
+
+ok();

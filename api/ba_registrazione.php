@@ -1,119 +1,89 @@
 <?php
+require_once __DIR__ . '/comune.php';
+richiediMetodo('POST');
 
-mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+if (isset($_SESSION['IdUtente'])) {
+    errore('Hai già effettuato l\'accesso.');
+}
 
-if (file_exists(__DIR__ . '/../db_connect.php')) {
-    require_once(__DIR__ . '/../db_connect.php');
-} else if (file_exists(__DIR__ . '/../basi/db_connect.php')) {
-    require_once(__DIR__ . '/../basi/db_connect.php');
+$tipo = $_POST['tipoUtente'] ?? '';
+if (!in_array($tipo, ['cliente', 'venditore'], true)) {
+    errore('Tipo di account non valido.');
+}
+
+// ===== Validazione (la stessa del frontend, ripetuta lato server) =====
+$username = trim($_POST['username'] ?? '');
+if (!preg_match('/^[a-zA-Z0-9_\-]{3,30}$/', $username)) {
+    errore('Username non valido: da 3 a 30 caratteri, solo lettere, numeri, _ o -.');
+}
+$nome    = testo($_POST, 'nome', 2, 50, 'Nome');
+$cognome = testo($_POST, 'cognome', 2, 50, 'Cognome');
+if (!preg_match("/^[\p{L}\s'\-]+$/u", $nome) || !preg_match("/^[\p{L}\s'\-]+$/u", $cognome)) {
+    errore('Nome e cognome possono contenere solo lettere, spazi, apostrofi e trattini.');
+}
+$email = trim($_POST['email'] ?? '');
+if (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 100) {
+    errore('Email non valida.');
+}
+$password = $_POST['password'] ?? '';
+if (!preg_match('/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/', $password)) {
+    errore('Password non valida: almeno 8 caratteri, con una maiuscola, un numero e un simbolo.');
+}
+
+if ($tipo === 'cliente') {
+    $telefono = preg_replace('/[\s\-]/', '', $_POST['telefono'] ?? '');
+    if (!preg_match('/^(\+39)?\d{6,11}$/', $telefono)) {
+        errore('Numero di telefono non valido.');
+    }
+    $indirizzo = testo($_POST, 'indirizzo', 5, 255, 'Indirizzo');
 } else {
-    header('Content-Type: application/json', true, 500);
-    echo json_encode(["status" => "error", "msg" => "Impossibile trovare il file db_connect.php."]);
-    exit;
+    $ragioneSociale = testo($_POST, 'ragione_sociale', 2, 100, 'Ragione sociale');
+    $partitaIva = trim($_POST['partita_iva'] ?? '');
+    if (!preg_match('/^\d{11}$/', $partitaIva)) {
+        errore('La partita IVA è composta da 11 cifre.');
+    }
 }
 
-header('Content-Type: application/json');
-
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['status' => 'error', 'msg' => 'Metodo non consentito.']);
-    exit;
+// ===== Username ed email devono essere liberi =====
+$check = $conn->prepare("SELECT username, email FROM utente WHERE username = ? OR email = ?");
+$check->bind_param("ss", $username, $email);
+$check->execute();
+if ($esistente = $check->get_result()->fetch_assoc()) {
+    errore(strcasecmp($esistente['username'], $username) === 0 ? 'Username già in uso.' : 'Email già registrata.');
 }
+$check->close();
 
-if (true) {
-    $user = $_POST['username'] ?? '';
-    $nome = $_POST['nome'] ?? '';
-    $cogn = $_POST['cognome'] ?? '';
-    $mail = $_POST['email'] ?? '';
-    $tipo = $_POST['tipoUtente'] ?? 'cliente';
+$hash = password_hash($password, PASSWORD_DEFAULT);
 
-    $errori = [];
+// ===== Inserimento in transazione: UTENTE + CLIENTE oppure VENDITORE =====
+$conn->begin_transaction();
+try {
+    $stmt = $conn->prepare(
+        "INSERT INTO utente (username, nome, cognome, email, password_hash, data_registrazione)
+         VALUES (?, ?, ?, ?, ?, CURRENT_DATE)"
+    );
+    $stmt->bind_param("sssss", $username, $nome, $cognome, $email, $hash);
+    $stmt->execute();
+    $stmt->close();
 
-    // Username: 3-30 caratteri alfanumerici + _ -
-    if (empty($user) || !preg_match('/^[a-zA-Z0-9_\-]{3,30}$/', $user))
-        $errori[] = "Username non valido (3-30 caratteri: lettere, numeri, _ o -).";
-
-    // Nome: min 2 lettere
-    if (empty($nome) || strlen($nome) < 2 || !preg_match('/^[\pL\s\'\-]+$/u', $nome))
-        $errori[] = "Nome non valido.";
-
-    // Cognome: min 2 lettere
-    if (empty($cogn) || strlen($cogn) < 2 || !preg_match('/^[\pL\s\'\-]+$/u', $cogn))
-        $errori[] = "Cognome non valido.";
-
-    // Email
-    if (empty($mail) || !filter_var($mail, FILTER_VALIDATE_EMAIL))
-        $errori[] = "Email non valida.";
-
-    // Password: min 8 car, 1 maiuscola, 1 numero, 1 simbolo
-    $pw = $_POST['password'] ?? '';
-    $pwValida = strlen($pw) >= 8
-        && preg_match('/[A-Z]/', $pw)
-        && preg_match('/[0-9]/', $pw)
-        && preg_match('/[^a-zA-Z0-9]/', $pw);
-    if (!$pw || !$pwValida)
-        $errori[] = "Password non valida (min 8 caratteri, 1 maiuscola, 1 numero, 1 simbolo).";
-
-    // Validazioni per ruolo
     if ($tipo === 'cliente') {
-        $tel = trim($_POST['telefono'] ?? '');
-        $ind = trim($_POST['indirizzo'] ?? '');
-        if (empty($tel) || !preg_match('/^(\+39\s?)?3\d{2}[\s\-]?\d{6,7}$/', $tel))
-            $errori[] = "Telefono non valido (es. 3201234567).";
-        if (empty($ind) || strlen($ind) < 5)
-            $errori[] = "Indirizzo obbligatorio (min 5 caratteri).";
+        $stmt = $conn->prepare("INSERT INTO cliente (username, telefono, indirizzo_predefinito) VALUES (?, ?, ?)");
+        $stmt->bind_param("sss", $username, $telefono, $indirizzo);
     } else {
-        $piva   = trim($_POST['partita_iva'] ?? '');
-        $ragSoc = trim($_POST['ragione_sociale'] ?? '');
-        if (empty($piva) || !preg_match('/^\d{11}$/', $piva))
-            $errori[] = "Partita IVA non valida (11 cifre numeriche).";
-        if (empty($ragSoc) || strlen($ragSoc) < 2)
-            $errori[] = "Ragione Sociale obbligatoria.";
+        $stmt = $conn->prepare("INSERT INTO venditore (username, partita_iva, ragione_sociale) VALUES (?, ?, ?)");
+        $stmt->bind_param("sss", $username, $partitaIva, $ragioneSociale);
     }
+    $stmt->execute();
+    $stmt->close();
 
-    if (!empty($errori)) {
-        echo json_encode(["status" => "error", "msg" => implode(' ', $errori)]);
-        exit;
-    }
-
-    $pass = password_hash($pw, PASSWORD_DEFAULT);
-
-    try {
-        $conn->begin_transaction();
-
-        $sqlU = "INSERT INTO UTENTE (username, nome, cognome, email, password_hash, data_registrazione)
-                 VALUES (?, ?, ?, ?, ?, CURRENT_DATE)";
-        $stmtU = $conn->prepare($sqlU);
-        $stmtU->bind_param("sssss", $user, $nome, $cogn, $mail, $pass);
-        $stmtU->execute();
-
-        if ($tipo === 'venditore') {
-            $piva   = $_POST['partita_iva'] ?? '';
-            $ragSoc = $_POST['ragione_sociale'] ?? '';
-            $stmtV = $conn->prepare("INSERT INTO VENDITORE (username, partita_iva, ragione_sociale) VALUES (?, ?, ?)");
-            $stmtV->bind_param("sss", $user, $piva, $ragSoc);
-            $stmtV->execute();
-        } else {
-            $tel = $_POST['telefono'] ?? '';
-            $ind = $_POST['indirizzo'] ?? '';
-            $stmtC = $conn->prepare("INSERT INTO CLIENTE (username, telefono, indirizzo_predefinito) VALUES (?, ?, ?)");
-            $stmtC->bind_param("sss", $user, $tel, $ind);
-            $stmtC->execute();
-        }
-
-        $conn->commit();
-
-        if (session_status() === PHP_SESSION_NONE) session_start();
-        $_SESSION['IdUtente']  = $user;
-        $_SESSION['tipoUtente'] = $tipo;
-
-        echo json_encode(["status" => "ok", "msg" => "Registrazione e login effettuati con successo!"]);
-
-    } catch (Exception $e) {
-        if (isset($conn)) $conn->rollback();
-        if (strpos($e->getMessage(), 'Duplicate entry') !== false) {
-            echo json_encode(["status" => "error", "msg" => "Username o Email già utilizzati da un altro utente."]);
-        } else {
-            echo json_encode(["status" => "error", "msg" => "Errore database: " . $e->getMessage()]);
-        }
-    }
+    $conn->commit();
+} catch (Throwable $e) {
+    $conn->rollback();
+    throw $e;
 }
+
+session_regenerate_id(true);
+$_SESSION['IdUtente']   = $username;
+$_SESSION['tipoUtente'] = $tipo;
+
+ok();

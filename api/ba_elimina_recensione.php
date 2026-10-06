@@ -1,27 +1,29 @@
 <?php
-session_start();
-header('Content-Type: application/json');
-require_once('../db_connect.php');
+require_once __DIR__ . '/comune.php';
+richiediMetodo('POST');
+$username = richiediLogin('cliente');
 
-if (!isset($_SESSION['IdUtente'])) {
-    echo json_encode(['status' => 'error', 'msg' => 'Non autorizzato']);
-    exit;
-}
+$id = intero($_POST['id_recensione'] ?? null, 1, PHP_INT_MAX);
+if (!$id) errore('Recensione non valida.');
 
-$idUtente = $_SESSION['IdUtente'];
-$idRecensione = intval($_POST['id_recensione'] ?? 0);
+// Foto da cancellare dal disco (le righe si cancellano a cascata)
+$stmt = $conn->prepare(
+    "SELECT ir.url FROM immagine_recensione ir
+     JOIN recensione r ON r.id_recensione = ir.id_recensione
+     WHERE r.id_recensione = ? AND r.username = ?"
+);
+$stmt->bind_param("is", $id, $username);
+$stmt->execute();
+$foto = array_column($stmt->get_result()->fetch_all(MYSQLI_ASSOC), 'url');
+$stmt->close();
 
-if (!$idRecensione) {
-    echo json_encode(['status' => 'error', 'msg' => 'ID non valido']);
-    exit;
-}
+$stmt = $conn->prepare("DELETE FROM recensione WHERE id_recensione = ? AND username = ?");
+$stmt->bind_param("is", $id, $username);
+$stmt->execute();
+$eliminate = $stmt->affected_rows;
+$stmt->close();
 
-// Elimina solo se è dell'utente corrente
-$stmt = $conn->prepare("DELETE FROM RECENSIONE WHERE id_recensione = ? AND username = ?");
-$stmt->bind_param("is", $idRecensione, $idUtente);
+if ($eliminate === 0) errore('Recensione non trovata.');
 
-if ($stmt->execute() && $stmt->affected_rows > 0) {
-    echo json_encode(['status' => 'ok']);
-} else {
-    echo json_encode(['status' => 'error', 'msg' => 'Recensione non trovata o non autorizzato']);
-}
+foreach ($foto as $url) eliminaImmagine($url);
+ok();

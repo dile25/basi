@@ -1,100 +1,108 @@
 <?php
-session_start();
-require_once('../db_connect.php');
-header('Content-Type: application/json');
+/*
+ * Aggiorna il profilo. Il corpo è JSON e contiene SOLO i campi da modificare:
+ * dal profilo arrivano dati personali, indirizzo o dati aziendali separatamente,
+ * quindi si aggiornano solo le chiavi presenti (prima un campo assente veniva svuotato).
+ */
+require_once __DIR__ . '/comune.php';
+richiediMetodo('POST');
+$username = richiediLogin();
+$tipo     = $_SESSION['tipoUtente'];
+$input    = leggiJson();
 
-if (!isset($_SESSION['IdUtente'])) {
-    echo json_encode(['status' => 'error', 'msg' => 'Non autorizzato']);
-    exit;
-}
+$campiUtente = [];   // colonna => valore per la tabella UTENTE
+$campiRuolo  = [];   // colonna => valore per CLIENTE o VENDITORE
 
-$input = json_decode(file_get_contents('php://input'), true);
-$id    = $_SESSION['IdUtente'];
-$tipo  = $_SESSION['tipoUtente'];
-
-$email          = trim($input['email']          ?? '');
-$telefono       = trim($input['telefono']       ?? '');
-$indirizzo      = trim($input['indirizzo']      ?? '');
-$password       = $input['password']            ?? '';
-$nuovoUsername  = trim($input['username']       ?? '');
-$ragioneSociale = trim($input['ragione_sociale']?? '');
-$partitaIva     = trim($input['partita_iva']    ?? '');
-
-// Validazioni sui campi forniti
-if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    echo json_encode(['status' => 'error', 'msg' => 'Indirizzo email non valido.']);
-    exit;
-}
-if (!empty($password)) {
-    $pwValida = strlen($password) >= 8
-        && preg_match('/[A-Z]/', $password)
-        && preg_match('/[0-9]/', $password)
-        && preg_match('/[^a-zA-Z0-9]/', $password);
-    if (!$pwValida) {
-        echo json_encode(['status' => 'error', 'msg' => 'Password non valida (min 8 caratteri, 1 maiuscola, 1 numero, 1 simbolo).']);
-        exit;
+// ===== Validazione dei soli campi presenti =====
+if (array_key_exists('username', $input)) {
+    $nuovo = trim((string)$input['username']);
+    if (!preg_match('/^[a-zA-Z0-9_\-]{3,30}$/', $nuovo)) {
+        errore('Username non valido: da 3 a 30 caratteri, solo lettere, numeri, _ o -.');
+    }
+    if ($nuovo !== $username) {
+        $check = $conn->prepare("SELECT 1 FROM utente WHERE username = ?");
+        $check->bind_param("s", $nuovo);
+        $check->execute();
+        if ($check->get_result()->num_rows > 0) errore('Username già in uso.');
+        $check->close();
+        $campiUtente['username'] = $nuovo;
     }
 }
-if (!empty($partitaIva) && !preg_match('/^\d{11}$/', $partitaIva)) {
-    echo json_encode(['status' => 'error', 'msg' => 'Partita IVA non valida (11 cifre numeriche).']);
-    exit;
+
+if (array_key_exists('email', $input)) {
+    $email = trim((string)$input['email']);
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 100) {
+        errore('Email non valida.');
+    }
+    $check = $conn->prepare("SELECT 1 FROM utente WHERE email = ? AND username <> ?");
+    $check->bind_param("ss", $email, $username);
+    $check->execute();
+    if ($check->get_result()->num_rows > 0) errore('Email già usata da un altro account.');
+    $check->close();
+    $campiUtente['email'] = $email;
+}
+
+if (!empty($input['password'])) {
+    $password = (string)$input['password'];
+    if (!preg_match('/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,72}$/', $password)) {
+        errore('Password non valida: almeno 8 caratteri, con una maiuscola, un numero e un simbolo.');
+    }
+    $campiUtente['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
+}
+
+if ($tipo === 'cliente') {
+    if (array_key_exists('telefono', $input)) {
+        $telefono = preg_replace('/[\s\-]/', '', (string)$input['telefono']);
+        if (!preg_match('/^(\+39)?\d{6,11}$/', $telefono)) errore('Numero di telefono non valido.');
+        $campiRuolo['telefono'] = $telefono;
+    }
+    if (array_key_exists('indirizzo', $input)) {
+        $campiRuolo['indirizzo_predefinito'] = testo($input, 'indirizzo', 5, 255, 'Indirizzo');
+    }
+} else {
+    if (array_key_exists('ragione_sociale', $input)) {
+        $campiRuolo['ragione_sociale'] = testo($input, 'ragione_sociale', 2, 100, 'Ragione sociale');
+    }
+    if (array_key_exists('partita_iva', $input)) {
+        $piva = trim((string)$input['partita_iva']);
+        if (!preg_match('/^\d{11}$/', $piva)) errore('La partita IVA è composta da 11 cifre.');
+        $campiRuolo['partita_iva'] = $piva;
+    }
+}
+
+if (!$campiUtente && !$campiRuolo) {
+    ok();   // niente da modificare
+}
+
+/* Esegue UPDATE tabella SET col1 = ?, col2 = ? WHERE username = ?
+   I nomi di colonna vengono solo dalle chiavi scritte sopra, mai dall'input. */
+function aggiorna(mysqli $conn, string $tabella, array $campi, string $username): void {
+    $set    = implode(', ', array_map(fn($c) => "$c = ?", array_keys($campi)));
+    $valori = array_values($campi);
+    $valori[] = $username;
+    $stmt = $conn->prepare("UPDATE $tabella SET $set WHERE username = ?");
+    $stmt->bind_param(str_repeat('s', count($valori)), ...$valori);
+    $stmt->execute();
+    $stmt->close();
 }
 
 $conn->begin_transaction();
-
 try {
-    // Cambio username (se fornito e diverso)
-    if (!empty($nuovoUsername) && $nuovoUsername !== $id) {
-        if (!preg_match('/^[a-zA-Z0-9_\-]{3,30}$/', $nuovoUsername)) {
-            throw new Exception('Username non valido (3-30 caratteri: lettere, numeri, _ o -).');
-        }
-        $check = $conn->prepare("SELECT COUNT(*) as cnt FROM UTENTE WHERE username = ?");
-        $check->bind_param("s", $nuovoUsername);
-        $check->execute();
-        if ($check->get_result()->fetch_assoc()['cnt'] > 0) {
-            throw new Exception('Username già in uso.');
-        }
-        $stmtU = $conn->prepare("UPDATE UTENTE SET username = ? WHERE username = ?");
-        $stmtU->bind_param("ss", $nuovoUsername, $id);
-        $stmtU->execute();
-        $_SESSION['IdUtente'] = $nuovoUsername;
-        $id = $nuovoUsername;
+    // Prima i dati di ruolo con lo username attuale; poi UTENTE (il cambio username
+    // si propaga alle altre tabelle grazie a ON UPDATE CASCADE).
+    if ($campiRuolo) {
+        aggiorna($conn, $tipo === 'cliente' ? 'cliente' : 'venditore', $campiRuolo, $username);
     }
-
-    // Aggiorna email e/o password (solo se fornita email)
-    if (!empty($email)) {
-        if (!empty($password)) {
-            $hash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $conn->prepare("UPDATE UTENTE SET email=?, password_hash=? WHERE username=?");
-            $stmt->bind_param("sss", $email, $hash, $id);
-        } else {
-            $stmt = $conn->prepare("UPDATE UTENTE SET email=? WHERE username=?");
-            $stmt->bind_param("ss", $email, $id);
-        }
-        $stmt->execute();
-    } elseif (!empty($password)) {
-        $hash = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $conn->prepare("UPDATE UTENTE SET password_hash=? WHERE username=?");
-        $stmt->bind_param("ss", $hash, $id);
-        $stmt->execute();
+    if ($campiUtente) {
+        aggiorna($conn, 'utente', $campiUtente, $username);
     }
-
-    // Aggiorna dati specifici per ruolo
-    if ($tipo === 'cliente') {
-        $stmt2 = $conn->prepare("UPDATE CLIENTE SET telefono=?, indirizzo_predefinito=? WHERE username=?");
-        $stmt2->bind_param("sss", $telefono, $indirizzo, $id);
-        $stmt2->execute();
-    } elseif ($tipo === 'venditore') {
-        if (!empty($ragioneSociale)) {
-            $stmt2 = $conn->prepare("UPDATE VENDITORE SET ragione_sociale=?, partita_iva=? WHERE username=?");
-            $stmt2->bind_param("sss", $ragioneSociale, $partitaIva, $id);
-            $stmt2->execute();
-        }
-    }
-
     $conn->commit();
-    echo json_encode(['status' => 'ok']);
-} catch (Exception $e) {
+} catch (Throwable $e) {
     $conn->rollback();
-    echo json_encode(['status' => 'error', 'msg' => $e->getMessage()]);
+    throw $e;
 }
+
+if (isset($campiUtente['username'])) {
+    $_SESSION['IdUtente'] = $campiUtente['username'];
+}
+ok();

@@ -1,41 +1,32 @@
 <?php
-session_start();
-require_once('../db_connect.php');
-header('Content-Type: application/json');
+require_once __DIR__ . '/comune.php';
+richiediMetodo('POST');
 
-$user = $_POST['username'] ?? '';
-$pass = $_POST['password'] ?? '';
-
-// 1. Cerchiamo l'utente (colonne aggiornate al tuo nuovo SQL)
-$stmt = $conn->prepare("SELECT username, password_hash, attivo FROM UTENTE WHERE username = ?");
-$stmt->bind_param("s", $user);
-$stmt->execute();
-$res = $stmt->get_result();
-
-if($row = $res->fetch_assoc()) {
-    // 2. Verifica password
-    if(password_verify($pass, $row['password_hash'])) {
-        if ((int)($row['attivo'] ?? 1) === 0) {
-            echo json_encode(['status' => 'error', 'msg' => 'Account disattivato. Contatta il supporto.']);
-            exit;
-        }
-        
-        // 3. Controllo RUOLO (Se è in VENDITORE è un venditore, altrimenti assumiamo cliente)
-        $tipoUtente = 'cliente';
-        $checkV = $conn->prepare("SELECT username FROM VENDITORE WHERE username = ?");
-        $checkV->bind_param("s", $user);
-        $checkV->execute();
-        if($checkV->get_result()->num_rows > 0) {
-            $tipoUtente = 'venditore';
-        }
-
-        $_SESSION['IdUtente'] = $row['username'];
-        $_SESSION['tipoUtente'] = $tipoUtente;
-
-        echo json_encode(['status' => 'ok', 'tipo' => $tipoUtente]);
-    } else {
-        echo json_encode(['status' => 'error', 'msg' => 'Password errata']);
-    }
-} else {
-    echo json_encode(['status' => 'error', 'msg' => 'Utente non trovato']);
+$username = trim($_POST['username'] ?? '');
+$password = $_POST['password'] ?? '';
+if ($username === '' || $password === '') {
+    errore('Inserisci username e password.');
 }
+
+$stmt = $conn->prepare(
+    "SELECT u.username, u.password_hash, u.attivo, v.username AS venditore
+     FROM utente u
+     LEFT JOIN venditore v ON v.username = u.username
+     WHERE u.username = ?"
+);
+$stmt->bind_param("s", $username);
+$stmt->execute();
+$utente = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+
+// Stesso messaggio per utente inesistente, password errata o account disattivato:
+// così non si rivela quali username esistono.
+if (!$utente || !password_verify($password, $utente['password_hash']) || (int)$utente['attivo'] === 0) {
+    errore('Username o password non corretti.');
+}
+
+session_regenerate_id(true);   // nuovo id di sessione dopo il login
+$_SESSION['IdUtente']   = $utente['username'];
+$_SESSION['tipoUtente'] = $utente['venditore'] ? 'venditore' : 'cliente';
+
+ok(['tipo' => $_SESSION['tipoUtente']]);

@@ -158,7 +158,7 @@ let pacchetti    = [];
 let categorieDB  = [];
 
 $(function() {
-    $.get('api/ba_categorie.php', function(resp) { categorieDB = resp.categorie || []; }, 'json');
+    $.get('api/ba_lista_categorie.php', function(resp) { categorieDB = resp.categorie || []; }, 'json');
     caricaLibri();
     caricaOrdini();
     caricaPacchetti();

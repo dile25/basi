@@ -128,7 +128,7 @@ const MAX_FOTO = 5;
 const MAX_PESO = 2 * 1024 * 1024;
 
 $(function() {
-    $.get('api/ba_categorie.php', function(resp) {
+    $.get('api/ba_lista_categorie.php', function(resp) {
         categorieDB = resp.categorie || [];
         categorieDB.filter(c => !c.nome_categoria_padre).forEach(c => {
             $('#campo-categoria').append($('<option>').val(c.nome_categoria).text(c.nome_categoria));

@@ -39,16 +39,14 @@ function caricaPreferiti() {
         preferiti.forEach(p => {
             const id   = parseInt(p.id_prodotto);
             const link = 'dettaglio_prodotto.php?id=' + id;
-            const scontato = parseFloat(p.prezzo_scontato) < parseFloat(p.prezzo);
             html += `<article class="book-card">
                 <a href="${link}" class="book-card__img-link" tabindex="-1" aria-hidden="true">
                     <img class="book-card__img" src="${escapeHtml(p.URLfoto || 'img/default.jpg')}" alt="">
                 </a>
                 <div class="book-info">
                     <h2 class="book-title"><a href="${link}">${escapeHtml(p.nome)}</a></h2>
-                    <p class="book-price">
-                        ${scontato ? `<del class="book-price-old">${formatPrezzo(p.prezzo)}</del> ${formatPrezzo(p.prezzo_scontato)}` : formatPrezzo(p.prezzo)}
-                    </p>
+                    <p class="book-price">${formatPrezzo(p.prezzo)}</p>
+                    ${parseInt(p.quantita_disponibile) > 0 ? '' : '<span class="badge badge-esaurito">Esaurito</span>'}
                     <div class="button-row">
                         <a href="${link}" class="btn btn-primary btn-small">Vedi il libro</a>
                         <button type="button" class="btn btn-fav attivo btn-small js-rimuovi-preferito" data-id="${id}" aria-label="Rimuovi ${escapeHtml(p.nome)} dai preferiti">

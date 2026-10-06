@@ -1,70 +1,69 @@
 <?php
-session_start();
-require_once('../db_connect.php');
-header('Content-Type: application/json');
+/*
+ * Catalogo: ricerca per testo, filtro per categoria e sezioni della home.
+ * GET q        testo cercato in titolo e autore
+ * GET cat      categoria (se è una categoria padre include le sue sottocategorie)
+ * GET sezione  'nuovi' (ultimi disponibili) | 'offerte' (un prodotto disponibile per pacchetto)
+ * GET limit    numero massimo di risultati (1-100): la paginazione è lato server
+ */
+require_once __DIR__ . '/comune.php';
 
-$q    = isset($_GET['q'])    ? trim($_GET['q'])    : '';
-$cat  = isset($_GET['cat'])  ? trim($_GET['cat'])  : '';
-$tipo = isset($_GET['tipo']) ? trim($_GET['tipo']) : '';
+$q       = mb_substr(trim($_GET['q'] ?? ''), 0, 100);
+$cat     = mb_substr(trim($_GET['cat'] ?? ''), 0, 100);
+$sezione = $_GET['sezione'] ?? '';
+$limit   = intero($_GET['limit'] ?? 60, 1, 100) ?? 60;
 
-$where  = [];
+$where  = ['p.attivo = 1'];
 $params = [];
 $types  = '';
 
 if ($q !== '') {
-    $where[]  = "(p.nome LIKE ? OR p.autore LIKE ?)";
-    $params[] = "%$q%";
-    $params[] = "%$q%";
+    // escape dei caratteri jolly di LIKE inseriti dall'utente
+    $like = '%' . addcslashes($q, '%_\\') . '%';
+    $where[]  = '(p.nome LIKE ? OR p.autore LIKE ?)';
+    $params[] = $like;
+    $params[] = $like;
     $types   .= 'ss';
 }
 
 if ($cat !== '') {
-    $where[]  = "d.nome_categoria = ?";
+    $where[] = 'EXISTS (SELECT 1 FROM descrive d
+                        JOIN categoria c ON c.nome_categoria = d.nome_categoria
+                        WHERE d.id_prodotto = p.id_prodotto
+                          AND (c.nome_categoria = ? OR c.nome_categoria_padre = ?))';
     $params[] = $cat;
-    $types   .= 's';
+    $params[] = $cat;
+    $types   .= 'ss';
 }
 
-if ($tipo !== '') {
-    $where[]  = "p.tipo_prodotto = ?";
-    $params[] = $tipo;
-    $types   .= 's';
+if ($sezione === 'nuovi') {
+    $where[] = 'p.quantita_disponibile > 0';
+} elseif ($sezione === 'offerte') {
+    // il primo prodotto disponibile di ogni pacchetto
+    $where[] = 'p.quantita_disponibile > 0';
+    $where[] = 'p.id_prodotto = (SELECT MIN(p2.id_prodotto) FROM prodotto p2
+                                 WHERE p2.id_pacchetto = p.id_pacchetto
+                                   AND p2.attivo = 1 AND p2.quantita_disponibile > 0)';
 }
 
-$where[] = 'p.attivo = 1';
-$whereClause = 'WHERE ' . implode(' AND ', $where);
-
-// sconto_pacchetto: usa pac.sconto SOLO se valorizzato (> 0).
-// Per saghe e promo autore pac.sconto e' NULL, quindi
-// sconto_pacchetto = 0 e PrezzoScontato = prezzo pieno:
-// nessun badge/prezzo scontato fasullo in home.
-$sql = "SELECT p.id_prodotto, p.nome, p.autore, p.descrizione, p.prezzo,
-               p.quantita_disponibile, p.data_inserimento, p.tipo_prodotto,
-               img.url AS URLfoto,
-               d.nome_categoria,
-               COALESCE(pac.sconto, 0)                             AS sconto_pacchetto,
-               ROUND(p.prezzo * (1 - COALESCE(pac.sconto, 0)/100), 2) AS PrezzoScontato,
-               pac.nome     AS nome_pacchetto,
-               pac.tipo_pacchetto,
-               pac.e_saga
+$sql = "SELECT p.id_prodotto, p.nome, p.autore, p.prezzo, p.quantita_disponibile,
+               (SELECT i.url FROM immagine_prodotto i
+                 WHERE i.id_prodotto = p.id_prodotto
+                 ORDER BY i.id_immagine_prodotto LIMIT 1) AS URLfoto,
+               pk.nome   AS nome_pacchetto,
+               pk.sconto AS sconto_pacchetto
         FROM prodotto p
-        LEFT JOIN immagine_prodotto img ON p.id_prodotto = img.id_prodotto
-        LEFT JOIN descrive d ON p.id_prodotto = d.id_prodotto
-        LEFT JOIN pacchetto pac ON p.id_pacchetto = pac.id_pacchetto AND pac.attivo = 1
-        $whereClause
-        GROUP BY p.id_prodotto
-        ORDER BY p.data_inserimento DESC";
+        LEFT JOIN pacchetto pk ON pk.id_pacchetto = p.id_pacchetto
+        WHERE " . implode(' AND ', $where) . "
+        ORDER BY p.data_inserimento DESC, p.id_prodotto DESC
+        LIMIT ?";
+$params[] = $limit;
+$types   .= 'i';
 
-$prodotti = [];
-if (count($params) > 0) {
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param($types, ...$params);
-    $stmt->execute();
-    $res = $stmt->get_result();
-} else {
-    $res = $conn->query($sql);
-}
+$stmt = $conn->prepare($sql);
+$stmt->bind_param($types, ...$params);
+$stmt->execute();
+$prodotti = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
 
-while ($row = $res->fetch_assoc()) {
-    $prodotti[] = $row;
-}
-echo json_encode(['status' => 'ok', 'prodotti' => $prodotti]);
+ok(['prodotti' => $prodotti]);

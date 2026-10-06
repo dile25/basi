@@ -1,16 +1,12 @@
 <?php
-session_start();
-require_once('../db_connect.php');
-header('Content-Type: application/json');
+require_once __DIR__ . '/comune.php';
 
-$stmt = $conn->prepare("SELECT nome_categoria, nome_categoria_padre FROM CATEGORIA ORDER BY nome_categoria_padre ASC, nome_categoria ASC");
-$stmt->execute();
-$res = $stmt->get_result();
+// Prima le categorie principali (padre NULL), poi le sottocategorie
+$res = $conn->query(
+    "SELECT nome_categoria, nome_categoria_padre
+     FROM categoria
+     ORDER BY nome_categoria_padre IS NOT NULL, nome_categoria_padre, nome_categoria"
+);
+$categorie = $res->fetch_all(MYSQLI_ASSOC);
 
-$categorie = [];
-while ($row = $res->fetch_assoc()) {
-    $categorie[] = $row;
-}
-$stmt->close();
-
-echo json_encode(['status' => 'ok', 'categorie' => $categorie]);
+ok(['categorie' => $categorie]);

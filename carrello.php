@@ -53,7 +53,7 @@ function caricaCarrello() {
         const rimossi = parseInt(resp.prodottiRimossi) || 0;
         if (rimossi > 0) {
             $('#testo-rimossi').text(rimossi + (rimossi === 1 ? ' prodotto è stato rimosso' : ' prodotti sono stati rimossi')
-                + ' dal carrello perché il venditore ha chiuso il suo account.');
+                + ' dal carrello perché non più disponibili.');
             $('#avviso-rimossi').removeClass('is-hidden');
         }
 

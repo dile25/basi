@@ -87,7 +87,6 @@ $tipoUtente = $_SESSION['tipoUtente'] ?? '';
         <dl class="dati-lista">
             <dt>Ragione sociale</dt><dd id="p-ragione-sociale">—</dd>
             <dt>Partita IVA</dt><dd id="p-partita-iva">—</dd>
-            <dt>Telefono</dt><dd id="p-telefono-venditore">—</dd>
         </dl>
         <form id="form-modifica-venditore" class="form-modifica-section" novalidate>
             <div class="form-field">
@@ -97,10 +96,6 @@ $tipoUtente = $_SESSION['tipoUtente'] ?? '';
             <div class="form-field">
                 <label for="edit-partita-iva" class="form-label">Partita IVA</label>
                 <input type="text" id="edit-partita-iva" class="form-control" maxlength="11" inputmode="numeric">
-            </div>
-            <div class="form-field">
-                <label for="edit-telefono-venditore" class="form-label">Telefono</label>
-                <input type="tel" id="edit-telefono-venditore" class="form-control" maxlength="16">
             </div>
             <button type="submit" class="btn btn-primary">Salva</button>
             <p class="form-msg is-hidden" id="msg-venditore" role="status"></p>
@@ -213,10 +208,8 @@ $(function() {
         } else if (data.tipo === 'venditore') {
             $('#p-ragione-sociale').text(d.ragione_sociale || '—');
             $('#p-partita-iva').text(d.partita_iva || '—');
-            $('#p-telefono-venditore').text(d.telefono || 'Non inserito');
             $('#edit-ragione-sociale').val(d.ragione_sociale || '');
             $('#edit-partita-iva').val(d.partita_iva || '');
-            $('#edit-telefono-venditore').val(d.telefono || '');
         }
     }, 'json');
 });
@@ -243,7 +236,9 @@ $('#form-modifica').on('submit', function(e) {
     $(this).find('.field-error').each(function() { if ($(this).text()) ok = false; });
     if (!ok) return;
 
-    postJson('api/ba_aggiorna_profilo.php', { username: username, email: email, telefono: telefono, password: password }, function(resp) {
+    const dati = { username: username, email: email, password: password };
+    if ($('#edit-telefono').length) dati.telefono = telefono;   // solo i clienti hanno il telefono
+    postJson('api/ba_aggiorna_profilo.php', dati, function(resp) {
         if (resp.status === 'ok') {
             $('#p-username').text(username);
             $('#p-email').text(email);
@@ -261,15 +256,13 @@ $('#form-modifica-venditore').on('submit', function(e) {
     e.preventDefault();
     const rs   = $('#edit-ragione-sociale').val().trim();
     const piva = $('#edit-partita-iva').val().trim();
-    const tel  = $('#edit-telefono-venditore').val().trim();
     if (rs.length < 2)           { mostraMsg('#msg-venditore', 'Inserisci la ragione sociale.', false); return; }
     if (!/^\d{11}$/.test(piva))  { mostraMsg('#msg-venditore', 'La partita IVA è composta da 11 cifre.', false); return; }
 
-    postJson('api/ba_aggiorna_profilo.php', { ragione_sociale: rs, partita_iva: piva, telefono: tel }, function(resp) {
+    postJson('api/ba_aggiorna_profilo.php', { ragione_sociale: rs, partita_iva: piva }, function(resp) {
         if (resp.status === 'ok') {
             $('#p-ragione-sociale').text(rs);
             $('#p-partita-iva').text(piva);
-            $('#p-telefono-venditore').text(tel || 'Non inserito');
             mostraMsg('#msg-venditore', 'Dati aggiornati.', true);
         } else {
             mostraMsg('#msg-venditore', resp.msg || 'Salvataggio non riuscito.', false);

@@ -1,32 +1,24 @@
 <?php
-session_start();
-header('Content-Type: application/json');
-require_once('../db_connect.php');
+require_once __DIR__ . '/comune.php';
+$username = richiediLogin('venditore');
 
-if (!isset($_SESSION['IdUtente']) || $_SESSION['tipoUtente'] !== 'venditore') {
-    echo json_encode(['status' => 'error', 'msg' => 'Accesso negato']);
-    exit;
-}
-
-$idVenditore = $_SESSION['IdUtente'];
-
-$sql = "SELECT p.id_prodotto, p.nome, p.autore, p.descrizione, p.prezzo,
-               p.quantita_disponibile, p.tipo_prodotto, p.id_pacchetto,
-               i.url AS url_foto,
-               (SELECT nome_categoria FROM DESCRIVE WHERE id_prodotto = p.id_prodotto LIMIT 1) as categoria
-        FROM PRODOTTO p
-        LEFT JOIN IMMAGINE_PRODOTTO i ON p.id_prodotto = i.id_prodotto
-        WHERE p.username = ? AND p.attivo = 1
-        ORDER BY p.id_prodotto DESC";
-
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $idVenditore);
+// Una sola riga per prodotto: foto e categoria con sottoquery (prima un JOIN sulle
+// immagini duplicava i prodotti con più foto)
+$stmt = $conn->prepare(
+    "SELECT p.id_prodotto, p.nome, p.autore, p.descrizione, p.prezzo, p.quantita_disponibile, p.id_pacchetto,
+            (SELECT i.url FROM immagine_prodotto i WHERE i.id_prodotto = p.id_prodotto
+              ORDER BY i.id_immagine_prodotto LIMIT 1) AS url_foto,
+            c.nome_categoria, c.nome_categoria_padre
+     FROM prodotto p
+     LEFT JOIN categoria c ON c.nome_categoria =
+          (SELECT d.nome_categoria FROM descrive d WHERE d.id_prodotto = p.id_prodotto
+            ORDER BY d.nome_categoria LIMIT 1)
+     WHERE p.username = ? AND p.attivo = 1
+     ORDER BY p.data_inserimento DESC, p.id_prodotto DESC"
+);
+$stmt->bind_param("s", $username);
 $stmt->execute();
-$res = $stmt->get_result();
+$libri = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
 
-$libri = [];
-while ($row = $res->fetch_assoc()) {
-    $libri[] = $row;
-}
-
-echo json_encode(['status' => 'ok', 'libri' => $libri]);
+ok(['libri' => $libri]);

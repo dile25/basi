@@ -1,34 +1,38 @@
 <?php
-session_start();
-require_once('../db_connect.php');
-header('Content-Type: application/json');
+require_once __DIR__ . '/comune.php';
 
-$id = intval($_GET['id'] ?? 0);
-if (!$id) {
-    echo json_encode(['status' => 'error', 'msg' => 'ID non valido']);
-    exit;
-}
+$id = intero($_GET['id'] ?? null, 1, PHP_INT_MAX);
+if (!$id) errore('Prodotto non valido.');
 
-$sql = "SELECT r.id_recensione, r.username, r.valutazione, r.testo, r.data,
-               (SELECT url FROM IMMAGINE_RECENSIONE WHERE id_recensione = r.id_recensione LIMIT 1) AS foto,
-               (SELECT attivo FROM UTENTE WHERE username = r.username) AS utente_attivo
-        FROM RECENSIONE r
-        WHERE r.id_prodotto = ?
-        ORDER BY r.data DESC, r.id_recensione DESC";
-
-$stmt = $conn->prepare($sql);
+$stmt = $conn->prepare(
+    "SELECT r.id_recensione, r.username, r.valutazione, r.testo, r.data, u.attivo,
+            (SELECT ir.url FROM immagine_recensione ir
+              WHERE ir.id_recensione = r.id_recensione LIMIT 1) AS foto
+     FROM recensione r
+     JOIN utente u ON u.username = r.username
+     WHERE r.id_prodotto = ?
+     ORDER BY r.data DESC, r.id_recensione DESC"
+);
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $res = $stmt->get_result();
 
 $recensioni = [];
-while ($row = $res->fetch_assoc()) {
-    $row['data'] = date("d/m/Y", strtotime($row['data']));
-    if ((int)($row['utente_attivo'] ?? 1) === 0) {
-        $row['username'] = 'utente eliminato';
-    }
-    unset($row['utente_attivo']);
-    $recensioni[] = $row;
+$giaRecensito = false;
+$utente = $_SESSION['IdUtente'] ?? '';
+while ($r = $res->fetch_assoc()) {
+    if ($r['username'] === $utente) $giaRecensito = true;
+    if ((int)$r['attivo'] === 0) $r['username'] = 'utente eliminato';
+    unset($r['attivo']);
+    $r['data'] = date('d/m/Y', strtotime($r['data']));
+    $recensioni[] = $r;
 }
+$stmt->close();
 
-echo json_encode(['status' => 'ok', 'recensioni' => $recensioni]);
+// Il bottone "Scrivi una recensione" compare solo a chi ha comprato il prodotto
+// e non lo ha ancora recensito
+$puoRecensire = ($_SESSION['tipoUtente'] ?? '') === 'cliente'
+    && !$giaRecensito
+    && haAcquistato($conn, $utente, $id);
+
+ok(['recensioni' => $recensioni, 'puoRecensire' => $puoRecensire]);
